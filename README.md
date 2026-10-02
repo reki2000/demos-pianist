@@ -61,7 +61,7 @@ Across all ten pieces, every finger segment and the upper/forearm lengths were c
 
 Chromium could not be launched in the original build environment, so a final check of real browser video and audio was not performed there. The download version does not depend on external libraries or network loads.
 
-The multi-file version is `dist/index.html`; serve it with `python -m http.server 8000 --directory dist`. Logic verification: `node verify.cjs`. Further tests: `anatomy-test.cjs`, `collision-test.cjs`, `continuity-test.cjs`, `score-test.cjs`, `pedal-test.cjs`, `expressive-test.cjs`, `direction-test.cjs`, `fingering-test.cjs`, `transition-test.cjs`, `hanging-test.cjs` and `audio-test.cjs` (run each with `node`). Fingering research is summarized in `FINGERING-NOTES.md`. Re-converting the source MIDI for development: `python convert.py`. Re-conversion overwrites the precomputed fingering, so recompute fingering before updating the distribution.
+The multi-file version is `dist/index.html`; serve it with `python -m http.server 8000 --directory dist`. Logic verification: `node verify.cjs`. Further tests: `anatomy-test.cjs`, `collision-test.cjs`, `continuity-test.cjs`, `score-test.cjs`, `pedal-test.cjs`, `expressive-test.cjs`, `direction-test.cjs`, `fingering-test.cjs`, `transition-test.cjs`, `hanging-test.cjs` and `audio-test.cjs` (run each with `node`). Fingering research is summarized in `FINGERING-NOTES.md`; design decisions and invariants from earlier versions are in `docs/DEVELOPMENT-NOTES.md`. Re-converting the source MIDI for development: `python convert.py`. Re-conversion overwrites the precomputed fingering, so recompute fingering before updating the distribution.
 
 ## Build and deployment
 
