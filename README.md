@@ -1,6 +1,10 @@
-# Piano in Motion
+# pianist
 
 Live demo: https://reki2000.github.io/demos-pianist/
+
+![Cinematic view](docs/screenshots/cinematic.png)
+
+![Hands view](docs/screenshots/hands.png)
 
 The latest standalone build is `piano-recital-v8.html` (identical to `piano-recital.html`). It embeds the recorded audio.
 
