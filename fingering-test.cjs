@@ -1,0 +1,14 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');global.window=global;vm.runInThisContext(fs.readFileSync('dist/motion.js','utf8'));
+let examples=0;
+function line(pitches,hand=0,dt=.3){let notes=pitches.map((p,i)=>[i*dt,dt*.9,p,80,hand]),source=notes.map(n=>n.slice()),s={notes,originalNotes:source,pedals:[],duration:pitches.length*dt};PianoMotion.build(s);assert.deepEqual(s.notes.map(n=>n.slice(0,5)),source);examples++;return{song:s,digits:s.notes.map(n=>PianoMotion.digit(hand,n[5]))};}
+const C=[60,62,64,65,67,69,71,72];
+assert.deepEqual(line(C).digits,[1,2,3,1,2,3,4,5]);assert.deepEqual(line(C,1).digits,[5,4,3,2,1,3,2,1]);assert.deepEqual(line(C.slice().reverse()).digits,[5,4,3,2,1,3,2,1]);assert.deepEqual(line(C.slice().reverse(),1).digits,[1,2,3,1,2,3,4,5]);
+assert.deepEqual(line([65,67,69,70,72,74,76,77]).digits,[1,2,3,4,1,2,3,4]);assert.deepEqual(line([62,64,66,67,69,71,73,74]).digits,[1,2,3,1,2,3,4,5]);assert.deepEqual(line([58,60,62,63,65,67,69,70]).digits,[2,1,2,3,1,2,3,4]);
+assert.deepEqual(line(C.slice(0,5)).digits,[1,2,3,4,5]);
+const two=C.concat([74,76,77,79,81,83,84]);assert.deepEqual(line(two).digits,[1,2,3,1,2,3,4,1,2,3,1,2,3,4,5]);assert.deepEqual(line(two.slice().reverse()).digits,[5,4,3,2,1,3,2,1,4,3,2,1,3,2,1]);
+assert.deepEqual(line([60,64,67,72,76,79,84],0,.18).digits,[1,2,3,1,2,3,5]);
+for(const hand of [0,1]){const fast=line(Array(9).fill(64),hand,.12).digits,slow=line(Array(4).fill(64),hand,.7).digits;assert(fast.every((d,i)=>!i||d!==fast[i-1]),'Fast repeats should share work between fingers');assert.equal(new Set(slow).size,1,'Slow repetitions need not substitute');const turn=line([60,62,64,62,60],hand).digits;assert.equal(turn[0],turn[4]);assert.equal(turn[1],turn[3]);}
+// Black-key octaves are a necessary exception to the thumb-on-white preference.
+for(let hand=0;hand<2;hand++){let notes=[[0,.5,66,90,hand],[0,.5,78,90,hand]],s={notes,originalNotes:notes.map(n=>n.slice()),pedals:[],duration:1};PianoMotion.build(s);assert.deepEqual(notes.map(n=>PianoMotion.digit(hand,n[5])).sort(),[1,5]);examples++;}
+vm.runInThisContext(fs.readFileSync('dist/songs.js','utf8'));let total=0,passes=0,positions=0;for(const s of SONGS){assert.equal(s.motion.version,12);for(const h of s.motion.hands)for(const fr of h.frames){assert.equal(new Set(fr.notes.map(n=>n.f)).size,fr.notes.length);for(const n of fr.notes){assert(PianoMotion.digit(h===s.motion.hands[1]?1:0,n.f)>=1);total++;}if(fr.passing){assert(fr.passing.fromDigit===1||fr.passing.toDigit===1);passes++;}}positions+=s.motion.sharedPositions.retained;}
+assert.equal(total,20356);console.log(JSON.stringify({examples,sourceNotes:total,scaleFingeringsBothHands:true,descendingScales:true,multipleOctaves:true,arpeggios:true,fastRepeatSubstitution:true,slowRepeatReuse:true,turnConsistency:true,blackOctaveException:true,lookahead:true,thumbPasses:passes,validatedSharedPositions:positions}));

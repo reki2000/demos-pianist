@@ -1,0 +1,3 @@
+const fs=require('fs'),vm=require('vm');global.window=global;vm.runInThisContext(fs.readFileSync('dist/songs.js','utf8'));vm.runInThisContext(fs.readFileSync('dist/motion.js','utf8'));let maxError=0,worst;
+for(const s of SONGS){PianoMotion.prepareHangingPlan(s);for(let hand=0;hand<2;hand++)for(const fr of s.motion.hands[hand].frames)for(const n of fr.notes){let f=PianoMotion.pressFinger(fr.palm,hand,n.f,n.pitch);if(f.error>maxError){maxError=f.error;worst={song:s.id,hand,frame:fr}}}console.log(s.id,s.motion.sharedPositions,'maxError',maxError);}
+fs.writeFileSync('dist/songs.js','window.SONGS='+JSON.stringify(SONGS)+';');console.log(JSON.stringify({maxError,worst}));

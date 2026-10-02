@@ -1,0 +1,20 @@
+{
+  "assetsDecoded": 118,
+  "assetSHA256Verified": true,
+  "stereo": true,
+  "finiteSamples": true,
+  "totalDecodedSeconds": 777.507,
+  "maxAssetPeak": 0.5589959621429443,
+  "renderedSourceEvents": 723,
+  "scheduledPianoNotes": 244,
+  "seconds": 22,
+  "sampleRate": 44100,
+  "preDynamicsPeak": 0.4289483917834735,
+  "outputPeak": 0.4289483917834735,
+  "encodedPeak": 0.43002891540527344,
+  "roomRMS": 0.017145850791135668,
+  "pedalResonanceRMS": 0.012848277875609899,
+  "nativePreviewUsesJSRecordedSampleSchedule": true,
+  "filtersAndDynamicsApproximate": true,
+  "browserAuditoryCheck": false
+}

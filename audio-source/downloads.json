@@ -1,0 +1,592 @@
+[
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP B-1.ogg",
+    "file": "PP_B-1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP D#0.ogg",
+    "file": "PP_D_0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP F0.ogg",
+    "file": "PP_F0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP A0.ogg",
+    "file": "PP_A0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP B0.ogg",
+    "file": "PP_B0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP D1.ogg",
+    "file": "PP_D1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP F1.ogg",
+    "file": "PP_F1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP A1.ogg",
+    "file": "PP_A1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP C2.ogg",
+    "file": "PP_C2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP D2.ogg",
+    "file": "PP_D2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP F2.ogg",
+    "file": "PP_F2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP A2.ogg",
+    "file": "PP_A2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP C3.ogg",
+    "file": "PP_C3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP D3.ogg",
+    "file": "PP_D3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP F3.ogg",
+    "file": "PP_F3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP A3.ogg",
+    "file": "PP_A3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP C4.ogg",
+    "file": "PP_C4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP D4.ogg",
+    "file": "PP_D4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP F4.ogg",
+    "file": "PP_F4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP A4.ogg",
+    "file": "PP_A4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP B4.ogg",
+    "file": "PP_B4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP D#5.ogg",
+    "file": "PP_D_5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP F#5.ogg",
+    "file": "PP_F_5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP A5.ogg",
+    "file": "PP_A5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP C6.ogg",
+    "file": "PP_C6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP D#6.ogg",
+    "file": "PP_D_6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP F#6.ogg",
+    "file": "PP_F_6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP A6.ogg",
+    "file": "PP_A6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/PP C7.ogg",
+    "file": "PP_C7.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp B-1.ogg",
+    "file": "Mp_B-1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp D#0.ogg",
+    "file": "Mp_D_0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp F0.ogg",
+    "file": "Mp_F0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp A0.ogg",
+    "file": "Mp_A0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp B0.ogg",
+    "file": "Mp_B0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp D1.ogg",
+    "file": "Mp_D1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp F1.ogg",
+    "file": "Mp_F1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp A1.ogg",
+    "file": "Mp_A1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp C2.ogg",
+    "file": "Mp_C2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp D2.ogg",
+    "file": "Mp_D2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp F2.ogg",
+    "file": "Mp_F2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp A2.ogg",
+    "file": "Mp_A2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp C3.ogg",
+    "file": "Mp_C3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp D3.ogg",
+    "file": "Mp_D3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp F3.ogg",
+    "file": "Mp_F3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp A3.ogg",
+    "file": "Mp_A3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp C4.ogg",
+    "file": "Mp_C4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp D4.ogg",
+    "file": "Mp_D4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp F4.ogg",
+    "file": "Mp_F4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp A4.ogg",
+    "file": "Mp_A4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp B4.ogg",
+    "file": "Mp_B4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp D#5.ogg",
+    "file": "Mp_D_5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp F#5.ogg",
+    "file": "Mp_F_5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp A5.ogg",
+    "file": "Mp_A5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp C6.ogg",
+    "file": "Mp_C6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp D#6.ogg",
+    "file": "Mp_D_6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp F#6.ogg",
+    "file": "Mp_F_6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mp A6.ogg",
+    "file": "Mp_A6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf B-1.ogg",
+    "file": "Mf_B-1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf D#0.ogg",
+    "file": "Mf_D_0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf F0.ogg",
+    "file": "Mf_F0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf A0.ogg",
+    "file": "Mf_A0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf B0.ogg",
+    "file": "Mf_B0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF D1.ogg",
+    "file": "MF_D1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF F1.ogg",
+    "file": "MF_F1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF A1.ogg",
+    "file": "MF_A1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF C2.ogg",
+    "file": "MF_C2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF D2.ogg",
+    "file": "MF_D2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF F2.ogg",
+    "file": "MF_F2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF A2.ogg",
+    "file": "MF_A2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF C3.ogg",
+    "file": "MF_C3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF D3.ogg",
+    "file": "MF_D3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF F3.ogg",
+    "file": "MF_F3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF A3.ogg",
+    "file": "MF_A3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/MF C4.ogg",
+    "file": "MF_C4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf D4.ogg",
+    "file": "Mf_D4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf F4.ogg",
+    "file": "Mf_F4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf A4.ogg",
+    "file": "Mf_A4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf B4.ogg",
+    "file": "Mf_B4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf D#5.ogg",
+    "file": "Mf_D_5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf F#5.ogg",
+    "file": "Mf_F_5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf A5.ogg",
+    "file": "Mf_A5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf C6.ogg",
+    "file": "Mf_C6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf D#6.ogg",
+    "file": "Mf_D_6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf F#6.ogg",
+    "file": "Mf_F_6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf A6.ogg",
+    "file": "Mf_A6.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/Mf C7.ogg",
+    "file": "Mf_C7.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF B-1.ogg",
+    "file": "FF_B-1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF D#0.ogg",
+    "file": "FF_D_0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF F0.ogg",
+    "file": "FF_F0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF A0.ogg",
+    "file": "FF_A0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF B0.ogg",
+    "file": "FF_B0.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF D1.ogg",
+    "file": "FF_D1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF F1.ogg",
+    "file": "FF_F1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF A1.ogg",
+    "file": "FF_A1.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF C2.ogg",
+    "file": "FF_C2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF D2.ogg",
+    "file": "FF_D2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF F2.ogg",
+    "file": "FF_F2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF A2.ogg",
+    "file": "FF_A2.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF C3.ogg",
+    "file": "FF_C3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF D3.ogg",
+    "file": "FF_D3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF F3.ogg",
+    "file": "FF_F3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF A3.ogg",
+    "file": "FF_A3.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF C4.ogg",
+    "file": "FF_C4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF D4.ogg",
+    "file": "FF_D4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF F4.ogg",
+    "file": "FF_F4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF A4.ogg",
+    "file": "FF_A4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF B4.ogg",
+    "file": "FF_B4.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF D5.ogg",
+    "file": "FF_D5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF F5.ogg",
+    "file": "FF_F5.ogg"
+  },
+  {
+    "repo": "smpldsnds/sfzinstruments-splendid-grand-piano",
+    "source": "samples/FF A5.ogg",
+    "file": "FF_A5.ogg"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/pedalD1.flac",
+    "file": "pedalD1.flac"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/pedalD2.flac",
+    "file": "pedalD2.flac"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/pedalU1.flac",
+    "file": "pedalU1.flac"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/pedalU2.flac",
+    "file": "pedalU2.flac"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/rel1.flac",
+    "file": "rel1.flac"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/rel25.flac",
+    "file": "rel25.flac"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/rel49.flac",
+    "file": "rel49.flac"
+  },
+  {
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "source": "Samples/rel73.flac",
+    "file": "rel73.flac"
+  }
+]
