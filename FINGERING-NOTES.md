@@ -1,36 +1,36 @@
-# 運指の調査と反映（v6）
+# Fingering research and implementation (v6)
 
-## 確認した資料
+## Sources reviewed
 
-- David A. Randolph, [pydactyl / Parncutt.py](https://github.com/dvdrndlph/pydactyl/blob/master/pydactyl/dactyler/Parncutt.py)。冒頭の出典と、指間の実用・快適・自然な幅、手のポジション移動、黒鍵上の親指・小指、親指の通過、3音の往復音型に関する評価処理を読みました。ここで再現されている研究は Parncutt et al., *An ergonomic model of keyboard fingering for melodic fragments*, Music Perception 14(4), 341–382 (1997)、および Jacobs (2001)、Balliauw et al. (2017) です。論文本文を直接閲覧したという意味ではありません。
-- Marco Musy, [PianoPlayer README](https://github.com/marcomusy/pianoplayer/blob/master/README.md)、[hand.py](https://github.com/marcomusy/pianoplayer/blob/master/pianoplayer/hand.py)。先読み、移動速度、音の長さ、手の大きさを考慮して候補を探索する考え方と、同時に押す和音での指の重複・交差の制約を確認しました。
-- [dlegs / pianoDP.c](https://github.com/dlegs/Optimal-Piano-Fingering-Algorithm/blob/master/pianoDP.c) と [sources.txt](https://github.com/dlegs/Optimal-Piano-Fingering-Algorithm/blob/master/sources.txt)。音列全体の移行コストを動的計画法で比較する構成を確認しました。単旋律専用の制約をそのまま和音へ適用していません。
-- Irina Lee, [Automatic and Customized Piano Fingering](https://github.com/IrinaLee521/Piano-Fingering/blob/master/README.md)。指番号が親指1〜小指5であること、同じ楽譜でも手の大きさに応じて運指が変わることを確認しました。
+- David A. Randolph, [pydactyl / Parncutt.py](https://github.com/dvdrndlph/pydactyl/blob/master/pydactyl/dactyler/Parncutt.py). Read the header citations and the evaluation logic for practical, comfortable and relaxed spans between fingers, hand position changes, thumb and little finger on black keys, thumb passing, and three-note back-and-forth figures. The research it reproduces is Parncutt et al., *An ergonomic model of keyboard fingering for melodic fragments*, Music Perception 14(4), 341–382 (1997), plus Jacobs (2001) and Balliauw et al. (2017). This does not mean the papers themselves were read directly.
+- Marco Musy, [PianoPlayer README](https://github.com/marcomusy/pianoplayer/blob/master/README.md) and [hand.py](https://github.com/marcomusy/pianoplayer/blob/master/pianoplayer/hand.py). Reviewed the idea of searching candidates while considering look-ahead, movement speed, note duration and hand size, and the constraints on duplicated and crossed fingers in simultaneous chords.
+- [dlegs / pianoDP.c](https://github.com/dlegs/Optimal-Piano-Fingering-Algorithm/blob/master/pianoDP.c) and [sources.txt](https://github.com/dlegs/Optimal-Piano-Fingering-Algorithm/blob/master/sources.txt). Reviewed the structure of comparing transition costs over the whole sequence with dynamic programming. Monophony-only constraints are not applied to chords as is.
+- Irina Lee, [Automatic and Customized Piano Fingering](https://github.com/IrinaLee521/Piano-Fingering/blob/master/README.md). Confirmed that finger numbers run from thumb = 1 to little finger = 5, and that fingering for the same score changes with hand size.
 
-外部実装のコードや評価表は組み込まず、既存の固定長の手モデルに合わせて独自の評価と探索を実装しました。資料のモデルにも違いがあります。例えば上記の Parncutt 実装は同音を同じ指で弾く制約を使いますが、本ページは速い連打に指替えを許す別の方針を採用しています。
+No code or scoring tables from external implementations were incorporated; an original evaluation and search were implemented to fit the existing fixed-length hand model. The source models also differ from each other. For example, the Parncutt implementation above constrains repeated notes to the same finger, while this page takes a different approach that allows finger changes for fast repetitions.
 
-## 実装への対応
+## Mapping to the implementation
 
-| 原則 | 反映した動作・選択 |
+| Principle | Resulting motion or choice |
 | --- | --- |
-| 1音だけで指を決めず、その先も考える | 全アタック群の候補を比較する動的計画法。直前2組の形を保持し、往復音型や先の和音も評価 |
-| 5指の構え、音階の3指・4指と親指の入れ替え | 長調の1オクターブ音階を検出して標準指順を優先。継続するオクターブでは終端用の指を区別 |
-| 親指のくぐりは左右の手と上行・下行で異なる | 解剖学的な番号で評価し、親指が入る移行と他の指が親指を越える移行を区別 |
-| 黒鍵は指の長さと白鍵との前後関係を考える | 単旋律で黒鍵上の短い親指・小指や不利な高さの通過にコスト。黒鍵の和音・オクターブを禁止しない |
-| 広い和音は外側の指を使う | 幅と指間隔を評価し、親指・小指を優先。指の重複や同時打鍵時の逆順は使わない |
-| 同じ音型は安定した運指で弾く | 同じ和音の指順と、A–B–Aの往復で元の音に戻る指を保つよう評価 |
-| 速い同音連打は交替、遅い反復は再使用も選べる | 時間間隔に応じて交替と再使用の評価を変更。速い連打は主に2指・3指、必要に応じ親指を含めて分担 |
-| 同じ手の構えで届く音は手をむやみに移さない | 指の長さを変えずに共通の手のひら位置を探索。未使用の指も次の鍵盤上で準備。間隔と中間動作を満たす箇所だけ採用 |
-| 大きな移動・くぐり替えは音と音の間に準備する | 既存の離鍵・関節角度の補間・手首の曲げ・手の移動・先行する指の開きへ、新しい運指を接続 |
+| Don't decide a finger from one note alone; think ahead | Dynamic programming over candidates for every attack group. Keeps the previous two shapes and also evaluates back-and-forth figures and upcoming chords |
+| Five-finger positions; swapping the thumb with fingers 3 and 4 in scales | Detects one-octave major scales and prefers the standard fingering. Distinguishes end-of-run fingers for continuing octaves |
+| Thumb passing differs by hand and by ascending/descending direction | Evaluated with anatomical numbering, distinguishing the thumb passing under from other fingers crossing over the thumb |
+| Black keys depend on finger length and fore–aft position relative to white keys | In monophonic lines, costs for the short thumb/little finger on black keys and for passing at unfavorable heights. Black-key chords and octaves are not forbidden |
+| Use outer fingers for wide chords | Evaluates span and finger spacing, preferring thumb and little finger. No duplicated fingers or reversed order in simultaneous strikes |
+| Play identical figures with stable fingering | Rewards keeping the same chord fingering and returning to the original finger in A–B–A figures |
+| Alternate fingers on fast repeated notes; slow repetition may reuse a finger | Scoring of alternation vs. reuse depends on the time interval. Fast repetitions are shared mainly between fingers 2 and 3, including the thumb when needed |
+| Don't move the hand needlessly when notes are within reach of one position | Searches a shared palm position without changing finger lengths, and prepares unused fingers over their next keys. Adopted only where spacing and in-between motion are satisfied |
+| Prepare large shifts and crossings between notes | New fingering connects to the existing release, joint-angle interpolation, wrist flexion, hand travel and anticipatory finger spread |
 
-音階指順などの基本例は一般的な練習形です。これらを全曲へ無条件に貼り付けてはいません。音符の実際の配置、固定長の指が届く範囲、指同士の間隔を優先します。和音には手の形の候補を使い、前後の音を含めて選びます。曲中の休みが大きい場合は新しいポジションを取りやすくします。
+Basic examples such as scale fingerings are common practice patterns and are not pasted unconditionally onto every piece. The actual layout of the notes, the reach of fixed-length fingers and inter-finger spacing take priority. Chords use hand-shape candidates and are chosen with the surrounding notes. When there is a long rest in a piece, taking a new position becomes easier.
 
-## 確認できる表示
+## What you can see
 
-上部楽譜の演奏中の音符の下に「右」「左」と指番号が出ます。1は親指、2は人差し指、3は中指、4は薬指、5は小指です。この番号と3Dモデルの打鍵に同じ割り当てを使います。楽譜が示す音価は従来と同様、MIDIからの推定です。
+Under the sounding notes in the score at the top, "R"/"L" and a finger number appear: 1 thumb, 2 index, 3 middle, 4 ring, 5 little finger. The same assignment drives the 3D model's keystrokes. Note durations shown in the score are, as before, estimated from MIDI.
 
-## 限界
+## Limitations
 
-これは人間工学的な規則を取り入れた自動運指です。原典・校訂版に書かれた指番号や、特定のピアニストの運指を再現したものではありません。MIDIに原典のフレーズ・声部・奏法が揃っていないため、フィンガーレガートを完全に再現するものでもありません。共有した手の位置で弾く場合にも、モデルの衝突回避に必要な短い離鍵期間を設けています。
+This is automatic fingering that incorporates ergonomic rules. It does not reproduce finger numbers printed in original or edited scores, or the fingering of any particular pianist. MIDI lacks the original phrasing, voicing and articulation, so finger legato is not fully reproduced either. Even when playing from a shared hand position, short release periods required for the model's collision avoidance are kept.
 
-骨格の長さ、打鍵位置、指の間隔、中間動作、音・ペダル・楽譜の時計は数値検証します。3Dのシェーダーと描画データはOpenGL ESで実描画して形を確認します。実ブラウザーでのUI操作と実際の聴感は、この環境のChromium起動制限により未確認です。
+Skeleton lengths, strike positions, finger spacing, in-between motion and the clocks for audio, pedal and score are verified numerically. The 3D shaders and render data are rendered with OpenGL ES to check the form. UI interaction and actual listening in a real browser were not checked because of Chromium launch restrictions in that environment.

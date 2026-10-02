@@ -1,31 +1,31 @@
-# v8 のピアノ音源
+# v8 piano audio
 
-発音を発振器による合成から、録音されたステレオのグランドピアノへ変更しました。10曲の発音時刻・音程・ベロシティ・音符数・運指はv7から変更していません。
+Sound generation was switched from oscillator synthesis to a recorded stereo grand piano. Onset, pitch, velocity, note count and fingering for all ten pieces are unchanged from v7.
 
-## 録音と配布形式
+## Recordings and distribution format
 
-- 主音源は **Splendid Grand Piano**。AKAIがPublic Domainとして公開したSteinwayの録音です。元SFZマッピングはkinwieによるものです。取得元: https://github.com/smpldsnds/sfzinstruments-splendid-grand-piano 。元の説明を `audio-licenses/SPLENDID-README.md` に保存しています。
-- pp / mp / mf / ff の4つの録音レイヤーを使い、ベロシティに合わせて隣り合うレイヤーを滑らかにつなぎます。最上部の一部では元マッピングと同様に録音を共有します。全鍵で4回ずつ別々に録音された音源ではありません。
-- 88鍵を110個の主録音でカバーします。元SFZの `pitch_keycenter` を基準に再生速度を調整し、移調量は最大2半音です。元ファイル名のオクターブ表記から音程を推測しません。
-- 小さな離鍵音4種類とペダル音4種類は **Salamander Grand Piano v3 / Alexander Holm** の録音です。CC BY 3.0。取得元: https://github.com/sfzinstruments/SalamanderGrandPiano 、原公開: https://archive.org/details/SalamanderGrandPianoV3 、ライセンス: https://creativecommons.org/licenses/by/3.0/ 。元の説明とライセンス全文は `audio-licenses/` に保存しています。
-- 配布用に先頭の余分な無音を調整し、ステレオのピークを揃え、末尾を短くフェードしています。主録音は最大12秒、離鍵音は0.48秒、ペダル音は0.72秒です。44.1kHzステレオMP3に圧縮しています。これは元録音の加工・抜粋です。
+- The main instrument is **Splendid Grand Piano**: Steinway recordings released into the public domain by AKAI. The original SFZ mapping is by kinwie. Source: https://github.com/smpldsnds/sfzinstruments-splendid-grand-piano. The upstream description is kept in `audio-licenses/SPLENDID-README.md`.
+- Four recorded layers (pp / mp / mf / ff) are used, with adjacent layers blended smoothly according to velocity. As in the original mapping, some recordings are shared at the very top of the range; not every key was recorded four separate times.
+- 110 main recordings cover all 88 keys. Playback rate is adjusted relative to the original SFZ `pitch_keycenter`, with at most two semitones of transposition. Pitch is never inferred from octave notation in the original file names.
+- The four small key-release noises and four pedal noises are recordings from **Salamander Grand Piano v3 / Alexander Holm**, CC BY 3.0. Source: https://github.com/sfzinstruments/SalamanderGrandPiano; original release: https://archive.org/details/SalamanderGrandPianoV3; license: https://creativecommons.org/licenses/by/3.0/. The upstream description and full license text are kept in `audio-licenses/`.
+- For distribution, excess leading silence was trimmed, stereo peaks were normalized and tails were faded briefly. Main recordings are at most 12 s, release noises 0.48 s and pedal noises 0.72 s, compressed to 44.1 kHz stereo MP3. These are processed excerpts of the original recordings.
 
-## ペダル・響き・音量
+## Pedal, resonance and level
 
-録音に含まれる自然な減衰をそのまま使い、離鍵時のダンパーだけを別のゲイン包絡で扱います。ペダルを踏んでいる間は離鍵した音を保持し、解除すると残っている音が減衰します。途中の踏み込み・踏み直し・部分的な踏み込みも扱います。既に失われた音のエネルギーを踏み直しで復活させません。最上部のダンパーを持たない弦は離鍵で急に消しません。
+The natural decay contained in the recordings is used as is; only the damper on key release is handled with a separate gain envelope. While the pedal is down, released notes are held; on release, remaining notes decay. Pressing mid-note, re-pedaling and partial pedaling are handled. Re-pedaling never revives energy that has already decayed. Undamped strings at the top of the range do not cut off abruptly on release.
 
-ペダル時の弦の共鳴を模した短いインパルス応答と、控えめな部屋の残響を加えています。これらは計算生成した近似です。実ホールで測定した残響や、すべての弦同士の物理的な相互作用を再現するモデルではありません。鍵盤・ペダルの動作音は小さくミックスします。
+A short impulse response imitating string resonance under the pedal and a subtle room reverb are added. These are computed approximations; they are neither a reverb measured in a real hall nor a model of every physical string-to-string interaction. Key and pedal mechanical noises are mixed quietly.
 
-同じ鍵の繰り返しでは古い余韻を短く減衰させ、1つの鍵に無制限に音が重ならないようにします。同時発音の上限は128打鍵です。ベロシティに応じた音量と音色を保ち、最終段に強いピークを抑えるDynamicsCompressorを置いています。ハードクリップによる音量制限ではありません。
+For repeated notes on the same key, the old tail is decayed briefly so that one key cannot stack unlimited voices. Polyphony is capped at 128 keystrokes. Velocity-dependent level and timbre are kept, and a DynamicsCompressor at the final stage tames strong peaks; level is not limited by hard clipping.
 
-音源の読み込みが完了してから音声時計と3Dを同時に開始します。Web Audio出力時計を使い、DynamicsCompressorの約6msの先読み遅延も表示側に反映します。読み込み中の選曲・移動・停止で古い曲が遅れて再生を始めるのを防ぎます。曲ごとに必要な録音だけをデコードし、不要な曲のキャッシュは解放します。英雄では92ファイルを読み込み、デコード後の音声には約210MBのメモリーを使います。低メモリー端末では初回準備に時間がかかる場合があります。
+The audio clock and 3D start together only after the samples finish loading. The Web Audio output clock is used, and the DynamicsCompressor's ~6 ms look-ahead latency is reflected on the visual side. Selecting, seeking or stopping during loading never lets an old piece start late. Only the recordings needed by each piece are decoded, and caches for other pieces are released. The Heroic Polonaise loads 92 files and uses about 210 MB of memory for decoded audio. On low-memory devices the first preparation may take some time.
 
-## 配布と確認
+## Distribution and verification
 
-`piano-recital-v8.html` は録音データも含む単一HTMLです。インターネット接続は不要です。ブラウザーで開き、中央の再生ボタンを押してください。分割版 `dist/index.html` は同じ `dist/audio/` とJavaScriptをHTTPサーバー経由で読み込みます。ZIPを展開したフォルダーで `python -m http.server 8000 --directory dist` を実行し、http://localhost:8000/ を開けば動作します。
+`piano-recital-v8.html` is a single HTML file that includes the recordings. No internet connection is required; open it in a browser and press the play button in the center. The multi-file version `dist/index.html` loads the same `dist/audio/` and JavaScript over an HTTP server. Run `python -m http.server 8000 --directory dist` in the extracted ZIP folder and open http://localhost:8000/.
 
-`node audio-test.cjs` は88鍵×127ベロシティの音程・レイヤー境界、全20,356音と10曲の必要音源、ダンパー・踏み直し・同音連打・停止を検証します。`node verify.cjs` は曲切り替え、読み込み取消、速度変更、打鍵の同期、既存の骨格・楽譜表示を検証します。`audio-manifest.json` に録音ごとの取得元、調整した先頭時間、長さ、SHA-256を記録しています。
+`node audio-test.cjs` verifies pitch and layer boundaries for 88 keys × 127 velocities, the samples required by all 20,356 notes and ten pieces, dampers, re-pedaling, repeated notes and stopping. `node verify.cjs` verifies piece switching, load cancellation, speed changes, keystroke sync and the existing skeleton and score display. `audio-manifest.json` records each recording's source, trimmed leading time, length and SHA-256.
 
-`node audio-test.cjs` の後に `python render-audio-preview.py` を実行すると、実際のJavaScriptが指定した録音・発音時刻・ゲイン包絡・残響インパルスを使って、英雄の冒頭22秒の試聴音声を生成します。Python、numpy、scipy、ffmpegが必要です。全118ファイルをデコードしてステレオ・有限値・SHA-256・ピークも確認します。試聴音声のフィルターとダイナミクス処理はネイティブ実装の近似で、ブラウザーのWeb Audio出力そのものではありません。
+Running `python render-audio-preview.py` after `node audio-test.cjs` generates a preview of the first 22 seconds of the Heroic Polonaise using the recordings, onsets, gain envelopes and reverb impulse specified by the actual JavaScript. It requires Python, numpy, scipy and ffmpeg. It also decodes all 118 files and checks stereo, finite values, SHA-256 and peaks. The preview's filters and dynamics are native approximations, not the browser's actual Web Audio output.
 
-この環境ではChromiumが実行制限で起動できないため、実ブラウザーでのUI操作・聴感確認は未実施です。検証の範囲と結果は `v8-verification.json` と `audio-render-verification.json` に記載しています。
+Chromium could not be launched in the original build environment, so UI interaction and listening in a real browser were not checked there. The scope and results of verification are recorded in `v8-verification.json` and `audio-render-verification.json`.

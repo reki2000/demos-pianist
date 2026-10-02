@@ -1,99 +1,130 @@
 # Piano in Motion
 
-最新版は `piano-recital-v8.html`（`piano-recital.html` と同内容）です。録音データを内蔵しています。
+Live demo: https://reki2000.github.io/demos-pianist/
 
-`piano-recital.html` をChrome、Edge、Firefox、SafariなどのWebGL対応ブラウザーで開き、中央の再生ボタンを押してください。インターネット接続は不要です。
+The latest standalone build is `piano-recital-v8.html` (identical to `piano-recital.html`). It embeds the recorded audio.
 
-## 操作
+Open `piano-recital.html` in a WebGL-capable browser such as Chrome, Edge, Firefox or Safari and press the play button in the center. No internet connection is required.
 
-- 画面下の10曲から演奏曲を選択します。
-- 再生・一時停止、最初に戻る、再生位置、速度、音量を操作できます。
-- 「演出」は5種類のショットを順番につなぎ、「手元」「全景」は固定視点です。「ペダル」は右足とダンパーペダルを接写します。
-- 「自由」ではドラッグで回転、スクロールでズームできます。
-- Spaceキーで再生・一時停止、右下のボタンで全画面に切り替えます。
+## Controls
 
-## 収録曲
+- Choose one of the ten pieces at the bottom of the page.
+- Play/pause, restart, seek, speed and volume controls are available.
+- "Cinematic" cuts between five shots in sequence; "Hands" and "Wide" are fixed views. "Pedal" is a close-up of the right foot and damper pedal.
+- In "Free", drag to orbit and scroll to zoom.
+- Space toggles play/pause; the button at the bottom right switches to fullscreen.
 
-1. ショパン — 英雄ポロネーズ Op.53
-2. ベートーヴェン — エリーゼのために WoO 59
-3. ベートーヴェン — 月光 第1楽章 Op.27 No.2
-4. ドビュッシー — 月の光
-5. モーツァルト — トルコ行進曲 K.331
-6. バッハ — 平均律 前奏曲 第1番 BWV 846
-7. ショパン — 雨だれの前奏曲 Op.28 No.15
-8. ショパン — 革命のエチュード Op.10 No.12
-9. ショパン — 幻想即興曲 Op.66
-10. ショパン — 前奏曲 ホ短調 Op.28 No.4
+## Program
 
-## 同期と表現
+1. Chopin — Heroic Polonaise, Op. 53
+2. Beethoven — Für Elise, WoO 59
+3. Beethoven — Moonlight Sonata, 1st movement, Op. 27 No. 2
+4. Debussy — Clair de Lune
+5. Mozart — Rondo alla Turca, K. 331
+6. Bach — Well-Tempered Clavier, Prelude No. 1, BWV 846
+7. Chopin — Raindrop Prelude, Op. 28 No. 15
+8. Chopin — Revolutionary Étude, Op. 10 No. 12
+9. Chopin — Fantaisie-Impromptu, Op. 66
+10. Chopin — Prelude in E minor, Op. 28 No. 4
 
-指は親指・人差し指・中指・薬指・小指ごとに異なる固定長を持ち、各節の長さを変えず、関節を曲げて動かします。PIPとDIPの曲げを連動させ、横への開きとMCPの動きを制限しています。上腕・前腕も固定長の関節計算を使います。
+## Synchronization and expression
 
-次の音を先読みし、離鍵・横移動・打鍵を連続した軌道でつなぎます。使っていない指は軽く垂らして待機し、打鍵する指だけがそこから下がります。親指のくぐり替えでは手首の高さ・向きを変えます。中指と小指の長さの違いを反映するため、鍵盤上の前後位置も使って打鍵します。
+Each finger (thumb, index, middle, ring, little) has its own fixed segment lengths. Segments never stretch; joints bend to move the finger. PIP and DIP flexion are coupled, and lateral spread and MCP motion are limited. The upper arm and forearm also use fixed-length joint solving.
 
-鍵盤は白鍵ピッチ23.5mm、白鍵の露出長148mm、黒鍵の露出長95mm・幅14mm・高さ12mmの公称比率を用います。白鍵と黒鍵の長さ比は約1:0.642です。人物と鍵盤の相対スケールも調整しました。
+The next notes are looked ahead so that release, lateral travel and strike form one continuous trajectory. Unused fingers hang loosely while waiting, and only the striking finger descends from there. During thumb crossings the wrist height and orientation change. The fore–aft position on the key is used as well, to reflect the length difference between the middle and little fingers.
 
-MIDIの声部を機械的に左右の手に固定せず、同時に押す鍵盤の範囲と手の移動距離から再配分します。10曲の全音符の音程・音量と音符数は保持しています。片手の可動域を超え、左右への再配分でも解決しない少数の大きな和音では、一部の発音と打鍵を一緒にずらして分散打鍵にしています。元MIDIのタイミングを完全にそのまま再現する演奏ではありません。
+The keyboard uses nominal proportions: 23.5 mm white-key pitch, 148 mm exposed white-key length, and black keys 95 mm long, 14 mm wide and 12 mm high, giving a white-to-black length ratio of about 1:0.642. The relative scale of the figure and keyboard was tuned as well.
 
-Web Audioの出力時計を基準に音声、指先、鍵盤を動かします。身体の前傾・左右の重心移動・頭のうなずきは、演奏の音量、音の密度、アクセントと手の位置から決まります。運指の計算結果は事前に保存しており、選曲時の再計算はありません。
+MIDI voices are not mechanically fixed to one hand; they are redistributed based on the span of simultaneous keys and hand travel distance. The pitch, velocity and note count of every note in all ten pieces are preserved. For the few large chords that exceed one hand's reach and cannot be solved by redistribution, some notes are rolled, shifting sound and keystroke together. This is therefore not a perfectly timing-exact reproduction of the source MIDI.
 
-人物はスタイライズされた3Dモデルで、運指は自動生成です。実演奏者のモーションキャプチャではありません。音色は録音されたSteinwayのグランドピアノです。詳細は `AUDIO-NOTES.md` を参照してください。
+Audio, fingertips and keys are driven from the Web Audio output clock. Forward lean, lateral weight shift and head nods are derived from dynamics, note density, accents and hand position. Fingering is precomputed and stored, so nothing is recomputed when a piece is selected.
 
-第三者素材（音源・MIDI）のライセンスは `THIRD-PARTY-NOTICES.md` にまとめています。
+The pianist is a stylized 3D model and the fingering is generated automatically; it is not motion capture of a real performer. The tone is a recorded Steinway grand piano. See `AUDIO-NOTES.md` for details.
 
-MIDI: © Bernd Krüger / https://www.piano-midi.de/ 。CC BY-NC-SA、個人・非営利利用向け。元のMIDIファイルに記載された著作権情報を尊重してください。元データの収録元: https://github.com/cheriell/ClassicalPianoMIDI-dataset 。本ページ用に秒単位の音符イベントと自動運指に変換しています。
+Third-party asset licenses (audio and MIDI) are summarized in `THIRD-PARTY-NOTICES.md`.
 
-## ペダル
+MIDI: © Bernd Krüger / https://www.piano-midi.de/ — CC BY-NC-SA, for personal and non-commercial use. Please respect the copyright notices in the original MIDI files. Source collection: https://github.com/cheriell/ClassicalPianoMIDI-dataset. For this page the MIDI was converted to note events in seconds plus automatic fingering.
 
-右のダンパーペダルはMIDIのCC64から読み込み、音・右足・ペダル本体・画面の保持/解除表示を同じ時計で同期させます。指を離した時点で踏まれていれば音が自然に減衰しながら残り、ペダルを離すとその音にダンパーが掛かります。鍵盤を押している音はペダルを離しても急に消えません。音の途中の踏み込み、減衰途中の踏み直し、部分的な踏み込みにも対応します。右足は踵を固定して回転させます。
+## Pedal
 
-元データに左・中央ペダルの演奏情報はないため、今回の音声・動作への反映対象は右のダンパーペダルです。
+The right (damper) pedal is read from MIDI CC64. Sound, right foot, pedal and the on-screen held/released indicator all follow the same clock. If the pedal is down when a finger lifts, the note keeps ringing with natural decay; releasing the pedal damps it. Keys that are still held do not cut off when the pedal is released. Pressing mid-note, re-pedaling during decay and partial pedaling are supported. The right foot pivots on a fixed heel.
 
-## 検証状況
+The source data contains no left or middle pedal information, so only the right damper pedal is reflected in audio and motion.
 
-10曲を通じた515時点で指の全節と上腕・前腕の長さを検証し、伸縮がないことを確認しました。鍵盤上の指先位置、1120フレームの中間動作、3276件のペダルイベント、踏み直しとペダル解除後の減衰、右足の固定された踵、鍵盤の比率、音と時計の同期、再生・停止、10曲の切り替えを検証しました。
+## Verification
 
-この環境ではChromiumの起動が実行制限で失敗するため、実ブラウザー映像・音の最終確認は未実施です。URL公開は未完了です。ダウンロード版は外部ライブラリーや読み込みに依存しません。
+Across all ten pieces, every finger segment and the upper/forearm lengths were checked at 515 time points with no stretching. Fingertip positions on the keys, 1,120 frames of in-between motion, 3,276 pedal events, re-pedaling and decay after release, the fixed heel, keyboard proportions, audio/clock sync, play/stop and switching between all ten pieces were verified.
 
-分割版は `dist/index.html`。ロジック検証は `node verify.cjs`。開発用の元MIDI再変換は `python convert.py` です。再変換すると事前計算済みの運指データを上書きするため、その後は運指を再計算してから配布版を更新してください。
+Chromium could not be launched in the original build environment, so a final check of real browser video and audio was not performed there. The download version does not depend on external libraries or network loads.
 
-## v3：ポリゴン人物と楽譜
-人物の頭・胴体・手・関節・四肢・靴をフラットな面のあるポリゴンで描画します。指は固定長の3節、PIP/DIPの関節と折れ目、爪を表現します。打鍵前の手首の上下量はベロシティの二乗に従い、肘の位置も腕の固定長を保って変化します。保持している音がある間は接触を優先し、上下動を制限します。
-上部の大譜表はMIDIから自動生成し、テンポ変化を含めて演奏時計に追従します。音高・開始時刻に対応する音符を金色で強調します。MIDIには原典の声部・連桁・休符・異名同音の綴りがないため、これは原典楽譜の複製ではありません。音価は演奏データからの近似です。全画面でも楽譜と操作を表示します。
-検証：音声・打鍵60時点、固定骨格515時点、テンポ変換515時点、運指の中間1120フレーム、ペダル3276イベント。ブラウザーの実描画・実際の聴感はこの環境の制約により未確認です。
+The multi-file version is `dist/index.html`. Logic verification: `node verify.cjs`. Re-converting the source MIDI for development: `python convert.py`. Re-conversion overwrites the precomputed fingering, so recompute fingering before updating the distribution.
 
-## v4：親指・手首・指の交差・連桁
-親指のCMC（手根中手関節）を手のひらの手首寄りの側面に配置しました。親指の3本の骨は中手骨、基節骨、末節骨として描き、他の4本は前方のMCPから始まります。母指球の厚み、手首と手のひらの接続、指先の爪の向きも調整しました。
-手首を固定支点として手のひらを上下に曲げ、打鍵強度に応じた腕の上下動と組み合わせます。指の付け根は手のひらの回転に追従し、指と腕の骨の長さを保ちます。
-全曲の運指を再計算し、同時打鍵では低い鍵盤から高い鍵盤へ指を順に配置します。指同士の距離も評価し、未使用の指はMCPから持ち上げて衝突を避けます。中間動作は関節角度を連続して変え、以前の鍵盤を追うために指が他の指を横切る動作を抑えました。短い装飾音では、次の手の位置へ移る前に離鍵します。音程・発音時刻・音量・音符数はv3から変更していません。
-短い音符は拍単位（複合拍子では3つの8分音符の単位）で連桁にまとめます。休みと長い音符をまたいで連結せず、和音は共通の符尾、16分音符・32分音符は二重・三重の連桁にします。演奏中の金色の符頭は維持します。
-数値検証：全20,356音の打鍵時点で指先の順序の逆転なし、指の骨格線の最小間隔0.014以上（画面内のワールド座標）。固定骨格515時点、音声発音244音、運指の連続動作1120フレーム、連桁3865組、ペダル3276イベント。楽譜の音価はMIDIの演奏情報から推定したもので原典の完全再現ではありません。実ブラウザーの描画・聴感確認は未実施です。
-追加の検証は `node anatomy-test.cjs`、`node collision-test.cjs`、`node continuity-test.cjs`、`node score-test.cjs`、`node pedal-test.cjs`。
+## v3: Polygonal figure and score
 
-## v5：正しい左右配置と演奏表現
-奏者はWebGL世界の+Zへ向いているため、解剖学的な右は-Xです。従来の計画座標（奏者の右を+Xとする）を描画時にWebGL世界へ変換し、鍵盤・左右の腕と手・足・右ダンパーペダルを一括して正しい左右へ直しました。カメラも同じ座標変換を使います。手元カメラは画面上側をピアノの奥側に揃え、低音が左、高音が右となります。画面内に収まる場合はA0/C8の表示も出します。
-速い移動と広い和音では、次の音型を先読みし、MCPの横方向の角度を先に変えて親指・小指を開きます。打鍵中の指は動かさず、離鍵した指には滑らかな準備期間を設けます。指の付け根の幅や各骨の長さは広げていません。指同士の接触回避も継続します。
-手首は強弱に応じて曲げを大きくし、指の付け根付近を支えるよう手の位置を補正します。これにより打鍵中にも手首・肘の上下動が出ます。指先が届かない場合は曲げ量を制限します。未使用の指の準備と、打鍵中の指の接触を両立させます。
-頭のうなずき、次の打鍵位置への視線、フレーズの強まりに合わせた前傾と左右の重心移動を追加・強化しました。服と肌の照明を調整し、非一様スケールの法線を正しく変換して、人物の形が見やすくなりました。「奏者」カメラは頭・胴体、「手元」は指・手首・肘を確認できます。手元は狭い画面でも両手が収まるよう距離を調整します。
-検証：実際のWebGL描画呼び出しに含まれる88鍵の世界座標とカメラ投影を調べ、音高が奏者の右へ上がり、奏者向きの手元画面でも右へ上がることを確認しました。全20,356音の打鍵時点で指の順序と間隔、515時点で骨格の固定長、595の先行準備場面で指の開き・手首・頭・胴体の動き、1120フレームで連続動作、244音で音程・発音時刻、3276件でペダルを確認しました。MIDIの音程・音量・発音時刻・運指の割当はv4から保持しています。
-WebGLのシェーダー・頂点バッファー・行列・描画呼び出しをそのままOpenGL ESに渡して48フレームを実描画し、手元と奏者の形・構図・連続動作を画像で確認しました。`render-check/hands-motion.gif` と `render-check/portrait-motion.gif` はこの3D描画の確認用です。GIFには音声・楽譜・操作UIは含まれません。Chromium起動制限は引き続きあるため、実ブラウザーでのUI操作と聴感の最終確認は未実施です。
-追加テスト：`node expressive-test.cjs`。実描画データの取得は `node capture-scene.cjs`、方向検証は `node direction-test.cjs`。描画確認はMesa EGLとPythonのnumpy/Pillowを利用し、`python render-egl.py render-check/hands.json render-check/hands.png` で再現できます。配布するHTML自体はこれらに依存しません。
+The figure's head, torso, hands, joints, limbs and shoes are drawn as faceted polygons. Fingers have three fixed-length segments with PIP/DIP joints, creases and nails. Wrist lift before a strike scales with the square of velocity, and the elbow position changes while preserving fixed arm lengths. While notes are held, contact takes priority and vertical motion is limited.
 
-## v6：運指の原則とフレーズの先読み
-資料の調査内容と実装の対応は `FINGERING-NOTES.md` にまとめています。人間工学的な指間の幅、黒鍵と白鍵での親指の通過、和音の外側の指、往復音型、同音連打の速さを評価します。全アタック群の候補を動的計画法で比較し、前の2つの形とその先の音列を使って指を選ぶよう変更しました。長調音階は基本の指順を優先し、1オクターブの終わりと続くオクターブを区別します。黒鍵上の親指を一律に禁止せず、和音やオクターブの例外も扱います。
-同じ手の構えで続く音は共通の手のひらの位置を探索し、次に使う指を鍵盤上で準備します。骨格の固定長、接触、未使用の指との間隔、中間動作の連続性を満たす箇所に適用します。弾きにくい場合は独立した手の移動へ戻します。発音時刻・音程・音量・音符数・左右の手分けはv5から保持し、指の割り当てと離鍵・準備動作を更新しました。
-上部楽譜に、演奏中の音符に対応する「右」「左」と1〜5の番号を出します。番号と3Dの指の割り当ては共通です。1は親指、5は小指です。原典楽譜の指示や特定の実演奏者の運指を再現するものではなく、前後の音型とモデルの手に合わせた自動生成です。
-基本音階・上下行・複数オクターブ・アルペジオ・速い／遅い反復・黒鍵のオクターブ・往復音型の確認は `node fingering-test.cjs`。従来の接触・骨格・音声・ペダル・連桁・時計の検証も継続しています。
+The grand staff at the top is generated from MIDI and follows the performance clock including tempo changes. Notes matching the sounding pitch and onset are highlighted in gold. MIDI lacks the original voicing, beaming, rests and enharmonic spelling, so this is not a reproduction of the original score; durations are approximated from performance data. The score and controls remain visible in fullscreen.
 
-最終検証：全20,356音の打鍵時点で指先の逆転なし、43,959の中間時点で各節の固定長と指同士の間隔を確認しました。8,075音の指番号を更新し、1,295の音型で共通の手の構えを採用しています。検証結果は `v6-verification.json`。追加の中間動作検証は `node transition-test.cjs`。
+Verification: audio/keystroke at 60 time points, fixed skeleton at 515, tempo conversion at 515, 1,120 in-between fingering frames, 3,276 pedal events. Real browser rendering and listening were not checked due to environment constraints.
 
-## v7：軽く垂らした指からの打鍵
-未使用の指を付け根から反らせる動きを取り除きました。手のひらに対するMCPの待機角を0度にし、指先側の関節を軽く曲げて自然に垂らします。打鍵する指はMCP・PIP・DIPを下へ曲げ、離鍵後は約100ms以内で滑らかに待機姿勢へ戻ります。速い反復では次の打鍵までの間隔に合わせて戻り時間を短くします。接触を避ける場合も、待機角を超えて付け根を持ち上げることはありません。
-白鍵・黒鍵の高さに合わせて付け根の曲げ幅と指先側の曲げを調整し、各節の固定長を保ったまま実際の鍵盤上の前後位置を使います。次の打鍵の55ms前から指を準備し、鍵盤の沈み込みと同じ18msの準備期間を使って押し下げます。離鍵では、実際の手首姿勢での関節角から連続して戻ります。指の横方向への開き、手首の曲げ、肘・胴体・頭、楽譜・ペダルの表現も継続しています。
-v6の全20,356音の発音時刻・長さ・音程・音量・手分け・指番号をSHA-256で照合しました。音声とアニメーションは引き続き同じWeb Audio時計を使います。
-検証：全打鍵時点の指同士の間隔と鍵盤接触、43,959の中間時点の間隔と固定長、25,490の指姿勢でMCPが待機角を超えて反らないこと、1,120フレームの連続性を確認しました。検証結果は `v7-verification.json`。追加検証は `node hanging-test.cjs`。WebGLと同じ描画データをOpenGL ESで48フレーム描画して確認しています。実ブラウザーでの操作・聴感の確認はこの環境では未実施です。
+## v4: Thumb, wrist, finger crossing and beaming
 
-## v8：録音グランドピアノ
-Steinwayの実録音（Splendid Grand Piano）に切り替えました。弱音から強音まで4つの録音レイヤーを滑らかにつなぎ、音量と音色の両方に強弱を反映します。元の音程・発音時刻・ベロシティ・指番号・3D動作を保持しています。ダンパーによる音の保持・減衰、小さな鍵盤とペダルの実録音、計算生成した控えめな共鳴・残響、強いピークを抑える処理を加えました。音源準備中の選曲・停止にも対応しています。
+The thumb CMC (carpometacarpal) joint was placed on the side of the palm near the wrist. The thumb's three bones are drawn as metacarpal, proximal and distal phalanges; the other four fingers start at the MCP at the front. Thenar thickness, the wrist–palm connection and nail orientation were adjusted.
 
-配布HTMLには118個の録音を内蔵しています。分割版は `python -m http.server 8000 --directory dist` で起動できます。音源の出典・ライセンス・処理・検証と制限は `AUDIO-NOTES.md`、結果は `v8-verification.json`。試聴用の `piano-audio-preview-v8.mp3` は、実際の発音スケジュールを使ったネイティブ処理の近似です。実ブラウザーでの聴感確認は未実施です。
+The palm flexes up and down around the wrist as a fixed pivot, combined with arm motion scaled by keystroke strength. Finger bases follow palm rotation while preserving finger and arm bone lengths.
+
+Fingering for every piece was recomputed: for simultaneous notes, fingers are assigned in order from lower to higher keys. Inter-finger distance is evaluated, and unused fingers lift from the MCP to avoid collisions. In-between motion changes joint angles continuously, suppressing motions where a finger crosses another to chase a previous key. For short ornaments, the key is released before moving to the next hand position. Pitch, onset, velocity and note count are unchanged from v3.
+
+Short notes are beamed per beat (in compound meters, per three eighth notes). Beams do not cross rests or long notes; chords share a stem, and 16th/32nd notes get double/triple beams. Gold noteheads during playback are kept.
+
+Numeric verification: at the strike time of all 20,356 notes, no fingertip order inversions and a minimum finger-skeleton gap of at least 0.014 (world units). Fixed skeleton at 515 points, 244 audio onsets, 1,120 frames of continuous fingering motion, 3,865 beam groups, 3,276 pedal events. Score durations are estimated from MIDI performance data and are not a full reproduction of the original. Real browser rendering and listening were not checked.
+
+Additional tests: `node anatomy-test.cjs`, `node collision-test.cjs`, `node continuity-test.cjs`, `node score-test.cjs`, `node pedal-test.cjs`.
+
+## v5: Correct left/right layout and expressive playing
+
+The pianist faces +Z in the WebGL world, so anatomical right is −X. Plan coordinates (with the pianist's right as +X) are now transformed to WebGL world space at render time, fixing the keyboard, both arms and hands, feet and the right damper pedal at once. Cameras use the same transform. The Hands camera puts the far side of the piano at the top of the screen, so bass is on the left and treble on the right. A0/C8 labels are shown when they fit on screen.
+
+For fast shifts and wide chords, the next figure is looked ahead and the lateral MCP angle changes early to spread the thumb and little finger. A striking finger is not moved, and released fingers get a smooth preparation period. Finger base width and bone lengths are not enlarged. Inter-finger collision avoidance continues.
+
+Wrist flexion grows with dynamics, and hand position is corrected to support the finger bases. This produces wrist and elbow vertical motion during strikes as well. Flexion is limited when the fingertip cannot reach. Preparation of unused fingers and contact of striking fingers are both satisfied.
+
+Head nods, gaze toward the next strike position, and forward lean and lateral weight shift following phrase intensity were added or strengthened. Lighting of clothes and skin was adjusted, and normals under non-uniform scale are transformed correctly so the figure's form reads better. The "Pianist" camera shows head and torso; "Hands" shows fingers, wrists and elbows. Hands adjusts its distance so both hands fit even on narrow screens.
+
+Verification: the world coordinates of all 88 keys and the camera projection in actual WebGL draw calls were inspected, confirming that pitch rises toward the pianist's right, and rises to the right on screen in the pianist-facing Hands view. Finger order and spacing at all 20,356 strikes, fixed skeleton lengths at 515 points, finger spread, wrist, head and torso motion in 595 look-ahead preparation scenes, continuity over 1,120 frames, pitch and onset of 244 notes, and 3,276 pedal events were checked. MIDI pitch, velocity, onset and finger assignment are preserved from v4.
+
+The WebGL shaders, vertex buffers, matrices and draw calls were passed directly to OpenGL ES to render 48 frames, and the form, composition and continuity of the Hands and Pianist views were checked as images. `render-check/hands-motion.gif` and `render-check/portrait-motion.gif` are from this 3D rendering check; the GIFs contain no audio, score or UI. Chromium launch restrictions remained, so final checks of UI interaction and listening in a real browser were not performed.
+
+Additional test: `node expressive-test.cjs`. Capturing render data: `node capture-scene.cjs`; direction check: `node direction-test.cjs`. Rendering checks use Mesa EGL and Python numpy/Pillow and can be reproduced with `python render-egl.py render-check/hands.json render-check/hands.png`. The distributed HTML does not depend on any of these.
+
+## v6: Fingering principles and phrase look-ahead
+
+The research and how it maps to the implementation are summarized in `FINGERING-NOTES.md`. Ergonomic inter-finger spans, thumb passing on black and white keys, outer fingers in chords, back-and-forth figures and the speed of repeated notes are evaluated. Candidates for every attack group are compared with dynamic programming, choosing fingers using the previous two shapes and the upcoming notes. Major scales prefer the standard fingering and distinguish the end of one octave from a continuing octave. The thumb on black keys is not banned outright, and exceptions for chords and octaves are handled.
+
+For notes that continue within one hand position, a shared palm position is searched and the next finger is prepared over its key. This is applied where fixed skeleton lengths, contact, spacing from unused fingers and continuity of in-between motion are all satisfied; otherwise it falls back to an independent hand move. Onset, pitch, velocity, note count and hand assignment are preserved from v5; finger assignment and release/preparation motion were updated.
+
+The score at the top shows "R"/"L" and a number 1–5 for sounding notes. The numbers match the 3D finger assignment: 1 is the thumb, 5 the little finger. This does not reproduce fingerings from the original score or any particular pianist; it is generated automatically to fit the surrounding figures and the model's hand.
+
+Basic scales, ascending/descending runs, multiple octaves, arpeggios, fast/slow repetition, black-key octaves and back-and-forth figures are checked with `node fingering-test.cjs`. Existing contact, skeleton, audio, pedal, beaming and clock checks continue.
+
+Final verification: no fingertip inversions at the strike time of all 20,356 notes; fixed segment lengths and inter-finger spacing checked at 43,959 in-between points. Finger numbers were updated for 8,075 notes, and a shared hand position was adopted for 1,295 figures. Results are in `v6-verification.json`. Additional in-between motion check: `node transition-test.cjs`.
+
+## v7: Striking from relaxed, hanging fingers
+
+The motion that bent unused fingers back from the base was removed. The MCP idle angle relative to the palm is now 0°, and the distal joints bend slightly so the fingers hang naturally. A striking finger flexes MCP, PIP and DIP downward and returns smoothly to the idle pose within about 100 ms after release. In fast repetition, the return time shortens to fit the interval until the next strike. Even when avoiding contact, the base never lifts beyond the idle angle.
+
+Base flexion and distal flexion are adjusted to white and black key heights, using the actual fore–aft position on the key while preserving fixed segment lengths. Fingers start preparing 55 ms before the next strike and press down over an 18 ms window matching key travel. On release, joints return continuously from the angles at the actual wrist pose. Lateral finger spread, wrist flexion, elbow/torso/head, score and pedal expression continue.
+
+Onset, duration, pitch, velocity, hand assignment and finger number of all 20,356 notes from v6 were matched by SHA-256. Audio and animation still share the same Web Audio clock.
+
+Verification: inter-finger spacing and key contact at every strike, spacing and fixed lengths at 43,959 in-between points, no MCP hyperextension beyond the idle angle across 25,490 finger poses, and continuity over 1,120 frames. Results are in `v7-verification.json`. Additional check: `node hanging-test.cjs`. The same render data as WebGL was rendered for 48 frames with OpenGL ES. UI interaction and listening in a real browser were not checked in that environment.
+
+## v8: Recorded grand piano
+
+The sound was switched to real Steinway recordings (Splendid Grand Piano). Four recorded layers from soft to loud are blended smoothly so dynamics affect both volume and timbre. Original pitch, onset, velocity, finger numbers and 3D motion are preserved. Damper sustain and decay, small recorded key and pedal noises, subtle computed resonance and reverb, and peak control were added. Selecting or stopping a piece while samples are loading is handled.
+
+The standalone HTML embeds 118 recordings. The multi-file version can be served with `python -m http.server 8000 --directory dist`. Sources, licenses, processing, verification and limitations of the audio are in `AUDIO-NOTES.md`; results are in `v8-verification.json`. The preview `piano-audio-preview-v8.mp3` is a native-processing approximation using the actual note schedule. Listening in a real browser was not checked.
+
+## Build and deployment
+
+GitHub Actions (`.github/workflows/pages.yml`) runs `node verify.cjs`, builds the standalone HTML and ZIP with `python pack-v8.py`, and deploys `dist/` together with `piano-recital.html`, `piano-recital.zip`, `THIRD-PARTY-NOTICES.md` and `audio-licenses/` to GitHub Pages on every push to `main`.

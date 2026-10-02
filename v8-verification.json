@@ -123,7 +123,7 @@
   "performanceNotesAndFingeringPreservedFromV7": true,
   "motionScoreAndGeometryUnchangedFromV7": true,
   "priorMotionVerification": "v7-verification.json",
-  "standaloneHTMLBytes": 33667024,
+  "standaloneHTMLBytes": 33666311,
   "inlineScripts": 9,
   "requiresRuntimeNetwork": false,
   "browserUIAndAuditoryCheck": false,
