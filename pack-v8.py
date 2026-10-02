@@ -43,8 +43,7 @@ files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  root/'capture-scene.cjs',root/'render-egl.py',root/'render-preview.py',
  root/'render-check/hands.json',root/'render-check/hands-motion.gif',root/'render-check/portrait-motion.gif',
  *root.glob('*test.cjs'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
- root/'audio-source/downloads.json',root/'audio-source/layers.json',
- *[root/'audio-source'/f'{layer}.sfz.txt' for layer in ['PP','MP','MF','FF']]]
+ root/'audio-source/downloads.json',root/'audio-source/layers.json',root/'THIRD-PARTY-NOTICES.md']
 archive=root/'piano-recital-v8.zip'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
  for p in files:

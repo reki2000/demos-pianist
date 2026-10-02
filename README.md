@@ -39,6 +39,8 @@ Web Audioの出力時計を基準に音声、指先、鍵盤を動かします�
 
 人物はスタイライズされた3Dモデルで、運指は自動生成です。実演奏者のモーションキャプチャではありません。音色は録音されたSteinwayのグランドピアノです。詳細は `AUDIO-NOTES.md` を参照してください。
 
+第三者素材（音源・MIDI）のライセンスは `THIRD-PARTY-NOTICES.md` にまとめています。
+
 MIDI: © Bernd Krüger / https://www.piano-midi.de/ 。CC BY-NC-SA、個人・非営利利用向け。元のMIDIファイルに記載された著作権情報を尊重してください。元データの収録元: https://github.com/cheriell/ClassicalPianoMIDI-dataset 。本ページ用に秒単位の音符イベントと自動運指に変換しています。
 
 ## ペダル
