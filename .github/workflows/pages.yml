@@ -26,7 +26,9 @@ jobs:
         with:
           python-version: '3.13'
       - name: Verify
-        run: node verify.cjs
+        run: |
+          node verify.cjs > verification.json
+          node audio-test.cjs > audio-verification.json
       - name: Build standalone HTML and zip
         run: python pack-v8.py
       - name: Assemble site

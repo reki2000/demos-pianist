@@ -22,10 +22,10 @@ The audio clock and 3D start together only after the samples finish loading. The
 
 ## Distribution and verification
 
-`piano-recital-v8.html` is a single HTML file that includes the recordings. No internet connection is required; open it in a browser and press the play button in the center. The multi-file version `dist/index.html` loads the same `dist/audio/` and JavaScript over an HTTP server. Run `python -m http.server 8000 --directory dist` in the extracted ZIP folder and open http://localhost:8000/.
+`piano-recital.html` (built by `python pack-v8.py`) is a single HTML file that includes the recordings. No internet connection is required; open it in a browser and press the play button in the center. The multi-file version `dist/index.html` loads the same `dist/audio/` and JavaScript over an HTTP server. Run `python -m http.server 8000 --directory dist` in the extracted ZIP folder and open http://localhost:8000/.
 
 `node audio-test.cjs` verifies pitch and layer boundaries for 88 keys × 127 velocities, the samples required by all 20,356 notes and ten pieces, dampers, re-pedaling, repeated notes and stopping. `node verify.cjs` verifies piece switching, load cancellation, speed changes, keystroke sync and the existing skeleton and score display. `audio-manifest.json` records each recording's source, trimmed leading time, length and SHA-256.
 
 Running `python render-audio-preview.py` after `node audio-test.cjs` generates a preview of the first 22 seconds of the Heroic Polonaise using the recordings, onsets, gain envelopes and reverb impulse specified by the actual JavaScript. It requires Python, numpy, scipy and ffmpeg. It also decodes all 118 files and checks stereo, finite values, SHA-256 and peaks. The preview's filters and dynamics are native approximations, not the browser's actual Web Audio output.
 
-Chromium could not be launched in the original build environment, so UI interaction and listening in a real browser were not checked there. The scope and results of verification are recorded in `v8-verification.json` and `audio-render-verification.json`.
+Chromium could not be launched in the original build environment, so UI interaction and listening in a real browser were not checked there. The scope and results of verification are written to `v8-verification.json` and `audio-render-verification.json` when the build and preview scripts are run.

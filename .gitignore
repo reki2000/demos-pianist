@@ -1,2 +1,20 @@
+# Build outputs (python pack-v8.py)
 piano-recital.html
 piano-recital.zip
+piano-recital-v*.html
+piano-recital-v*.zip
+v8-verification.json
+
+# Test and verification outputs
+verification.json
+audio-verification.json
+audio-render-fixture.json
+audio-render-verification.json
+piano-audio-preview-v*.mp3
+piano-audio-preview-v*.wav
+render-check/*.gif
+render-check/*.png
+
+# CI site staging
+_site/
+__pycache__/

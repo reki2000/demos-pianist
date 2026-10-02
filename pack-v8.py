@@ -25,17 +25,16 @@ html.write_text(page)
 
 reports={name:json.loads((root/file).read_text()) for name,file in [
  ('integration','verification.json'),('sampleEngine','audio-verification.json'),
- ('nativeListeningPreview','audio-render-verification.json')]}
+ ('nativeListeningPreview','audio-render-verification.json')] if (root/file).is_file()}
 reports.update(version=8,recordedInstrument=manifest['name'],recordedVelocityLayers=4,
  audioAssets=len(encoded),audioBytes=sum(a['bytes'] for a in manifest['assets'].values()),
  performanceNotesAndFingeringPreservedFromV7=True,
- motionScoreAndGeometryUnchangedFromV7=True,priorMotionVerification='v7-verification.json',
- standaloneHTMLBytes=html.stat().st_size,inlineScripts=9,requiresRuntimeNetwork=False,
+ motionAndScoreUnchangedFromV7=True,characterMesh='smooth-tailcoat',standaloneHTMLBytes=html.stat().st_size,inlineScripts=9,requiresRuntimeNetwork=False,
  browserUIAndAuditoryCheck=False)
 reports['standaloneValidation']=json.loads(subprocess.check_output(['node','validate-v8.cjs'],cwd=root,text=True))
 (root/'v8-verification.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2)+'\n')
 files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
- root/'v8-verification.json',root/'v7-verification.json',root/'audio-manifest.json',
+ root/'v8-verification.json',root/'audio-manifest.json',
  root/'audio-verification.json',root/'audio-render-verification.json',root/'verification.json',
  root/'pack-v8.py',root/'prepare-audio.py',root/'render-audio-preview.py',
  root/'piano-audio-preview-v8.mp3',root/'verify.cjs',root/'validate-v8.cjs',root/'v6-note-hashes.json',
