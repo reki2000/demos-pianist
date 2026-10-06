@@ -25,6 +25,12 @@ No code or scoring tables from external implementations were incorporated; an or
 
 Basic examples such as scale fingerings are common practice patterns and are not pasted unconditionally onto every piece. The actual layout of the notes, the reach of fixed-length fingers and inter-finger spacing take priority. Chords use hand-shape candidates and are chosen with the surrounding notes. When there is a long rest in a piece, taking a new position becomes easier.
 
+## Natural spans and soft motion (v10)
+
+Parncutt et al. (1997) list, for every pair of fingers, the largest span that is still relaxed, comfortable and practical. The fingering search now uses the comfortable and practical maxima (in semitones: 1–2: 8/10, 1–3: 10/12, 1–4: 12/14, 1–5: 13/15, 2–3: 3/5, 2–4: 5/7, 2–5: 8/10, 3–4: 2/4, 3–5: 5/7, 4–5: 3/5). Exceeding the comfortable span costs a little per semitone; exceeding the practical span costs quadratically and almost always loses to another fingering. The penalty applies to every pair of notes in a chord and to consecutive notes that are joined (it is halved for slower transitions). Each candidate hand shape also pays for the lateral angle of its fingers and for neighbouring sounding fingers that point apart, and hand travel between shapes, especially fast travel, costs more than before, so quiet hand positions win.
+
+The model separates the lateral range a finger may use to reach a key from the narrower range of a free finger, so idle fingers never fan out. A free finger takes its lateral angle from the sounding fingers on either side and is kept in order next to its neighbours (the thumb may still pass under).
+
 ## What you can see
 
 Under the sounding notes in the score at the top, "R"/"L" and a finger number appear: 1 thumb, 2 index, 3 middle, 4 ring, 5 little finger. The same assignment drives the 3D model's keystrokes. Note durations shown in the score are, as before, estimated from MIDI.

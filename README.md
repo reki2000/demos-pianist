@@ -12,7 +12,7 @@ Open it in a WebGL-capable browser such as Chrome, Edge, Firefox or Safari and p
 
 ## Controls
 
-- Choose one of the ten pieces at the bottom of the page.
+- Choose one of the eighteen pieces at the bottom of the page.
 - Play/pause, restart, seek, speed and volume controls are available.
 - "Cinematic" cuts between five shots in sequence; "Hands" and "Wide" are fixed views. "Pedal" is a close-up of the right foot and damper pedal.
 - In "Free", drag to orbit and scroll to zoom.
@@ -30,6 +30,20 @@ Open it in a WebGL-capable browser such as Chrome, Edge, Firefox or Safari and p
 8. Chopin — Revolutionary Étude, Op. 10 No. 12
 9. Chopin — Fantaisie-Impromptu, Op. 66
 10. Chopin — Prelude in E minor, Op. 28 No. 4
+11. Joplin — The Entertainer (ragtime, 1902)
+12. Joplin — Maple Leaf Rag (ragtime, 1899)
+13. Traditional — When the Saints Go Marching In (swing arrangement)
+14. Traditional — Amazing Grace (hymn tune New Britain, three verses)
+15. Satie — Gymnopédie No. 1
+16. Schumann — Träumerei, Op. 15 No. 7
+17. Liszt — Liebestraum No. 3
+18. Debussy — Golliwogg's Cakewalk, Children's Corner
+
+Pieces 11–15 are public-domain compositions. Joplin, Satie and the *New Britain* hymn are played from public-domain Mutopia Project editions, and the *Saints* and *Amazing Grace* arrangements were written for this project (`arrangements.cjs`); `add-songs.cjs` adds dynamics, pedalling and a closing ritardando and builds them into `dist/songs.js`. Pieces 1–10 and 16–18 are piano-midi.de performances.
+
+## Soft motion and natural spans
+
+Fingering avoids stretches that splay the hand: every pair of fingers has a comfortable and a practical maximum span (Parncutt et al. 1997), and chords or consecutive notes beyond them are strongly penalized, as is the lateral angle of each finger. A free finger keeps a narrower lateral range than a finger pressing a key and stays in order next to its neighbours. Hand shifts begin as early as the held keys allow and last longer, fingers prepare up to 140 ms before a strike and relax over about 130 ms after release, and wrist lift and flexion are smaller and slower. On screen, free fingers are additionally eased between frames (fixed bone lengths are kept; sounding and approaching fingers are never delayed).
 
 ## Synchronization and expression
 
@@ -39,7 +53,7 @@ The next notes are looked ahead so that release, lateral travel and strike form 
 
 The keyboard uses nominal proportions: 23.5 mm white-key pitch, 148 mm exposed white-key length, and black keys 95 mm long, 14 mm wide and 12 mm high, giving a white-to-black length ratio of about 1:0.642. The relative scale of the figure and keyboard was tuned as well.
 
-MIDI voices are not mechanically fixed to one hand; they are redistributed based on the span of simultaneous keys and hand travel distance. The pitch, velocity and note count of every note in all ten pieces are preserved. For the few large chords that exceed one hand's reach and cannot be solved by redistribution, some notes are rolled, shifting sound and keystroke together. This is therefore not a perfectly timing-exact reproduction of the source MIDI.
+MIDI voices are not mechanically fixed to one hand; they are redistributed based on the span of simultaneous keys and hand travel distance. The pitch, velocity and note count of every note in every piece are preserved. For the few large chords that exceed one hand's reach and cannot be solved by redistribution, some notes are rolled, shifting sound and keystroke together. This is therefore not a perfectly timing-exact reproduction of the source MIDI.
 
 Audio, fingertips and keys are driven from the Web Audio output clock. Forward lean, lateral weight shift and head nods are derived from dynamics, note density, accents and hand position. Fingering is precomputed and stored, so nothing is recomputed when a piece is selected.
 
@@ -47,7 +61,7 @@ The pianist is a stylized 3D model and the fingering is generated automatically;
 
 Third-party asset licenses (audio and MIDI) are summarized in `THIRD-PARTY-NOTICES.md`.
 
-MIDI: © Bernd Krüger / https://www.piano-midi.de/ — CC BY-NC-SA, for personal and non-commercial use. Please respect the copyright notices in the original MIDI files. Source collection: https://github.com/cheriell/ClassicalPianoMIDI-dataset. For this page the MIDI was converted to note events in seconds plus automatic fingering.
+MIDI performances: © Bernd Krüger / https://www.piano-midi.de/ — CC BY-NC-SA, for personal and non-commercial use. Please respect the copyright notices in the original MIDI files. Source collection: https://github.com/cheriell/ClassicalPianoMIDI-dataset. Public-domain scores: Mutopia Project (https://www.mutopiaproject.org/). For this page the MIDI was converted to note events in seconds plus automatic fingering.
 
 ## Pedal
 
@@ -57,11 +71,11 @@ The source data contains no left or middle pedal information, so only the right 
 
 ## Verification
 
-Across all ten pieces, every finger segment and the upper/forearm lengths were checked at 515 time points with no stretching. Fingertip positions on the keys, 1,120 frames of in-between motion, 3,276 pedal events, re-pedaling and decay after release, the fixed heel, keyboard proportions, audio/clock sync, play/stop and switching between all ten pieces were verified.
+Across all eighteen pieces, every finger segment and the upper/forearm lengths were checked at 515 time points with no stretching. Fingertip positions on the keys, 1,120 frames of in-between motion, 3,276 pedal events, re-pedaling and decay after release, the fixed heel, keyboard proportions, audio/clock sync, play/stop and switching between all pieces were verified.
 
 Chromium could not be launched in the original build environment, so a final check of real browser video and audio was not performed there. The download version does not depend on external libraries or network loads.
 
-The multi-file version is `dist/index.html`; serve it with `python -m http.server 8000 --directory dist`. Logic verification: `node verify.cjs`. Further tests: `anatomy-test.cjs`, `collision-test.cjs`, `continuity-test.cjs`, `score-test.cjs`, `pedal-test.cjs`, `expressive-test.cjs`, `direction-test.cjs`, `fingering-test.cjs`, `transition-test.cjs`, `hanging-test.cjs` and `audio-test.cjs` (run each with `node`). Fingering research is summarized in `FINGERING-NOTES.md`; design decisions and invariants from earlier versions are in `docs/DEVELOPMENT-NOTES.md`. Re-converting the source MIDI for development: `python convert.py`. Re-conversion overwrites the precomputed fingering, so recompute fingering before updating the distribution.
+The multi-file version is `dist/index.html`; serve it with `python -m http.server 8000 --directory dist`. Logic verification: `node verify.cjs`. Further tests: `anatomy-test.cjs`, `collision-test.cjs`, `continuity-test.cjs`, `score-test.cjs`, `pedal-test.cjs`, `expressive-test.cjs`, `direction-test.cjs`, `fingering-test.cjs`, `transition-test.cjs`, `hanging-test.cjs` and `audio-test.cjs` (run each with `node`). Fingering research is summarized in `FINGERING-NOTES.md`; design decisions and invariants from earlier versions are in `docs/DEVELOPMENT-NOTES.md`. Re-converting the source MIDI for development: `python convert.py`. Re-conversion overwrites the precomputed fingering, so recompute fingering before updating the distribution. Pieces 11–18 are built by `node add-songs.cjs`, and `node add-songs.cjs --replan` re-plans the fingering and motion of every piece after a change to `dist/motion.js`.
 
 ## Build and deployment
 
