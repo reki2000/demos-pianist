@@ -68,8 +68,8 @@ c.font='17px Georgia,serif';for(let base of [top,staff2]){c.fillText(signature.n
 let bar=signature.numerator*4/signature.denominator,start=Math.max(0,current-(cursor-left)/px),end=current+(w-cursor)/px;
 for(let b=signature.beat+Math.ceil((start-signature.beat)/bar)*bar;b<end;b+=bar){let x=cursor+(b-current)*px;line(x,top,x,staff2+28,'#49453e');c.font='10px Arial';c.fillStyle='#a39a8c';c.fillText(String(Math.round((b-signature.beat)/bar)+1),x+4,top-10)}
 let list=model(s),l=0,r=list.length;while(l<r){let m=(l+r)>>1;if(list[m].beat<start-.5)l=m+1;else r=m}
-let active=[],glyphs=new Map();c.save();c.beginPath();c.rect(left,20,w-left,h-20);c.clip();
-for(let i=l;i<list.length&&list[i].beat<=end+.4;i++){let e=list[i],n=e.n,p=n[2],bass=p<60,base=bass?staff2:top,diatonic=e.spelling.diatonic,bottom=bass?25:37,y=base+28-(diatonic-bottom)*gap/2,x=cursor+(e.beat-current)*px,on=n[0]<=t&&n[0]+n[1]>t,color=on?'#ffcc70':'#d8d0c1';if(on)active.push(p);let shift=0;if(y<base-24){y+=28;shift=1}else if(y>base+52){y-=28;shift=-1}c.fillStyle=color;c.strokeStyle=color;
+let active=s.notes.filter(n=>n[0]<=t&&n[0]+n[1]>t).map(n=>n[2]),glyphs=new Map();c.save();c.beginPath();c.rect(left,20,w-left,h-20);c.clip();
+for(let i=l;i<list.length&&list[i].beat<=end+.4;i++){let e=list[i],n=e.n,p=n[2],bass=p<60,base=bass?staff2:top,diatonic=e.spelling.diatonic,bottom=bass?25:37,y=base+28-(diatonic-bottom)*gap/2,x=cursor+(e.beat-current)*px,on=n[0]<=t&&n[0]+n[1]>t,color=on?'#ffcc70':'#d8d0c1';let shift=0;if(y<base-24){y+=28;shift=1}else if(y>base+52){y-=28;shift=-1}c.fillStyle=color;c.strokeStyle=color;
 if(shift){c.font='9px Arial';c.fillText(shift>0?'8va':'8vb',x-8,shift>0?base-30:base+64)}
 for(let yy=base-7;yy>=y-1;yy-=7)line(x-9,yy,x+9,yy,color);for(let yy=base+35;yy<=y+1;yy+=7)line(x-9,yy,x+9,yy,color);
 if(e.spelling.accidental){c.fillStyle=color;c.font='15px Georgia,serif';c.fillText(e.spelling.accidental,x-18,y+5)}
