@@ -13,4 +13,13 @@ for(let [t,down] of [[.19,false],[.2,true],[4.09,true],[4.1,false]]){assert.equa
 let last=P.state(sustained,.14).position;for(let t=.14;t<=.2;t+=.001){let p=P.state(sustained,t).position;assert(p>=last-1e-9&&p>=0&&p<=1);last=p}
 const songsContext={window:null};songsContext.window=songsContext;vm.createContext(songsContext);vm.runInContext(fs.readFileSync('dist/songs.js','utf8'),songsContext);let checks=0;
 for(let s of songsContext.SONGS){for(let [t,v] of s.pedals){assert.equal(P.state(s,t+.00000001).down,v>=64);assert(Math.abs(P.state(s,t).position-v/127)<1e-8);checks++}for(let i=0;i<s.notes.length;i+=120){let e=P.envelope(s,s.notes[i]);for(let point of e.points)assert(Number.isFinite(point.t)&&Number.isFinite(point.level));}}
-console.log(JSON.stringify({pedalEvents:checks,noteOffPedalState:true,longSustain:true,pedalUpDamping:true,heldKeyUnaffected:true,repedalling:true,partialPedal:true,speedSynchronization:true,footPedalTimeline:true}));
+const connectedNotes=[[0,.21,60,90,0],[.35,.22,62,90,0],[.70,.22,64,90,0],[2,.20,65,80,0]];
+const legato={notes:connectedNotes,pedals:[],duration:4,motion:{hands:[{frames:[{notes:connectedNotes.map((n,i)=>({t:n[0],pitch:n[2],end:[.08,.40,.82,2.2][i]}))}]},{frames:[]}]}};
+assert(P.keyEnd(legato,connectedNotes[0])<.35,'Motion still permits early hand travel');
+assert(P.soundEnd(legato,connectedNotes[0])>.35,'Acoustic note-off must follow the next attack');
+assert(P.soundEnd(legato,connectedNotes[1])>.70,'Successive melody notes must overlap');
+assert(Math.abs(P.soundEnd(legato,connectedNotes[2])-.92)<1e-9,'A phrase break must not be bridged');
+assert(P.levelAt(P.envelope(legato,connectedNotes[0]),.37)>.6,'String continues beyond the following attack');
+const short={notes:[[0,.04,60,90,0],[.4,.1,62,90,0]],pedals:[],duration:2};
+assert.equal(P.soundEnd(short,short.notes[0]),.04,'An intentionally staccato note stays short');
+console.log(JSON.stringify({pedalEvents:checks,noteOffPedalState:true,longSustain:true,pedalUpDamping:true,heldKeyUnaffected:true,repedalling:true,partialPedal:true,speedSynchronization:true,footPedalTimeline:true,legatoRelease:true,phraseBreaks:true}));

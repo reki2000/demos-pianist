@@ -29,6 +29,8 @@ jobs:
         run: |
           node verify.cjs > verification.json
           node audio-test.cjs > audio-verification.json
+          node score-test.cjs > score-verification.json
+          node pedal-test.cjs > pedal-verification.json
       - name: Build standalone HTML and zip
         run: python pack-v8.py
       - name: Assemble site
