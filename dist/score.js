@@ -12,8 +12,18 @@ function keyAccidentals(fifths=0){
  return altered;
 }
 function spellPitch(p,fifths=0){
- const pc=((p%12)+12)%12,step=(fifths<0?flatSteps:sharpSteps)[pc],natural=[0,2,4,5,7,9,11][step];
- return{diatonic:Math.floor(p/12)*7+step,letter:step,octave:Math.floor(p/12),alteration:pc-natural};
+ const pc=((p%12)+12)%12,naturals=[0,2,4,5,7,9,11],defaults=keyAccidentals(fifths),
+  preferred=(fifths<0?flatSteps:sharpSteps)[pc];
+ let best=null;
+ for(let letter=0;letter<7;letter++){
+  let alteration=pc-naturals[letter];if(alteration>6)alteration-=12;if(alteration< -6)alteration+=12;
+  if(Math.abs(alteration)>1)continue;
+  const octave=(p-naturals[letter]-alteration)/12,
+   cost=(alteration===defaults[letter]?0:10)+(alteration===0?0:.02)+
+    ((fifths<0?alteration>0:alteration<0)?.2:0)+(letter===preferred?0:.1);
+  if(!best||cost<best.cost)best={diatonic:octave*7+letter,letter,octave,alteration,cost};
+ }
+ return{diatonic:best.diatonic,letter:best.letter,octave:best.octave,alteration:best.alteration};
 }
 function keyGlyphs(fifths,bass=false){
  const sharpTreble=[0,3,-1,2,5,1,4],flatTreble=[4,1,5,2,6,3,7];
