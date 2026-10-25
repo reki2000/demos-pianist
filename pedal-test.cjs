@@ -18,7 +18,7 @@ const legato={notes:connectedNotes,pedals:[],duration:4,motion:{hands:[{frames:[
 assert(P.keyEnd(legato,connectedNotes[0])<.35,'Motion still permits early hand travel');
 assert(P.soundEnd(legato,connectedNotes[0])>.35,'Acoustic note-off must follow the next attack');
 assert(P.soundEnd(legato,connectedNotes[1])>.70,'Successive melody notes must overlap');
-assert.equal(P.soundEnd(legato,connectedNotes[2]),.92,'A phrase break must not be bridged');
+assert(Math.abs(P.soundEnd(legato,connectedNotes[2])-.92)<1e-9,'A phrase break must not be bridged');
 assert(P.levelAt(P.envelope(legato,connectedNotes[0]),.37)>.6,'String continues beyond the following attack');
 const short={notes:[[0,.04,60,90,0],[.4,.1,62,90,0]],pedals:[],duration:2};
 assert.equal(P.soundEnd(short,short.notes[0]),.04,'An intentionally staccato note stays short');
