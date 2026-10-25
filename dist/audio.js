@@ -6,10 +6,10 @@ function layerMix(velocity){const layers=manifest.layers,v=clamp(velocity,1,127)
 function sampleFor(layer,pitch){return layer.samples.reduce((best,s)=>Math.abs(s.root-pitch)<Math.abs(best.root-pitch)?s:best);}
 function notePlan(n){return layerMix(n[3]).map(x=>({...sampleFor(x.layer,n[2]),layer:x.layer.id,weight:x.weight,rate:2**((n[2]-sampleFor(x.layer,n[2]).root)/12)}));}
 function pedalAt(song,t){let a=0,b=song.pedals.length;while(a<b){let m=(a+b)>>1;if(song.pedals[m][0]<=t)a=m+1;else b=m;}return a?song.pedals[a-1][1]/127:0;}
-// Samples contain the natural decay. This envelope applies only the dampers,
+// Samples contain the natural decay. Acoustic release follows the next nearby\n// strike (not early hand repositioning); this envelope applies only the dampers,
 // so long pedal tails are not faded a second time by an oscillator envelope.
-function dampingEnvelope(song,n,speed,duration){let start=n[0]+.002*speed,keyEnd=PianoPedal.keyEnd(song,n),release=Math.max(start,keyEnd+.012*speed),horizon=n[0]+duration*speed,points=[{t:n[0],level:0},{t:start,level:1}],changes=[release,horizon];for(const p of song.pedals)if(p[0]>start&&p[0]<horizon)changes.push(p[0]);changes.sort((a,b)=>a-b);let level=1,time=start,stop=horizon;
- for(const t of changes){if(t<=time||t>horizon)continue;let depth=pedalAt(song,time),rate=time>=release-1e-8&&n[2]<91?(24+(n[2]-21)*.20)*Math.max(0,1-depth*2)**2:0,dt=(t-time)/speed;if(rate&&Math.log(level/.00001)/rate<=dt){stop=time+Math.log(level/.00001)/rate*speed;points.push({t:stop,level:.00001});break;}level*=Math.exp(-rate*dt);points.push({t,level});time=t;}
+function dampingEnvelope(song,n,speed,duration){let start=n[0]+.002*speed,keyEnd=PianoPedal.soundEnd(song,n),release=Math.max(start,keyEnd+.012*speed),horizon=n[0]+duration*speed,points=[{t:n[0],level:0},{t:start,level:1}],changes=[release,horizon];for(const p of song.pedals)if(p[0]>start&&p[0]<horizon)changes.push(p[0]);changes.sort((a,b)=>a-b);let level=1,time=start,stop=horizon;
+ for(const t of changes){if(t<=time||t>horizon)continue;let depth=pedalAt(song,time),rate=time>=release-1e-8&&n[2]<91?(17+Math.max(0,n[2]-21)*.07)*Math.max(0,1-depth*2)**2:0,dt=(t-time)/speed;if(rate&&Math.log(level/.00001)/rate<=dt){stop=time+Math.log(level/.00001)/rate*speed;points.push({t:stop,level:.00001});break;}level*=Math.exp(-rate*dt);points.push({t,level});time=t;}
  // A short fade protects the end of a recording, including undamped treble.
  if(stop===horizon){let fade=Math.max(start,horizon-.030*speed),last=points.at(-1);while(points.length>1&&points.at(-1).t>=fade)points.pop();points.push({t:fade,level},{t:horizon,level:.00001});}
  return{points,keyEnd,end:keyEnd,stop};
