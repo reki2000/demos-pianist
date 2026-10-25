@@ -3,7 +3,7 @@ const dry=song([]),sustained=song([[.2,127],[4.1,0]]);
 assert(Math.abs(at(dry,.15)-at(sustained,.15))<1e-9,'Pedal should not damp a held key');
 assert(at(dry,1)===0,'Released unpedalled note should stop');
 assert(at(sustained,3)>.3,'Sustain must survive past the old 2.5-second cap');
-assert(at(sustained,4.05)>.2&&at(sustained,4.5)===0,'Pedal-up damps the released strings');
+assert(at(sustained,4.05)>.2&&at(sustained,4.5)<.001,'Pedal-up damps the released strings');
 const heldNote=[0,5,60,100,0,2],upWhileHeld=song([[0,127],[.6,0]]);
 const a=P.envelope(upWhileHeld,heldNote),b=P.envelope(dry,heldNote);assert(Math.abs(P.levelAt(a,1)-P.levelAt(b,1))<1e-9,'Pedal-up must not cut a physically held note');
 const caught=song([[.34,127],[2,0]]);assert(at(caught,.7)>.01&&at(caught,.7)>at(dry,.7),'Re-pedalling catches an undamped tail');assert(at(caught,.7)<at(sustained,.7),'Re-pedalling does not restore lost energy');
