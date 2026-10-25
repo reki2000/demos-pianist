@@ -12,7 +12,7 @@ Sound generation was switched from oscillator synthesis to a recorded stereo gra
 
 ## Pedal, resonance and level
 
-The natural decay contained in the recordings is used as is; only the damper on key release is handled with a separate gain envelope. While the pedal is down, released notes are held; on release, remaining notes decay. Pressing mid-note, re-pedaling and partial pedaling are handled. Re-pedaling never revives energy that has already decayed. Undamped strings at the top of the range do not cut off abruptly on release.
+The natural decay contained in the recordings is used as is; only the damper on key release is handled with a separate gain envelope. Without the damper pedal, successive notes in the same hand now remain audible through the following attack (about 28 ms of overlap) when they belong to a connected phrase. The acoustic end is independent of any early finger lift needed for hand movement, and the damper fades more gradually so a quiet release tail remains. Deliberate short notes and long phrase gaps are not joined. While the pedal is down, released notes are held; on release, remaining notes decay. Pressing mid-note, re-pedaling and partial pedaling are handled. Re-pedaling never revives energy that has already decayed. Undamped strings at the top of the range do not cut off abruptly on release.
 
 A short impulse response imitating string resonance under the pedal and a subtle room reverb are added. These are computed approximations; they are neither a reverb measured in a real hall nor a model of every physical string-to-string interaction. Key and pedal mechanical noises are mixed quietly.
 
