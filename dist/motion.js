@@ -13,6 +13,10 @@ const rootX=[-.066,-.037,-.011,.016,.048],rootZ=[-.022,.045,.052,.046,.034];
 // Lateral MCP range: the full reach used only to press a key, and the narrower
 // range a finger keeps when it is free, so idle fingers never splay.
 const abduction=[1.45,.62,.48,.58,1.0],relaxedAbduction=[1.30,.40,.28,.34,.60];
+// Natural resting hand, per anatomical digit (thumb..little): the MCP knuckle
+// flexes downward and the PIP keeps a light grasping curl, both growing
+// toward the little finger. A free finger is never a flat, extended lever.
+const restFlex=[.16,.26,.30,.34,.38],restCurl=[.38,.52,.58,.64,.70];
 function physical(hand,f){return hand?4-f:f}
 // CMC is at the proximal radial edge; the four MCPs form the distal knuckle arc.
 function handPoint(palm,p){let cp=Math.cos(palm.pitch||0),sp=Math.sin(palm.pitch||0),c=Math.cos(palm.yaw||0),s=Math.sin(palm.yaw||0),y=p[1]-.004,z=p[2]+.069,ry=y*cp-z*sp,rz=y*sp+z*cp-.069;return[palm.x+p[0]*c+rz*s,palm.y+.004+ry,palm.z+rz*c-p[0]*s]}
@@ -52,11 +56,16 @@ function prepareHangingPlan(song){let retained=0,rejected=0,cache=new Map();
 function keySurface(point,depressions){let top=-Infinity;for(const k of keyboard.keys){let len=k.black?keyboard.blackLength:keyboard.whiteLength,width=k.black?keyboard.blackWidth:keyboard.whiteWidth;if(Math.abs(point[0]-k.x)<width*.5+.001&&point[2]>keyboard.rear-len&&point[2]<keyboard.rear)top=Math.max(top,keyboard.whiteTop+(k.black?keyboard.blackHeight:0)-keyboard.travel*(depressions?.get(k.midi)||0));}return top;}
 // Free fingers keep their neighbours' left-to-right order (the thumb may pass
 // under). The correction grows with the finger's freedom, so it is continuous.
-function orderFingers(fingers,hand,yaw){const margin=.05;
+function orderFingers(fingers,hand,yaw,pitch=0){const margin=.05;
  for(let pass=0;pass<2;pass++)for(let f=0;f<5;f++){let F=fingers[f],w=F.contact?0:F.freedom??0;if(w<=0||physical(hand,f)===0)continue;let lo=-Infinity,hi=Infinity;
   for(const j of [f-1,f+1]){let N=fingers[j];if(!N||physical(hand,j)===0)continue;if(j<f)lo=N.abduction-margin;else hi=N.abduction+margin;}
   let limit=abduction[physical(hand,f)],want=clamp(clamp(F.abduction,lo,Math.max(lo,hi)),-limit,limit),az=mix(F.abduction,want,w);if(Math.abs(az-F.abduction)<1e-9)continue;
-  fingers[f]={...F,...bendFinger(F.points[0],hand,f,F.angles[0],F.angles[1],yaw+az,yaw,F.target),avoided:F.avoided};}
+  let a=F.angles[0],q=F.angles[1],moved=bendFinger(F.points[0],hand,f,a,q,yaw+az,yaw,F.target);
+  // Sliding a curled fingertip sideways can carry it over a taller key than
+  // the one it was resting above. Uncurl toward flat only as far as the tip
+  // needs to clear the surface under its new position.
+  if(moved.points[3][1]<restSurface(moved.points[3])+.004){let sLo=0,sHi=1,flat=-pitch;for(let k=0;k<10;k++){let s=(sLo+sHi)/2,c=bendFinger(F.points[0],hand,f,mix(flat,a,s),q*s,yaw+az,yaw,F.target);if(c.points[3][1]>=restSurface(c.points[3])+.004)sLo=s;else sHi=s;}moved=bendFinger(F.points[0],hand,f,mix(flat,a,sLo),q*sLo,yaw+az,yaw,F.target);}
+  fingers[f]={...F,...moved,avoided:F.avoided};}
 }
 function separateFingers(fingers,hand,yaw,pitch=0,depressions){const goal=.014;
  // A free MCP may flex DOWN a little; it can never extend above its resting
@@ -209,14 +218,36 @@ function palmAt(handPlan,t,hand){let frames=handPlan.frames,i=lower(frames,t+.00
  return p;
 }
 const frameAngles=new WeakMap();
-function relaxedAngles(palm,hand,f,az){let phys=physical(hand,f),sign=hand?-1:1;if(az===undefined)az=(phys===0?-.42:(phys-2)*.06)*sign;let a=-(palm.pitch||0),ls=lengths[phys],base=root(palm,hand,f),floor=keyboard.whiteTop+keyboard.blackHeight+.010,lo=0,hi=.36;for(let j=0;j<16;j++){let q=(lo+hi)/2,y=base[1]+ls[0]*Math.sin(a)+ls[1]*Math.sin(a-q)+ls[2]*Math.sin(a-1.65*q);if(y>=floor)lo=q;else hi=q;}return{a,q:lo,az:clamp(az,-relaxedAbduction[phys],relaxedAbduction[phys])}}
+// Key height under a resting fingertip, with black-key occupancy faded over
+// 45 mm. The hard keySurface steps by a full black-key height the moment a
+// tip crosses an edge, and a hand sliding sideways crosses a black key every
+// few frames, so a tight fade would make the rest curl bob up and down over
+// every key. The wide fade keeps nearly full clearance over a black key's
+// centre and nearly full curl over the white keys beside it, while changing
+// slowly enough to stay continuous at speed.
+function restSurface(p){let occ=0;for(const k of keyboard.keys){if(!k.black||Math.abs(p[0]-k.x)>.055)continue;let wx=smooth((keyboard.blackWidth/2+.0225-Math.abs(p[0]-k.x))/.045),wz=smooth((p[2]-(keyboard.rear-keyboard.blackLength)+.0225)/.045)*smooth((keyboard.rear+.0225-p[2])/.045);occ=Math.max(occ,wx*wz)}return keyboard.whiteTop+keyboard.blackHeight*occ}
+function relaxedAngles(palm,hand,f,az){let phys=physical(hand,f),sign=hand?-1:1;if(az===undefined)az=(phys===0?-.42:(phys-2)*.06)*sign;az=clamp(az,-relaxedAbduction[phys],relaxedAbduction[phys]);let ls=lengths[phys],base=root(palm,hand,f),flat=-(palm.pitch||0),gripA=flat-restFlex[phys],gripQ=restCurl[phys],azimuth=(palm.yaw||0)+az,dir=[Math.sin(azimuth),0,Math.cos(azimuth)];
+ // Pose at curl amount u: u=0 is the old flat finger, u=1 the full light grip.
+ // The PIP curl leads and the MCP drop follows (u^.8 vs u^1.3), so the
+ // fingertip hooks downward instead of the whole finger sinking as a lever.
+ // The grip fingertip is lower and closer, so take the largest u whose tip
+ // still clears the key surface actually underneath it by 6 mm. Clearing the
+ // local surface (not the tallest black key everywhere) is what lets the curl
+ // survive over white keys while never clipping a black key.
+ let poseAt=u=>({a:mix(flat,gripA,u**1.3),q:gripQ*u**.8}),tip=u=>{let{a,q}=poseAt(u),p=base.slice();for(let j=0;j<3;j++){let angle=a-(j===0?0:j===1?q:q*1.65);p=add(p,[dir[0]*ls[j]*Math.cos(angle),ls[j]*Math.sin(angle),dir[2]*ls[j]*Math.cos(angle)])}return p},clear=u=>{let p=tip(u);return p[1]-(restSurface(p)+.006)},lo=0,hi=1;
+ if(clear(0)>=0)for(let j=0;j<14;j++){let mid=(lo+hi)/2;if(clear(mid)>=0)lo=mid;else hi=mid;}
+ return{...poseAt(lo),az}}
 function anglesAtFrame(frame,hand){if(!frame)return null;let cached=frameAngles.get(frame);if(cached)return cached;let contacts=frame.notes.map(n=>({...n,solved:pressFinger(frame.palm,hand,n.f,n.pitch)})),result=[];
  for(let f=0;f<5;f++){let n=contacts.find(n=>n.f===f),prepared=frame.prepared?.find(n=>n.f===f),fingers=contacts.filter(n=>physical(hand,n.f)!==0),below=fingers.filter(n=>n.f<f).sort((a,b)=>b.f-a.f)[0],above=fingers.filter(n=>n.f>f).sort((a,b)=>a.f-b.f)[0],nearAz=below&&above?mix(below.solved.abduction,above.solved.abduction,(f-below.f)/(above.f-below.f)):(below||above)?.solved.abduction,solved=n?.solved||(prepared?pressFinger(frame.palm,hand,f,prepared.pitch,0):null),rest=relaxedAngles(frame.palm,hand,f,physical(hand,f)===0?undefined:nearAz);result.push(solved?{a:solved.angles[0],q:solved.angles[1],az:solved.abduction,restAz:n?rest.az:solved.abduction}:{...rest,restAz:rest.az});}frameAngles.set(frame,result);return result;
 }
 const releasePoses=new WeakMap();
 function releaseAngles(hp,n,hand){let cached=releasePoses.get(n);if(cached)return cached;let t=Math.max(n.t,n.end-.000002),p=palmAt(hp,t,hand),targets=[];for(let f=0;f<5;f++){let seq=hp.fingers[f],i=lower(seq,t+.000001)-1,e=seq[i];if(e&&t<e.end)targets.push({f,pitch:e.pitch,press:1,point:keyPoint(e.pitch,1,e.z)});}p=articulatePalm(p,targets,hand,wristGesture(hp,t));let F=pressFinger(p,hand,n.f,n.pitch);cached={a:F.angles[0]+p.pitch,q:F.angles[1],az:F.abduction};releasePoses.set(n,cached);return cached;}
-function transitFinger(hp,t,palm,hand,state,spread){let f=state.f,phys=physical(hand,f),sign=hand?-1:1,base=root(palm,hand,f),rest=relaxedAngles(palm,hand,f),seq=hp.fingers[f],ni=lower(seq,t+.000001)-1,old=seq[ni],next=seq[ni+1],a=rest.a,q=rest.q,az=rest.az;
- if(phys!==0){let i=lower(hp.frames,t+.000001)-1,from=anglesAtFrame(hp.frames[Math.max(0,i)],hand)?.[f],to=anglesAtFrame(hp.frames[i+1],hand)?.[f];if(from){rest.az=mix(from.restAz,to?.restAz??from.restAz,palm.blend||0);az=rest.az;}}
+function transitFinger(hp,t,palm,hand,state,spread){let f=state.f,phys=physical(hand,f),sign=hand?-1:1,base=root(palm,hand,f),seq=hp.fingers[f],ni=lower(seq,t+.000001)-1,old=seq[ni],next=seq[ni+1];
+ // The rendered azimuth comes from the neighbouring frame fingers, not the
+ // default fan, and it decides which keys the fingertip actually hovers
+ // over. Resolve it first so relaxedAngles clears the right key surface.
+ let frameAz;if(phys!==0){let i=lower(hp.frames,t+.000001)-1,from=anglesAtFrame(hp.frames[Math.max(0,i)],hand)?.[f],to=anglesAtFrame(hp.frames[i+1],hand)?.[f];if(from)frameAz=mix(from.restAz,to?.restAz??from.restAz,palm.blend||0);}
+ let rest=relaxedAngles(palm,hand,f,frameAz),a=rest.a,q=rest.q,az=rest.az;
  // A released finger follows the hand in its own joint pose. It does not
  // continue reaching back across its neighbours toward the previous key.
  // Distal joints (PIP/DIP, q) trail the knuckle (MCP, a) with a slight phase
@@ -258,7 +289,7 @@ function pose(song,t){let plan=build(song),hands=[],depressions=new Map();
   // The preplanned palm follows a continuous trajectory, without per-frame snaps.
   palm=articulatePalm(palm,targets,hand,gesture);
   let fingers=states.map(state=>{let base=root(palm,hand,state.f),want=state.point||defaultTip(base,hand,state.f,palm.yaw),solved=state.contact?pressFinger(palm,hand,state.f,state.event.pitch,state.press):transitFinger(hp,t,palm,hand,state,spread);if(state.press>0&&state.event&&t>=state.event.t)depressions.set(state.event.pitch,Math.max(depressions.get(state.event.pitch)||0,state.press));return{...state,...solved,floorWeight:state.event&&t>=state.event.t? smooth((t-state.event.end)/.09):1}});
-  orderFingers(fingers,hand,palm.yaw);separateFingers(fingers,hand,palm.yaw,palm.pitch,depressions);hands.push({palm,fingers,gesture,spread});
+  orderFingers(fingers,hand,palm.yaw,palm.pitch);separateFingers(fingers,hand,palm.yaw,palm.pitch,depressions);hands.push({palm,fingers,gesture,spread});
  }
  let k=clamp(t*10,0,plan.envelope.length-1),a=Math.floor(k),b=Math.min(a+1,plan.envelope.length-1),energy=mix(plan.envelope[a].energy,plan.envelope[b].energy,k-a),accent=0;
  // Find recent attacks only, to keep deterministic seeking and bounded work.
@@ -268,7 +299,7 @@ function pose(song,t){let plan=build(song),hands=[],depressions=new Map();
 }
 // Geometric seed for the established fingering search, never a rendered pose.
 function planningTip(base,hand,f,yaw,pitch=0){let i=physical(hand,f),q=.85,a=.65,ls=lengths[i],sign=hand?-1:1,az=yaw+(i===0?-.42*sign:(i-2)*.06*sign),p=base.slice();for(let j=0;j<3;j++){let angle=a-(j===0?0:j===1?q:1.65*q);p=add(p,[Math.sin(az)*ls[j]*Math.cos(angle),ls[j]*Math.sin(angle),Math.cos(az)*ls[j]*Math.cos(angle)])}return p}
-function defaultTip(base,hand,f,yaw,pitch=0){let i=physical(hand,f),q=i===0?.36:.36,a=-pitch,ls=lengths[i],sign=hand?-1:1,az=yaw+(i===0?-.42*sign:(i-2)*.06*sign),p=base.slice();for(let j=0;j<3;j++){let angle=a-(j===0?0:j===1?q:1.65*q);p=add(p,[Math.sin(az)*ls[j]*Math.cos(angle),ls[j]*Math.sin(angle),Math.cos(az)*ls[j]*Math.cos(angle)])}return p}
+function defaultTip(base,hand,f,yaw,pitch=0){let i=physical(hand,f),q=restCurl[i],a=-pitch-restFlex[i],ls=lengths[i],sign=hand?-1:1,az=yaw+(i===0?-.42*sign:(i-2)*.06*sign),p=base.slice();for(let j=0;j<3;j++){let angle=a-(j===0?0:j===1?q:1.65*q);p=add(p,[Math.sin(az)*ls[j]*Math.cos(angle),ls[j]*Math.sin(angle),Math.cos(az)*ls[j]*Math.cos(angle)])}return p}
 function arm(shoulder,wrist,hand,force=0){let upper=.49,lower=.435,v=sub(wrist,shoulder),distance=Math.hypot(...v),d=clamp(distance,Math.abs(upper-lower)+.001,upper+lower-.002),dir=unit(v),end=add(shoulder,mul(dir,d)),along=(upper*upper-lower*lower+d*d)/(2*d),height=Math.sqrt(Math.max(0,upper*upper-along*along)),out=[hand?-.7:.7,-1+.18*force,-.45-.15*force],perp=unit(sub(out,mul(dir,dot(out,dir)))),elbow=add(add(shoulder,mul(dir,along)),mul(perp,height));return{shoulder,elbow,wrist:end,requestedWrist:wrist,lengths:[upper,lower],error:Math.abs(distance-d)}}
 // Display-only easing of free fingers between rendered frames. Sounding and
 // approaching fingers are never delayed, and every bone keeps its fixed length.
