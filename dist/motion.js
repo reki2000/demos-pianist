@@ -219,9 +219,13 @@ function transitFinger(hp,t,palm,hand,state,spread){let f=state.f,phys=physical(
  if(phys!==0){let i=lower(hp.frames,t+.000001)-1,from=anglesAtFrame(hp.frames[Math.max(0,i)],hand)?.[f],to=anglesAtFrame(hp.frames[i+1],hand)?.[f];if(from){rest.az=mix(from.restAz,to?.restAz??from.restAz,palm.blend||0);az=rest.az;}}
  // A released finger follows the hand in its own joint pose. It does not
  // continue reaching back across its neighbours toward the previous key.
- if(old&&t>=old.end&&t<old.end+.13){let played=releaseAngles(hp,old,hand);var r=smooth((t-old.end)/Math.min(.13,Math.max(.016,(next?.t??old.end+.2)-old.end)*.7));a=mix(played.a-(palm.pitch||0),a,r);q=mix(played.q,q,r);az=mix(played.az,az,r);}
- let freedom=old&&t>=old.end&&t<old.end+.13?r:1;let fan=(spread?.phase||0)*(spread?.amount||0)*.04*(phys===0?-.7:(phys-2)/2)*sign;az+=fan;
- if(next&&t<next.t){let begin=Math.max(old?.end??0,next.t-.14),v=smooth((t-begin)/Math.max(.008,next.t-begin)),played=pressFinger(palm,hand,f,next.pitch,smooth((t-next.t+.018)/.018));freedom*=1-v;a=mix(a,played.angles[0],v);q=mix(q,played.angles[1],v);az=mix(az,played.abduction,v);}
+ // Distal joints (PIP/DIP, q) trail the knuckle (MCP, a) with a slight phase
+ // lag so the finger curls rather than swinging as a rigid lever. The lag is
+ // a remap of the same normalized progress, so both arrive together: no pop.
+ const lag=u=>smooth(clamp((u-.13)/.87,0,1));
+ if(old&&t>=old.end&&t<old.end+.16){let played=releaseAngles(hp,old,hand);var r=smooth((t-old.end)/Math.min(.16,Math.max(.016,(next?.t??old.end+.2)-old.end)*.7));a=mix(played.a-(palm.pitch||0),a,r);q=mix(played.q,q,lag(r));az=mix(played.az,az,r);}
+ let freedom=old&&t>=old.end&&t<old.end+.16?r:1;let fan=(spread?.phase||0)*(spread?.amount||0)*.04*(phys===0?-.7:(phys-2)/2)*sign;az+=fan;
+ if(next&&t<next.t){let begin=Math.max(old?.end??0,next.t-.18),v=smooth((t-begin)/Math.max(.008,next.t-begin)),played=pressFinger(palm,hand,f,next.pitch,smooth((t-next.t+.018)/.018));freedom*=1-v;a=mix(a,played.angles[0],v);q=mix(q,played.angles[1],lag(v));az=mix(az,played.abduction,v);}
  az=clamp(az,-abduction[phys],abduction[phys]);let solved=bendFinger(base,hand,f,a,q,palm.yaw+az,palm.yaw,state.point||defaultTip(base,hand,f,palm.yaw,palm.pitch));return{...solved,avoided:false,restMCP:0,freedom,approaching:!!next&&next.t-t<.05};
 }
 function wristGesture(hp,t){let release=0,nextTime=Infinity,velocity=0;
@@ -268,7 +272,7 @@ function defaultTip(base,hand,f,yaw,pitch=0){let i=physical(hand,f),q=i===0?.36:
 function arm(shoulder,wrist,hand,force=0){let upper=.49,lower=.435,v=sub(wrist,shoulder),distance=Math.hypot(...v),d=clamp(distance,Math.abs(upper-lower)+.001,upper+lower-.002),dir=unit(v),end=add(shoulder,mul(dir,d)),along=(upper*upper-lower*lower+d*d)/(2*d),height=Math.sqrt(Math.max(0,upper*upper-along*along)),out=[hand?-.7:.7,-1+.18*force,-.45-.15*force],perp=unit(sub(out,mul(dir,dot(out,dir)))),elbow=add(add(shoulder,mul(dir,along)),mul(perp,height));return{shoulder,elbow,wrist:end,requestedWrist:wrist,lengths:[upper,lower],error:Math.abs(distance-d)}}
 // Display-only easing of free fingers between rendered frames. Sounding and
 // approaching fingers are never delayed, and every bone keeps its fixed length.
-function soften(previous,current,dt,tau=.035){if(!previous||!(dt>0)||dt>.1)return current;let k=1-Math.exp(-dt/tau);
+function soften(previous,current,dt,tau=.05){if(!previous||!(dt>0)||dt>.1)return current;let k=1-Math.exp(-dt/tau);
  for(let h=0;h<2;h++)for(let f=0;f<5;f++){let F=current.hands[h].fingers[f],P=previous.hands[h].fingers[f];if(F.contact||F.approaching||F.press>0)continue;let base=F.points[0],points=[base];
   for(let j=1;j<4;j++){let want=add(base,sub(F.points[j],base).map((v,i)=>mix(P.points[j][i]-P.points[0][i],v,k))),dir=unit(sub(want,points[j-1]));points.push(add(points[j-1],mul(dir,F.lengths[j-1])));}
   current.hands[h].fingers[f]={...F,points};}
