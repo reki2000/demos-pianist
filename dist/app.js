@@ -9,9 +9,12 @@ function prepare(){maxNoteDuration=Math.max(...song.notes.map(n=>n[1]))+.01;Pian
 function lowerBound(arr,t){let a=0,b=arr.length;while(a<b){let m=(a+b)>>1;if(arr[m][0]<t)a=m+1;else b=m}return a}
 // The heard position is the audio clock minus the output latency. On slow
 // tablets the timestamp APIs jitter by tens of milliseconds per call (and
-// sometimes drop out to a differently-biased fallback), which made the
-// rendered position vibrate back and forth. So the latency is estimated
-// from those readings but only tracked slowly, the clock itself is the
+// sometimes drop out to a differently-biased fallback or wander), which
+// made the rendered position vibrate. So the latency is estimated from
+// those readings but tracked like a PLL: fast acquisition for the first
+// two seconds, then a slow time constant and a hard cap of 25ms/s on how
+// fast the estimate may move, because a device's true output latency is
+// constant unless the audio route changes. The clock itself is the
 // smooth ctx.currentTime, and the shown position never runs backwards
 // while playing: estimator noise can stall it, never reverse it.
 let latencyEst=null,latencyStamp=0,shownTime=0;
@@ -20,7 +23,7 @@ function audibleClock(){if(!ctx)return 0;let now=performance.now()/1000,est=null
 // latency properties are only a bootstrap until a valid sample arrives,
 // so the two estimators' different biases never alternate per frame.
 if(est===null&&latencyEst===null)est=clamp(ctx.outputLatency||ctx.baseLatency||0,0,.5);
-if(est!==null){if(latencyEst===null){latencyEst=est;latencyStamp=now}else{latencyEst+=(est-latencyEst)*(1-Math.exp(-(now-latencyStamp)/.75));latencyStamp=now}}
+if(est!==null){if(latencyEst===null){latencyEst=est;latencyStamp=now}else{let dtw=Math.min(.25,Math.max(0,now-latencyStamp)),step=(est-latencyEst)*(1-Math.exp(-dtw/(ctx.currentTime-anchor<2?.6:3.5)));latencyEst+=clamp(step,-.025*dtw,.025*dtw);latencyStamp=now}}
 return ctx.currentTime-(latencyEst||0)}
 function currentTime(){if(!playing)return position;let t=clamp(startPos+(audibleClock()-anchor-(audioEngine?.latency||0))*speed,0,song.duration);if(t<shownTime&&shownTime-t<1)t=shownTime;else shownTime=t;return t}
 async function audioInit(requested,token){if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:44100,latencyHint:'interactive'});const waking=ctx.resume();audioEngine=PianoAudio.create(ctx,{volume:Number($('volume').value)});master=audioEngine.master;voices=audioEngine.voices;window.recitalAudioDebug=audioEngine.stats;await waking;}else await ctx.resume();await audioEngine.loadForSong(requested,p=>{if(token===playToken)$('status').textContent='Preparing recorded piano… '+p.loaded+' / '+p.total;});}
