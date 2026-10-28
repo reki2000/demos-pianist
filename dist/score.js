@@ -34,13 +34,28 @@ function keyGlyphs(fifths,bass=false){
 function flagCount(duration){return duration<.21?3:duration<.42?2:duration<.85?1:0}
 function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,beat:beatAt(s,n[0]),duration:Math.max(.125,beatAt(s,n[0]+n[1])-beatAt(s,n[0]))})),lanes=Array.from({length:4},()=>[]),beams=[],clusters=[];
  for(const e of m){let lane=(e.n[2]<60?0:2)+e.n[4],arr=lanes[lane],last=arr.at(-1);if(last&&Math.abs(e.beat-last.beat)<.045)last.notes.push(e);else{last={beat:e.beat,notes:[e],lane};arr.push(last);clusters.push(last)}e.cluster=last;}
+ // A chord whose tones straddle the middle-C lane split is still one chord:
+ // fold the smaller same-hand cluster at the same beat into its partner so
+ // the tones share a stem, flags and any beam. Only fold when the two
+ // clusters last about as long as each other (not two real voices).
+ for(let hand=0;hand<2;hand++){const pair=[lanes[hand],lanes[hand+2]];
+  for(let li=0;li<2;li++){const arr=pair[li],other=pair[1-li];
+   for(let i=arr.length-1;i>=0;i--){const cl=arr[i],partner=other.find(o=>Math.abs(o.beat-cl.beat)<.045);if(!partner)continue;
+    const dA=Math.max(...cl.notes.map(e=>e.duration)),dB=Math.max(...partner.notes.map(e=>e.duration));
+    if(Math.max(dA,dB)/Math.min(dA,dB)>1.6)continue;
+    const home=(hand===0)===(li===0),winner=cl.notes.length!==partner.notes.length?(cl.notes.length>partner.notes.length?cl:partner):(home?cl:partner),loser=winner===cl?partner:cl;
+    winner.notes.push(...loser.notes);for(const e of loser.notes)e.cluster=winner;
+    const la=loser===cl?arr:other;la.splice(la.indexOf(loser),1);clusters.splice(clusters.indexOf(loser),1);
+   }
+  }
+ }
  for(const lane of lanes){let group=[];const finish=()=>{if(group.length>1){let beam={clusters:group.slice()};beams.push(beam);for(const cl of group){cl.beam=beam;for(const e of cl.notes)e.beam=beam}}group=[]};
   for(let i=0;i<lane.length;i++){let cl=lane[i],next=lane[i+1],duration=Math.max(...cl.notes.map(e=>e.duration)),delta=next?next.beat-cl.beat:Infinity;
    // MIDI note-offs are often shorter than the written rhythmic value.
    if(delta<1.6&&duration>=delta*.64&&duration<=delta*1.10)duration=delta;
-   cl.flags=flagCount(duration);for(const e of cl.notes)e.flags=cl.flags;
-   let sig=signatureAt(s,cl.beat),unit=sig.denominator===8&&sig.numerator%3===0&&sig.numerator>3?1.5:4/sig.denominator,cell=Math.floor((cl.beat-sig.beat+.035)/unit),key=sig.beat+':'+cell,prev=group.at(-1);
-   if(!cl.flags){finish();continue}if(prev&&(prev.cell!==key||cl.beat-prev.beat>Math.max(.26,prev.rhythm*1.4)))finish();cl.cell=key;cl.rhythm=duration;group.push(cl);
+   cl.value=duration;cl.flags=flagCount(duration);for(const e of cl.notes)e.flags=cl.flags;
+   let sig=signatureAt(s,cl.beat),unit=sig.denominator===8&&sig.numerator%3===0?1.5:4/sig.denominator,cell=Math.floor((cl.beat-sig.beat+.035)/unit),key=sig.beat+':'+cell,prev=group.at(-1);
+   if(!cl.flags){finish();continue}if(prev&&(prev.cell!==key||cl.beat-prev.beat>Math.max(.62,prev.rhythm*1.4)))finish();cl.cell=key;cl.rhythm=duration;group.push(cl);
   }finish();
  }
  // A key signature applies to every octave; a bar's accidentals override it
@@ -73,7 +88,7 @@ for(let i=l;i<list.length&&list[i].beat<=end+.4;i++){let e=list[i],n=e.n,p=n[2],
 if(shift){c.font='9px Arial';c.fillText(shift>0?'8va':'8vb',x-8,shift>0?base-30:base+64)}
 for(let yy=base-7;yy>=y-1;yy-=7)line(x-9,yy,x+9,yy,color);for(let yy=base+35;yy<=y+1;yy+=7)line(x-9,yy,x+9,yy,color);
 if(e.spelling.accidental){c.fillStyle=color;c.font='15px Georgia,serif';c.fillText(e.spelling.accidental,x-18,y+5)}
-c.beginPath();c.ellipse(x,y,5.7,3.8,-.35,0,Math.PI*2);if(e.duration>=1.8){c.strokeStyle=color;c.lineWidth=1.6;c.stroke()}else c.fill();glyphs.set(e,{x,y,base,color,on});let up=y>base+14,stemX=x+(up?5:-5),stemY=y+(up?-25:25);if(e.duration<3.6&&!e.beam){line(stemX,y,stemX,stemY,color);if(e.flags){let flags=e.flags;for(let f=0;f<flags;f++){c.strokeStyle=color;c.beginPath();c.moveTo(stemX,stemY+(up?f*5:-f*5));c.quadraticCurveTo(stemX+(up?10:-10),stemY+(up?10:-10)+(up?f*5:-f*5),stemX+(up?6:-6),stemY+(up?16:-16)+(up?f*5:-f*5));c.stroke()}}}
+c.beginPath();c.ellipse(x,y,5.7,3.8,-.35,0,Math.PI*2);if(e.duration>=1.8){c.strokeStyle=color;c.lineWidth=1.6;c.stroke()}else c.fill();glyphs.set(e,{x,y,base,color,on});
 }
 let beamCount=0;
 for(const beam of list.beams){let visible=beam.clusters.some(cl=>cl.notes.some(e=>glyphs.has(e)));if(!visible)continue;
@@ -84,6 +99,11 @@ for(const beam of list.beams){let visible=beam.clusters.some(cl=>cl.notes.some(e
  drawBeam(first.x+stemOffset,last.x+stemOffset,0);
  for(let level=1;level<3;level++)for(let i=0;i<positions.length;i++){let g=positions[i];if(g.cl.flags<=level)continue;let next=positions[i+1],prev=positions[i-1];if(next&&next.cl.flags>level)drawBeam(g.x+stemOffset,next.x+stemOffset,level);else if(!prev||prev.cl.flags<=level){let direction=next?1:-1,length=Math.min(10,Math.abs((next||prev)?.x-g.x||20)*.4);drawBeam(g.x+stemOffset,g.x+stemOffset+direction*length,level)}}beamCount++;
 }
+// Unbeamed clusters get one shared stem and one set of flags per cluster,
+// however many noteheads the chord has.
+for(const cl of list.clusters){if(cl.beam||!(cl.value<3.6))continue;let gs=cl.notes.map(e=>glyphs.get(e)).filter(Boolean);if(!gs.length)continue;let base=gs[0].base,x=gs[0].x,ys=gs.map(g=>g.y),up=ys.reduce((a,b)=>a+b,0)/ys.length>base+14,stemX=x+(up?5:-5),tip=up?Math.min(...ys)-25:Math.max(...ys)+25,color=cl.notes.some(e=>glyphs.get(e)?.on)?'#ffcc70':'#d8d0c1';
+for(const y of ys)line(stemX,y,stemX,tip,color);
+if(cl.flags){c.strokeStyle=color;for(let f=0;f<cl.flags;f++){c.beginPath();c.moveTo(stemX,tip+(up?f*5:-f*5));c.quadraticCurveTo(stemX+(up?10:-10),tip+(up?10:-10)+(up?f*5:-f*5),stemX+(up?6:-6),tip+(up?16:-16)+(up?f*5:-f*5));c.stroke()}}}
 let activeFingerings=[];c.font='10px Arial';c.fillStyle='#ffcc70';
 for(const cl of list.clusters){let sounding=cl.notes.filter(e=>glyphs.get(e)?.on);if(!sounding.length)continue;let g=glyphs.get(sounding[0]),hand=sounding[0].n[4],digits=sounding.map(e=>hand?5-e.n[5]:e.n[5]+1);c.fillText((hand?'L':'R')+digits.join('·'),g.x-5,g.base+45+hand*12);for(let j=0;j<sounding.length;j++)activeFingerings.push({hand,pitch:sounding[j].n[2],digit:digits[j]});}
 c.restore();line(cursor,23,cursor,staff2+38,'#dfbe83');c.fillStyle='#dfbe83';c.beginPath();c.moveTo(cursor-5,20);c.lineTo(cursor+5,20);c.lineTo(cursor,27);c.fill();canvas.setAttribute('aria-label',s.title+': automatic transcription. Sounding MIDI pitches '+active.join(', ')+'. Fingering '+activeFingerings.map(f=>(f.hand?'L':'R')+f.digit).join(', '));window.recitalScoreDebug={time:t,beat:current,activeNotes:active,activeFingerings,beamGroups:beamCount};
