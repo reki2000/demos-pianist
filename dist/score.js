@@ -37,12 +37,16 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
  // A chord whose tones straddle the middle-C lane split is still one chord:
  // fold the smaller same-hand cluster at the same beat into its partner so
  // the tones share a stem, flags and any beam. Only fold when the two
- // clusters last about as long as each other (not two real voices).
+ // clusters last about as long as each other (not two real voices) and
+ // their nearest tones are within an octave: distant high and low notes
+ // keep separate flags (the same rule breaks beams below).
  for(let hand=0;hand<2;hand++){const pair=[lanes[hand],lanes[hand+2]];
   for(let li=0;li<2;li++){const arr=pair[li],other=pair[1-li];
    for(let i=arr.length-1;i>=0;i--){const cl=arr[i],partner=other.find(o=>Math.abs(o.beat-cl.beat)<.045);if(!partner)continue;
     const dA=Math.max(...cl.notes.map(e=>e.duration)),dB=Math.max(...partner.notes.map(e=>e.duration));
     if(Math.max(dA,dB)/Math.min(dA,dB)>1.6)continue;
+    const psA=cl.notes.map(e=>e.n[2]),psB=partner.notes.map(e=>e.n[2]),gapAB=Math.max(...psA)<Math.min(...psB)?Math.min(...psB)-Math.max(...psA):Math.max(...psB)<Math.min(...psA)?Math.min(...psA)-Math.max(...psB):0;
+    if(gapAB>12)continue;
     const home=(hand===0)===(li===0),winner=cl.notes.length!==partner.notes.length?(cl.notes.length>partner.notes.length?cl:partner):(home?cl:partner),loser=winner===cl?partner:cl;
     winner.notes.push(...loser.notes);for(const e of loser.notes)e.cluster=winner;
     const la=loser===cl?arr:other;la.splice(la.indexOf(loser),1);clusters.splice(clusters.indexOf(loser),1);
@@ -53,9 +57,9 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
   for(let i=0;i<lane.length;i++){let cl=lane[i],next=lane[i+1],duration=Math.max(...cl.notes.map(e=>e.duration)),delta=next?next.beat-cl.beat:Infinity;
    // MIDI note-offs are often shorter than the written rhythmic value.
    if(delta<1.6&&duration>=delta*.64&&duration<=delta*1.10)duration=delta;
-   cl.value=duration;cl.flags=flagCount(duration);for(const e of cl.notes)e.flags=cl.flags;
+   cl.value=duration;cl.flags=flagCount(duration);for(const e of cl.notes)e.flags=cl.flags;cl.lo=Math.min(...cl.notes.map(e=>e.n[2]));cl.hi=Math.max(...cl.notes.map(e=>e.n[2]));
    let sig=signatureAt(s,cl.beat),unit=sig.denominator===8&&sig.numerator%3===0?1.5:4/sig.denominator,cell=Math.floor((cl.beat-sig.beat+.035)/unit),key=sig.beat+':'+cell,prev=group.at(-1);
-   if(!cl.flags){finish();continue}if(prev&&(prev.cell!==key||cl.beat-prev.beat>Math.max(.62,prev.rhythm*1.4)))finish();cl.cell=key;cl.rhythm=duration;group.push(cl);
+   if(!cl.flags){finish();continue}if(prev&&(prev.cell!==key||cl.beat-prev.beat>Math.max(.62,prev.rhythm*1.4)||(cl.lo>prev.hi?cl.lo-prev.hi:prev.lo>cl.hi?prev.lo-cl.hi:0)>12))finish();cl.cell=key;cl.rhythm=duration;group.push(cl);
   }finish();
  }
  // A key signature applies to every octave; a bar's accidentals override it
