@@ -36,4 +36,21 @@ let heroStart=heroLH.find(cl=>Math.abs(cl.beat-130.75)<.06),heroHigh=heroLH.find
 assert.equal(heroClefs.clefOf.get(heroHigh),'treble','hero beats 131: LH chord group takes the temporary treble clef');
 assert.equal(heroClefs.clefOf.get(heroBack),'bass','hero beats 131.5: LH scale is back in bass clef');
 assert(heroClefs.starts.has(heroStart)&&heroClefs.clefOf.get(heroStart)==='treble'&&heroClefs.starts.has(heroBack),'clef changes are announced at the first cluster of each run');
+// Chord folding: no two clusters of one hand may sit within the fold
+// tolerance across the lane split with their nearest tones an octave
+// or less apart -- such pairs are one broken-chord figure and must
+// have been folded into a single chord (grace notes excepted).
+let graceTotal=0;
+for(const s of SONGS){const m=PianoScore.model(s);graceTotal+=m.clusters.filter(c=>c.grace).length;
+ for(const hand of [0,1]){const arr=m.clusters.filter(c=>c.notes[0].n[4]===hand).sort((a,b)=>a.beat-b.beat);
+  for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length&&arr[j].beat-arr[i].beat<.045;j++){
+   const a=arr[i],b=arr[j];if(a.lane===b.lane||a.grace||b.grace)continue;
+   const A=a.notes.map(e=>e.n[2]),B=b.notes.map(e=>e.n[2]);
+   const gap=Math.max(...A)<Math.min(...B)?Math.min(...B)-Math.max(...A):Math.max(...B)<Math.min(...A)?Math.min(...A)-Math.max(...B):0;
+   assert(gap>12,'unfolded split chord in '+s.id+' @'+a.beat)}}}
+// Grace notes are rare ornaments, not a texture: the conservative
+// rule (a lone note crushed just before a lone main note) must keep
+// the total tiny, and liebestraum's acciaccatura must be one of them.
+assert(graceTotal>=1&&graceTotal<=2,'grace cluster total '+graceTotal);
+assert(PianoScore.model(SONGS.find(s=>s.id==='liebestraum')).clusters.some(c=>c.grace),'liebestraum grace note');
 console.log(JSON.stringify({beamGroups:groups,simpleMeter:true,compoundMeter:true,restsBreakBeams:true,quarterNotesUnbeamed:true,chordStems:true,mixedSecondaryBeams:true,keySignatures:true,measureAccidentals:true,lowerStaffClefChanges:clefChanges}));

@@ -36,25 +36,40 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
  for(const e of m){let lane=(e.n[2]<60?0:2)+e.n[4],arr=lanes[lane],last=arr.at(-1);if(last&&Math.abs(e.beat-last.beat)<.045)last.notes.push(e);else{last={beat:e.beat,notes:[e],lane};arr.push(last);clusters.push(last)}e.cluster=last;}
  // A chord whose tones straddle the middle-C lane split is still one chord:
  // fold the smaller same-hand cluster at the same beat into its partner so
- // the tones share a stem, flags and any beam. Only fold when the two
- // clusters last about as long as each other (not two real voices) and
- // their nearest tones are within an octave: distant high and low notes
- // keep separate flags (the same rule breaks beams below).
+ // the tones share a stem, flags and any beam: a broken-chord figure
+ // whose tones straddle the lane split is one chord, however uneven
+ // the measured note lengths are (the long side is usually pedal
+ // ring, so the merged chord takes the shorter side's value below).
+ // Only the pitch rule still separates them: nearest tones more than
+ // an octave apart keep separate flags (the same rule breaks beams).
+ // Ornaments first: a lone note crushed .01-.05 beats before the
+ // next note of the same hand, where that note is a main position
+ // (not itself part of a fast run) and the pair is not an octave
+ // doubling, is a grace note -- it borrows its time from the note it
+ // decorates, so it neither folds into a chord nor takes a full
+ // rhythmic position. Print sets these small, with a slashed stem.
+ {const sorted=[...clusters].sort((a,b)=>a.beat-b.beat);
+  for(const hand of [0,1]){const hc=sorted.filter(c=>c.notes[0].n[4]===hand);
+   for(let i=0;i+1<hc.length;i++){const a=hc[i],b=hc[i+1],d=b.beat-a.beat;
+    if(d<=.01||d>=.05||a.notes.length!==1||b.notes.length!==1)continue;
+    const after=hc[i+2];if(after&&after.beat-b.beat<.05)continue;
+    if(b.notes.some(e=>Math.abs(e.n[2]-a.notes[0].n[2])===12))continue;
+    a.grace=true;for(const e of a.notes)e.grace=true}}}
  for(let hand=0;hand<2;hand++){const pair=[lanes[hand],lanes[hand+2]];
   for(let li=0;li<2;li++){const arr=pair[li],other=pair[1-li];
-   for(let i=arr.length-1;i>=0;i--){const cl=arr[i],partner=other.find(o=>Math.abs(o.beat-cl.beat)<.045);if(!partner)continue;
+   for(let i=arr.length-1;i>=0;i--){const cl=arr[i],partner=other.find(o=>Math.abs(o.beat-cl.beat)<.045);if(!partner||cl.grace||partner.grace)continue;
     const dA=Math.max(...cl.notes.map(e=>e.duration)),dB=Math.max(...partner.notes.map(e=>e.duration));
-    if(Math.max(dA,dB)/Math.min(dA,dB)>1.6)continue;
     const psA=cl.notes.map(e=>e.n[2]),psB=partner.notes.map(e=>e.n[2]),gapAB=Math.max(...psA)<Math.min(...psB)?Math.min(...psB)-Math.max(...psA):Math.max(...psB)<Math.min(...psA)?Math.min(...psA)-Math.max(...psB):0;
     if(gapAB>12)continue;
     const home=(hand===0)===(li===0),winner=cl.notes.length!==partner.notes.length?(cl.notes.length>partner.notes.length?cl:partner):(home?cl:partner),loser=winner===cl?partner:cl;
     winner.notes.push(...loser.notes);for(const e of loser.notes)e.cluster=winner;
+    winner.valueDur=Math.min(dA,dB);
     const la=loser===cl?arr:other;la.splice(la.indexOf(loser),1);clusters.splice(clusters.indexOf(loser),1);
    }
   }
  }
  for(const lane of lanes){let group=[];const finish=()=>{if(group.length>1){let beam={clusters:group.slice()};beams.push(beam);for(const cl of group){cl.beam=beam;for(const e of cl.notes)e.beam=beam}}group=[]};
-  for(let i=0;i<lane.length;i++){let cl=lane[i],next=lane[i+1],duration=Math.max(...cl.notes.map(e=>e.duration)),delta=next?next.beat-cl.beat:Infinity;
+  for(let i=0;i<lane.length;i++){let cl=lane[i],next=lane[i+1],duration=cl.valueDur??Math.max(...cl.notes.map(e=>e.duration)),delta=next?next.beat-cl.beat:Infinity;
    // MIDI note-offs are often shorter than the written rhythmic value.
    if(delta<1.6&&duration>=delta*.64&&duration<=delta*1.10)duration=delta;
    cl.value=duration;cl.flags=flagCount(duration);for(const e of cl.notes)e.flags=cl.flags;cl.lo=Math.min(...cl.notes.map(e=>e.n[2]));cl.hi=Math.max(...cl.notes.map(e=>e.n[2]));
@@ -252,7 +267,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
   for(let yy=base-7;yy>=minY-1;yy-=7)line(xLo,yy,xHi,yy,color,1.3);for(let yy=base+35;yy<=maxY+1;yy+=7)line(xLo,yy,xHi,yy,color,1.3);
   for(const e of items){let g=G.get(e);
    if(g.accX!==undefined){c.fillStyle=g.color;c.font='15px Georgia,serif';c.fillText(e.spelling.accidental,g.accX,g.y+5)}
-   c.fillStyle=g.color;c.strokeStyle=g.color;c.beginPath();c.ellipse(g.hx,g.y,4.8,3.5,-.35,0,Math.PI*2);if(e.duration>=1.8){c.lineWidth=1.6;c.stroke()}else c.fill();
+   c.fillStyle=g.color;c.strokeStyle=g.color;c.beginPath();c.ellipse(g.hx,g.y,e.grace?3.3:4.8,e.grace?2.4:3.5,-.35,0,Math.PI*2);if(e.duration>=1.8){c.lineWidth=1.6;c.stroke()}else c.fill();
    glyphs.set(e,{x:g.hx,ax:g.ax,y:g.y,base:g.base,color:g.color,on:g.on,dia:g.dia,ref:g.ref})}
   let shifted=items.filter(e=>G.get(e).shift);
   if(shifted.length){let g0=G.get(shifted[0]);c.fillStyle=g0.color;c.font='9px Arial';
@@ -308,7 +323,8 @@ if(cl.flags){let nx=nextOnStaff.get(cl),ng=nx?nx.notes.map(e=>glyphs.get(e)).fil
   if(fTop<sBot&&sTop<fBot)limit=Math.min(limit,nStemX-1.5);
   for(const e of nx.notes){let ga=G.get(e);if(ga&&ga.accX!==undefined&&fTop<ga.y+7.5&&ga.y-7.5<fBot)limit=Math.min(limit,ga.accX-1)}
   if(limit<Infinity){let k=Math.max(.3,Math.min(1,(limit-stemX)/7));sweep=10*k;endS=6*k}}
- c.strokeStyle=color;for(let f=0;f<cl.flags;f++){c.beginPath();c.moveTo(stemX,tip+(up?f*5:-f*5));c.quadraticCurveTo(stemX+sweep,tip+(up?10:-10)+(up?f*5:-f*5),stemX+endS,tip+(up?16:-16)+(up?f*5:-f*5));c.stroke()}}}
+ c.strokeStyle=color;for(let f=0;f<cl.flags;f++){c.beginPath();c.moveTo(stemX,tip+(up?f*5:-f*5));c.quadraticCurveTo(stemX+sweep,tip+(up?10:-10)+(up?f*5:-f*5),stemX+endS,tip+(up?16:-16)+(up?f*5:-f*5));c.stroke()}
+  if(cl.grace){c.beginPath();c.moveTo(stemX-3,tip+(up?16:-16));c.lineTo(stemX+4.5,tip+(up?4:-4));c.stroke()}}}
 let activeFingerings=[];c.font='10px Arial';c.fillStyle='#ffcc70';
 for(const cl of list.clusters){let sounding=cl.notes.filter(e=>glyphs.get(e)?.on);if(!sounding.length)continue;let g=glyphs.get(sounding[0]),hand=sounding[0].n[4],digits=sounding.map(e=>hand?5-e.n[5]:e.n[5]+1);c.fillText((hand?'L':'R')+digits.join('·'),(g.ax??g.x)-5,g.base+45+hand*12);for(let j=0;j<sounding.length;j++)activeFingerings.push({hand,pitch:sounding[j].n[2],digit:digits[j]});}
 c.restore();line(cursor,23,cursor,staff2+38,'#dfbe83');c.fillStyle='#dfbe83';c.beginPath();c.moveTo(cursor-5,20);c.lineTo(cursor+5,20);c.lineTo(cursor,27);c.fill();canvas.setAttribute('aria-label',s.title+': automatic transcription. Sounding MIDI pitches '+active.join(', ')+'. Fingering '+activeFingerings.map(f=>(f.hand?'L':'R')+f.digit).join(', '));window.recitalScoreDebug={time:t,beat:current,activeNotes:active,activeFingerings,beamGroups:beamCount};
