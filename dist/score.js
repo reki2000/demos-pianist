@@ -161,8 +161,46 @@ let dirOf=tones=>{let above=tones.filter(g=>g.y<g.base+14).length,below=tones.le
  let far=tones.reduce((a,g)=>Math.abs(g.y-g.base-14)>Math.abs(a.y-a.base-14)?g:a);return far.y>far.base+14};
 let beamUp=new Map();
 for(const beam of list.beams){let tones=[];for(const cl of beam.clusters)for(const e of cl.notes){let g=G.get(e);if(g)tones.push(g)}if(tones.length)beamUp.set(beam,dirOf(tones))}
+// Cross-staff flag rule: when a beamed group's or a flagged cluster's
+// flag ink would overlap the other staff -- its beams, flags or
+// noteheads -- the direction is forced instead: the upper staff's flags
+// point up, the lower staff's point down. Extents use the same geometry
+// the beam pass below draws with, so the test sees what the reader
+// will see. Flips only ever move ink away from the other staff, so one
+// pass over the initial layout settles every conflict.
+let beamPos=beam=>beam.clusters.map(cl=>{let tones=cl.notes.map(e=>{let g=G.get(e)||place(e,cl);return{x:g.ax,y:g.y,base:g.base,dia:g.dia}});
+ return{cl,x:tones[0].x,base:tones[0].base,ys:tones.map(g=>g.y),centre:tones.reduce((a,g)=>a+g.dia,0)/tones.length}});
+let beamBox=(beam,up)=>{let positions=beamPos(beam),first=positions[0],last=positions.at(-1),
+ dSteps=Math.round(last.centre-first.centre),rise=[0,.25,.5,.75,1,1.25,1.5][Math.min(6,Math.abs(dSteps))]*gap,
+ slope=dSteps===0?0:-Math.sign(dSteps)*rise/Math.max(1,last.x-first.x),stemOffset=up?4:-4;
+ let intercept=up?Infinity:-Infinity;
+ for(const g of positions){let edge=up?Math.min(...g.ys):Math.max(...g.ys),candidate=edge+(up?-28:28)-slope*(g.x-first.x);intercept=up?Math.min(intercept,candidate):Math.max(intercept,candidate)}
+ for(const g of positions){let edge=up?Math.min(...g.ys):Math.max(...g.ys),len=up?edge-(intercept+slope*(g.x-first.x)):intercept+slope*(g.x-first.x)-edge;if(len<17.5)intercept+=up?len-17.5:17.5-len}
+ intercept=(up?Math.floor(intercept/1.75):Math.ceil(intercept/1.75))*1.75;
+ let beamY=x=>intercept+slope*(x-first.x-stemOffset),sp=(Math.max(...beam.clusters.map(c=>c.flags))-1)*5.25+3.5,
+  yA=beamY(first.x+stemOffset),yB=beamY(last.x+stemOffset);
+ return{x0:Math.min(first.x+stemOffset,last.x+stemOffset),x1:Math.max(first.x+stemOffset,last.x+stemOffset),top:up?Math.min(yA,yB):Math.min(yA,yB)-sp,bot:up?Math.max(yA,yB)+sp:Math.max(yA,yB)}};
+let flagBox=(grp,up)=>{let items=grp.items.map(e=>G.get(e)),ys=items.map(g=>g.y),base=items[0].base,x=items[0].ax,
+ stemX=x+(up?4:-4),edge=up?Math.min(...ys):Math.max(...ys),tip=edge+(up?-24.5:24.5),fl=grp.cl.flags,span=fl?16+5*(fl-1):0;
+ if(up&&edge>base+14)tip=Math.min(tip,base+14);if(!up&&edge<base+14)tip=Math.max(tip,base+14);
+ return{x0:stemX,x1:fl?stemX+8:stemX,top:up?tip:tip-span,bot:up?tip+span:tip}};
+let clusterDir=new Map(),flagItems=[];
+for(const beam of list.beams){if(!beamUp.has(beam))continue;let up=beamUp.get(beam);
+ flagItems.push({staff:beam.clusters[0].notes[0].n[4],box:beamBox(beam,up),up,beam})}
+for(const grp of groups){let cl=grp.cl;if(cl.beam)continue;let up=dirOf(grp.items.map(e=>G.get(e)));clusterDir.set(cl,up);
+ flagItems.push({staff:cl.notes[0].n[4],box:flagBox(grp,up),up,cl})}
+let headsByStaff=[[],[]];for(const e of vis)headsByStaff[G.get(e).base===staff2?1:0].push(G.get(e));
+const xOv=(a,b)=>a.x0<b.x1&&b.x0<a.x1,yOv=(a,b)=>a.top<b.bot&&b.top<a.bot;
+for(const it of flagItems){let unsafe=it.staff===0?!it.up:it.up;if(!unsafe)continue;
+ let hit=flagItems.some(jt=>jt.staff!==it.staff&&xOv(it.box,jt.box)&&yOv(it.box,jt.box))||
+  headsByStaff[1-it.staff].some(g=>xOv(it.box,{x0:g.ax-4.8,x1:g.ax+4.8})&&yOv(it.box,{top:g.y-3.5,bot:g.y+3.5}));
+ if(!hit)continue;let nu=it.staff===0;
+ if(it.beam)beamUp.set(it.beam,nu);else clusterDir.set(it.cl,nu);it.up=nu}
+for(const beam of list.beams)if(beamUp.has(beam))for(const cl of beam.clusters)clusterDir.set(cl,beamUp.get(beam));
+let nextOnStaff=new Map(),lastByHand=[null,null];
+for(const cl of list.clusters){let hd=cl.notes[0].n[4];if(lastByHand[hd])nextOnStaff.set(lastByHand[hd],cl);lastByHand[hd]=cl}
 let layout=new Map();
-for(const grp of groups){let cl=grp.cl,up=cl.beam&&beamUp.has(cl.beam)?beamUp.get(cl.beam):dirOf(grp.items.map(e=>G.get(e)));layout.set(cl,up);
+for(const grp of groups){let cl=grp.cl,up=clusterDir.get(cl)??(cl.beam&&beamUp.has(cl.beam)?beamUp.get(cl.beam):dirOf(grp.items.map(e=>G.get(e))));layout.set(cl,up);
  let subs=new Map();for(const e of grp.items){let g=G.get(e);if(!subs.has(g.base))subs.set(g.base,[]);subs.get(g.base).push(e)}
  for(const [base,items] of subs){
   // Seconds in a chord: heads alternate sides of the stem, displaced by a
@@ -251,11 +289,26 @@ for(const beam of list.beams){let visible=beam.clusters.some(cl=>cl.notes.some(e
 // The stem runs 3.5 spaces from the tip-side head, extended so its tip
 // still reaches the middle line when the chord sits far outside the
 // staff, and flags always sweep to the right of the stem.
-for(const cl of list.clusters){if(cl.beam||!(cl.value<3.6))continue;let gs=cl.notes.map(e=>glyphs.get(e)).filter(Boolean);if(!gs.length)continue;let base=gs[0].base,x=gs[0].ax,ys=gs.map(g=>g.y),up=layout.get(cl)??(ys.reduce((a,b)=>a+b,0)/ys.length>base+14),stemX=x+(up?4:-4),edge=up?Math.min(...ys):Math.max(...ys),tip=edge+(up?-24.5:24.5);
+for(const cl of list.clusters){if(cl.beam||!(cl.value<3.6))continue;let gs=cl.notes.map(e=>glyphs.get(e)).filter(Boolean);if(!gs.length)continue;let base=gs[0].base,x=gs[0].ax,ys=gs.map(g=>g.y),up=layout.get(cl)??(ys.reduce((a,b)=>a+b,0)/ys.length>base+14),stemX=x+(up?4:-4),edge=up?Math.min(...ys):Math.max(...ys),tip=edge+(up?-24.5:24.5),sweep=10,endS=6;
 if(up&&edge>base+14)tip=Math.min(tip,base+14);if(!up&&edge<base+14)tip=Math.max(tip,base+14);
 let color=cl.notes.some(e=>glyphs.get(e)?.on)?'#ffcc70':'#d8d0c1';
 for(const y of ys)line(stemX,y,stemX,tip,color);
-if(cl.flags){c.strokeStyle=color;for(let f=0;f<cl.flags;f++){c.beginPath();c.moveTo(stemX,tip+(up?f*5:-f*5));c.quadraticCurveTo(stemX+10,tip+(up?10:-10)+(up?f*5:-f*5),stemX+6,tip+(up?16:-16)+(up?f*5:-f*5));c.stroke()}}}
+if(cl.flags){let nx=nextOnStaff.get(cl),ng=nx?nx.notes.map(e=>glyphs.get(e)).filter(Boolean):[];
+ // A flag never reaches into the next cluster on its staff: when the
+ // next onset is close, the flag's sweep shrinks to fit the room
+ // before the next head, accidental or stem that it would cross.
+ if(ng.length){let nUp=layout.get(nx)??(ng.reduce((a,g)=>a+g.y,0)/ng.length>ng[0].base+14),nYs=ng.map(g=>g.y),nBase=ng[0].base,
+   nEdge=nUp?Math.min(...nYs):Math.max(...nYs),nTip=nEdge+(nUp?-24.5:24.5);
+  if(nx.beam)nTip=nEdge+(nUp?-28:28);
+  if(nUp&&nEdge>nBase+14)nTip=Math.min(nTip,nBase+14);if(!nUp&&nEdge<nBase+14)nTip=Math.max(nTip,nBase+14);
+  let fTop=up?tip:tip-(16+5*(cl.flags-1)),fBot=up?tip+16+5*(cl.flags-1):tip,limit=Infinity,
+   hTop=Math.min(...nYs)-3.5,hBot=Math.max(...nYs)+3.5;
+  if(fTop<hBot&&hTop<fBot)limit=Math.min(limit,Math.min(...ng.map(g=>g.x))-6.3);
+  let nStemX=ng[0].ax+(nUp?4:-4),sTop=Math.min(nEdge,nTip),sBot=Math.max(nEdge,nTip);
+  if(fTop<sBot&&sTop<fBot)limit=Math.min(limit,nStemX-1.5);
+  for(const e of nx.notes){let ga=G.get(e);if(ga&&ga.accX!==undefined&&fTop<ga.y+7.5&&ga.y-7.5<fBot)limit=Math.min(limit,ga.accX-1)}
+  if(limit<Infinity){let k=Math.max(.3,Math.min(1,(limit-stemX)/7));sweep=10*k;endS=6*k}}
+ c.strokeStyle=color;for(let f=0;f<cl.flags;f++){c.beginPath();c.moveTo(stemX,tip+(up?f*5:-f*5));c.quadraticCurveTo(stemX+sweep,tip+(up?10:-10)+(up?f*5:-f*5),stemX+endS,tip+(up?16:-16)+(up?f*5:-f*5));c.stroke()}}}
 let activeFingerings=[];c.font='10px Arial';c.fillStyle='#ffcc70';
 for(const cl of list.clusters){let sounding=cl.notes.filter(e=>glyphs.get(e)?.on);if(!sounding.length)continue;let g=glyphs.get(sounding[0]),hand=sounding[0].n[4],digits=sounding.map(e=>hand?5-e.n[5]:e.n[5]+1);c.fillText((hand?'L':'R')+digits.join('·'),(g.ax??g.x)-5,g.base+45+hand*12);for(let j=0;j<sounding.length;j++)activeFingerings.push({hand,pitch:sounding[j].n[2],digit:digits[j]});}
 c.restore();line(cursor,23,cursor,staff2+38,'#dfbe83');c.fillStyle='#dfbe83';c.beginPath();c.moveTo(cursor-5,20);c.lineTo(cursor+5,20);c.lineTo(cursor,27);c.fill();canvas.setAttribute('aria-label',s.title+': automatic transcription. Sounding MIDI pitches '+active.join(', ')+'. Fingering '+activeFingerings.map(f=>(f.hand?'L':'R')+f.digit).join(', '));window.recitalScoreDebug={time:t,beat:current,activeNotes:active,activeFingerings,beamGroups:beamCount};
