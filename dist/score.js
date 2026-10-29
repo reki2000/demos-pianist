@@ -68,7 +68,14 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
    }
   }
  }
- for(const lane of lanes){let group=[];const finish=()=>{if(group.length>1){let beam={clusters:group.slice()};beams.push(beam);for(const cl of group){cl.beam=beam;for(const e of cl.notes)e.beam=beam}}group=[]};
+ // Beams are formed per hand, not per pitch lane. The lanes split a
+ // hand at middle C -- an artifact from when the staff itself was
+ // chosen by pitch -- so a melodic figure that crosses middle C (an
+ // ascending F-C-Eb-A, say) was torn in two: its low first note beamed
+ // forward to the next low-lane notes, past the rest of the figure.
+ // On one staff a hand's flagged run is one gesture; the pitch-gap
+ // rule below still breaks the beam between distant notes.
+ for(const pair of [[lanes[0],lanes[2]],[lanes[1],lanes[3]]]){const lane=[...pair[0],...pair[1]].sort((a,b)=>a.beat-b.beat);let group=[];const finish=()=>{if(group.length>1){let beam={clusters:group.slice()};beams.push(beam);for(const cl of group){cl.beam=beam;for(const e of cl.notes)e.beam=beam}}group=[]};
   for(let i=0;i<lane.length;i++){let cl=lane[i],next=lane[i+1],duration=cl.valueDur??Math.max(...cl.notes.map(e=>e.duration)),delta=next?next.beat-cl.beat:Infinity;
    // MIDI note-offs are often shorter than the written rhythmic value.
    if(delta<1.6&&duration>=delta*.64&&duration<=delta*1.10)duration=delta;
