@@ -136,9 +136,9 @@ function render(canvas,s,t){let c=canvas.getContext('2d');if(!c)return;let w=can
  keyStart=40,timeX=keyStart+Math.max(1,keyCount)*9+5,left=timeX+23,
  cursor=Math.max(left+20,Math.min(w*.32,260)),top=42,gap=7,staff2=top+72;
 let line=(x,y,x2,y2,color='#6c655b',lw=1)=>{c.strokeStyle=color;c.lineWidth=lw;c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.stroke()};
-for(let base of [top,staff2])for(let i=0;i<5;i++)line(8,base+i*gap,w,base+i*gap);c.fillStyle='#dfbe83';c.font='34px Georgia,serif';c.fillText('𝄞',10,top+30);c.fillText('𝄢',10,staff2+25);
+for(let base of [top,staff2])for(let i=0;i<5;i++)line(8,base+i*gap,w,base+i*gap);c.fillStyle='#dfbe83';c.font='34px Bravura,Georgia,serif';c.fillText('𝄞',10,top+30);c.fillText('𝄢',10,staff2+25);
 let signature=signatureAt(s,current);
-c.font='21px Georgia,serif';for(const [bass,base] of [[false,top],[true,staff2]])
+c.font='21px Bravura,Georgia,serif';for(const [bass,base] of [[false,top],[true,staff2]])
  for(const [i,g] of keyGlyphs(key.fifths,bass).entries())c.fillText(g.symbol,keyStart+i*9,base+g.halfSteps*gap/2+6);
 c.font='17px Georgia,serif';for(let base of [top,staff2]){c.fillText(signature.numerator,timeX,base+12);c.fillText(signature.denominator,timeX,base+29)}
 let sm=spaceMap(s,px),Xc=sm.at(current),xPos=b=>cursor+(sm.at(b)-Xc);
@@ -243,7 +243,7 @@ for(const [bass,base] of [[false,top],[true,staff2]]){
  c.fillStyle='#a39a8c';
  let restHalf=cx=>{c.fillRect(cx-4,base+9.5,8,4.5)},restWhole=cx=>{c.fillRect(cx-4,base+7,8,4.5)},
   restBeat=(u,unit)=>{let cx=xPos(u+unit/2);if(cx<left+8||cx>w-4)return;
-   if(unit===2)restHalf(cx);else{c.font='20px Georgia,serif';c.fillText(unit===.5?'𝄾':'𝄽',cx-5,base+20);if(unit===1.5){c.beginPath();c.ellipse(cx+6.5,base+10.5,1.6,1.6,0,0,Math.PI*2);c.fill()}}};
+   if(unit===2)restHalf(cx);else{c.font='20px Bravura,Georgia,serif';c.fillText(unit===.5?'𝄾':'𝄽',cx-5,base+20);if(unit===1.5){c.beginPath();c.ellipse(cx+6.5,base+10.5,1.6,1.6,0,0,Math.PI*2);c.fill()}}};
  for(let i=1;i<merged.length;i++){let g0=merged[i-1][1],g1=merged[i][0];if(g1-g0<.95)continue;
   let sig=signatureAt(s,g0+.01),barLen=sig.numerator*4/sig.denominator,unit=sig.denominator===8&&sig.numerator%3===0?1.5:4/sig.denominator,pos=g0;
   while(pos<g1-.05){let barStart=sig.beat+Math.floor((pos-sig.beat+1e-6)/barLen)*barLen;
@@ -259,14 +259,14 @@ let dotted=v=>[3,1.5,.75].some(dv=>Math.abs(v-dv)<.06);
 for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){let g=G.get(e);if(!subs.has(g.base))subs.set(g.base,[]);subs.get(g.base).push(e)}
  // A change of the lower staff's clef is announced by a small clef
  // glyph just before the first cluster written in the new clef.
- if(clefMap.starts.has(cl)){let cc=clefMap.clefOf.get(cl);c.fillStyle='#dfbe83';c.font='22px Georgia,serif';c.fillText(cc==='treble'?'𝄞':'𝄢',Math.min(...grp.items.map(e=>G.get(e).ax))-13,staff2+(cc==='treble'?22:17))}
+ if(clefMap.starts.has(cl)){let cc=clefMap.clefOf.get(cl);c.fillStyle='#dfbe83';c.font='22px Bravura,Georgia,serif';c.fillText(cc==='treble'?'𝄞':'𝄢',Math.min(...grp.items.map(e=>G.get(e).ax))-13,staff2+(cc==='treble'?22:17))}
  for(const [base,items] of subs){let color=items.some(e=>G.get(e).on)?'#ffcc70':'#d8d0c1',xs=items.map(e=>G.get(e).hx),xLo=Math.min(...xs)-7.1,xHi=Math.max(...xs)+7.1,
    minY=Math.min(...items.map(e=>G.get(e).y)),maxY=Math.max(...items.map(e=>G.get(e).y));
   // Ledger lines are a little heavier than staff lines and reach a third
   // of a space past the outermost heads, displaced ones included.
   for(let yy=base-7;yy>=minY-1;yy-=7)line(xLo,yy,xHi,yy,color,1.3);for(let yy=base+35;yy<=maxY+1;yy+=7)line(xLo,yy,xHi,yy,color,1.3);
   for(const e of items){let g=G.get(e);
-   if(g.accX!==undefined){c.fillStyle=g.color;c.font='15px Georgia,serif';c.fillText(e.spelling.accidental,g.accX,g.y+5)}
+   if(g.accX!==undefined){c.fillStyle=g.color;c.font='15px Bravura,Georgia,serif';c.fillText(e.spelling.accidental,g.accX,g.y+5)}
    c.fillStyle=g.color;c.strokeStyle=g.color;c.beginPath();c.ellipse(g.hx,g.y,e.grace?3.3:4.8,e.grace?2.4:3.5,-.35,0,Math.PI*2);if(e.duration>=1.8){c.lineWidth=1.6;c.stroke()}else c.fill();
    glyphs.set(e,{x:g.hx,ax:g.ax,y:g.y,base:g.base,color:g.color,on:g.on,dia:g.dia,ref:g.ref})}
   let shifted=items.filter(e=>G.get(e).shift);
