@@ -40,8 +40,8 @@ assert(heroClefs.starts.has(heroStart)&&heroClefs.clefOf.get(heroStart)==='trebl
 // tolerance across the lane split with their nearest tones an octave
 // or less apart -- such pairs are one broken-chord figure and must
 // have been folded into a single chord (grace notes excepted).
-let graceTotal=0;
-for(const s of SONGS){const m=PianoScore.model(s);graceTotal+=m.clusters.filter(c=>c.grace).length;
+let graceTotal=0,runTotal=0;
+for(const s of SONGS){const m=PianoScore.model(s);graceTotal+=m.clusters.filter(c=>c.grace).length;runTotal+=m.clusters.filter(c=>c.graceRun).length;
  for(const hand of [0,1]){const arr=m.clusters.filter(c=>c.notes[0].n[4]===hand).sort((a,b)=>a.beat-b.beat);
   for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length&&arr[j].beat-arr[i].beat<.045;j++){
    const a=arr[i],b=arr[j];if(a.lane===b.lane||a.grace||b.grace)continue;
@@ -51,6 +51,12 @@ for(const s of SONGS){const m=PianoScore.model(s);graceTotal+=m.clusters.filter(
 // Grace notes are rare ornaments, not a texture: the conservative
 // rule (a lone note crushed just before a lone main note) must keep
 // the total tiny, and liebestraum's acciaccatura must be one of them.
-assert(graceTotal>=1&&graceTotal<=2,'grace cluster total '+graceTotal);
+assert(graceTotal-runTotal>=1&&graceTotal-runTotal<=2,'single grace cluster total '+(graceTotal-runTotal));
 assert(PianoScore.model(SONGS.find(s=>s.id==='liebestraum')).clusters.some(c=>c.grace),'liebestraum grace note');
+// Grace runs (one chord spread in sustained two-tone slices, set
+// small like grace notes) are clair's three spread figures and
+// nothing else in the corpus: the single-note measured runs in
+// hero and turkish are melodic lines and keep their full size.
+assert.equal(runTotal,9,'grace run cluster total '+runTotal);
+assert.equal(PianoScore.model(SONGS.find(s=>s.id==='clair')).clusters.filter(c=>c.graceRun).length,9,'clair grace run clusters');
 console.log(JSON.stringify({beamGroups:groups,simpleMeter:true,compoundMeter:true,restsBreakBeams:true,quarterNotesUnbeamed:true,chordStems:true,mixedSecondaryBeams:true,keySignatures:true,measureAccidentals:true,lowerStaffClefChanges:clefChanges}));

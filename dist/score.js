@@ -68,6 +68,23 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
    }
   }
  }
+ // A chord spread in slices is a grace run: three or more clusters
+ // of one hand follow within .095 beats, every slice after the
+ // first carries two or more tones, and every tone is still
+ // ringing when the next slice sounds (its measured length is at
+ // least six times the gap -- pedal ring, not a measured short
+ // value). The slices are one harmony delivered as a spread
+ // gesture, so the whole run is set small like a grace note.
+ // Single-note arpeggio lines (the measured 64th-note runs in
+ // hero and turkish) are a melodic texture, not chord slices, and
+ // keep their full size. This runs after the fold above, so a
+ // spread whose root folded into its first slice keeps the
+ // cluster shapes (and clef behaviour) of the folded figure.
+ {const sorted=[...clusters].sort((a,b)=>a.beat-b.beat);
+  for(const hand of [0,1]){const hc=sorted.filter(c=>c.notes[0].n[4]===hand);let chain=[];
+   const flush=()=>{if(chain.length>=3&&chain.slice(1).every(cl=>cl.notes.length>=2)&&chain.every((cl,i)=>i+1>=chain.length||Math.min(...cl.notes.map(e=>e.duration))>=6*(chain[i+1].beat-cl.beat)))for(const cl of chain){cl.grace=true;cl.graceRun=true;for(const e of cl.notes)e.grace=true}chain=[]};
+   for(let i=0;i<hc.length;i++){if(i+1<hc.length){const g=hc[i+1].beat-hc[i].beat;if(g>.01&&g<=.095){if(!chain.length)chain.push(hc[i]);chain.push(hc[i+1]);continue}}flush()}
+   flush()}}
  // Beams are formed per hand, not per pitch lane. The lanes split a
  // hand at middle C -- an artifact from when the staff itself was
  // chosen by pitch -- so a melodic figure that crosses middle C (an
@@ -283,7 +300,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
   // A dot goes in the space to the right of the head -- for a head on a
   // line, the space above that line -- and tones sharing a space (a
   // second apart) share one dot.
-  if(dotted(cl.value)){let dotYs=new Set(),maxRight=Math.max(...xs)+4.8;
+  if(dotted(cl.value)&&!cl.grace){let dotYs=new Set(),maxRight=Math.max(...xs)+4.8;
    for(const e of items){let g=G.get(e),onLine=(((g.dia-g.ref)%2)+2)%2===0;dotYs.add(onLine?g.y-3.5:g.y)}
    c.fillStyle=color;for(const dy of dotYs){c.beginPath();c.ellipse(maxRight+4.5,dy,1.6,1.6,0,0,Math.PI*2);c.fill()}}
  }}
