@@ -75,6 +75,29 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
   barAlterations.set(id,written.alteration);
  }
  m.beams=beams;m.clusters=clusters;cache.set(s,m);return m}
+// Horizontal scale that follows the music's density. Real engraving
+// gives crowded bars more width; a scrolling score can do the same with
+// a precomputed space map: around any onset gap of g beats (per staff),
+// the scale asks for NEED/g px per beat so noteheads (9.6px) keep a
+// minimum gap, clamped to [base, base*2.2] and smoothed so the scroll
+// speed changes gently. Sparse music keeps the base scale untouched.
+const spaceCache=new WeakMap();
+function spaceMap(s,base){let per=spaceCache.get(s);if(!per){per=new Map();spaceCache.set(s,per)}
+ if(per.has(base))return per.get(base);
+ let m=model(s),q=1/16,lastBeat=0;
+ for(const cl of m.clusters)lastBeat=Math.max(lastBeat,cl.beat+1);
+ let n=Math.ceil(lastBeat/q)+128,req=new Float32Array(n);
+ for(const bass of [true,false]){let onsets=m.clusters.filter(cl=>cl.notes.some(e=>(e.n[2]<60)===bass)).map(cl=>cl.beat).sort((a,b)=>a-b);
+  for(let i=1;i<onsets.length;i++){let g=onsets[i]-onsets[i-1];if(g<=.02||g>=.6)continue;let need=12.4/g,
+    a=Math.max(0,Math.floor((onsets[i-1]-.5)/q)),b=Math.min(n-1,Math.ceil((onsets[i]+.5)/q));
+   for(let k=a;k<=b;k++)if(need>req[k])req[k]=need}}
+ let pxs=new Float32Array(n);for(let i=0;i<n;i++)pxs[i]=Math.min(base*2.2,Math.max(base,req[i]));
+ for(let pass=0;pass<2;pass++){let pre=new Float32Array(n+1);for(let i=0;i<n;i++)pre[i+1]=pre[i]+pxs[i];
+  let out=new Float32Array(n),R=6;for(let i=0;i<n;i++){let a=Math.max(0,i-R),b=Math.min(n,i+R+1);out[i]=(pre[b]-pre[a])/(b-a)}pxs=out}
+ let X=new Float32Array(n+1);for(let i=0;i<n;i++)X[i+1]=X[i]+pxs[i]*q;
+ let at=beat=>{let f=Math.min(n-1e-6,Math.max(0,beat/q)),i=Math.floor(f);return X[i]+(X[i+1]-X[i])*(f-i)},
+  beatAt=x=>{x=Math.min(X[n]-1e-6,Math.max(0,x));let lo=0,hi=n;while(lo<hi){let mid=(lo+hi)>>1;if(X[mid]<=x)lo=mid+1;else hi=mid}let i=Math.max(1,lo)-1;return(i+(x-X[i])/Math.max(1e-9,X[i+1]-X[i]))*q};
+ let sm={at,beatAt};per.set(base,sm);return sm}
 function render(canvas,s,t){let c=canvas.getContext('2d');if(!c)return;let w=canvas.clientWidth||900,h=canvas.clientHeight||180,d=Math.min(window.devicePixelRatio||1,2);if(canvas.width!==w*d||canvas.height!==h*d){canvas.width=w*d;canvas.height=h*d}c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,w,h);c.fillStyle='#17191c';c.fillRect(0,0,w,h);let current=beatAt(s,t),px=w<600?49:66,key=keyAt(s,current),keyCount=Math.min(7,Math.abs(key.fifths||0)),
  keyStart=40,timeX=keyStart+Math.max(1,keyCount)*9+5,left=timeX+23,
  cursor=Math.max(left+20,Math.min(w*.32,260)),top=42,gap=7,staff2=top+72;
@@ -84,14 +107,15 @@ let signature=signatureAt(s,current);
 c.font='21px Georgia,serif';for(const [bass,base] of [[false,top],[true,staff2]])
  for(const [i,g] of keyGlyphs(key.fifths,bass).entries())c.fillText(g.symbol,keyStart+i*9,base+g.halfSteps*gap/2+6);
 c.font='17px Georgia,serif';for(let base of [top,staff2]){c.fillText(signature.numerator,timeX,base+12);c.fillText(signature.denominator,timeX,base+29)}
-let bar=signature.numerator*4/signature.denominator,start=Math.max(0,current-(cursor-left)/px),end=current+(w-cursor)/px;
-for(let b=signature.beat+Math.ceil((start-signature.beat)/bar)*bar;b<end;b+=bar){let x=cursor+(b-current)*px;line(x,top,x,staff2+28,'#49453e');c.font='10px Arial';c.fillStyle='#a39a8c';c.fillText(String(Math.round((b-signature.beat)/bar)+1),x+4,top-10)}
+let sm=spaceMap(s,px),Xc=sm.at(current),xPos=b=>cursor+(sm.at(b)-Xc);
+let bar=signature.numerator*4/signature.denominator,start=sm.beatAt(Xc-(cursor-left)),end=sm.beatAt(Xc+(w-cursor));
+for(let b=signature.beat+Math.ceil((start-signature.beat)/bar)*bar;b<end;b+=bar){let x=xPos(b);line(x,top,x,staff2+28,'#49453e');c.font='10px Arial';c.fillStyle='#a39a8c';c.fillText(String(Math.round((b-signature.beat)/bar)+1),x+4,top-10)}
 let list=model(s),l=0,r=list.length;while(l<r){let m=(l+r)>>1;if(list[m].beat<start-.5)l=m+1;else r=m}
 let active=s.notes.filter(n=>n[0]<=t&&n[0]+n[1]>t).map(n=>n[2]),glyphs=new Map();c.save();c.beginPath();c.rect(left,20,w-left,h-20);c.clip();
 // Note geometry. Ledger lines carry a note up to five lines out; only
 // beyond that does an 8va/8vb shift apply, and a shift is one diatonic
 // octave (7 staff steps = 24.5px), so the head lands on the right line.
-let geom=e=>{let p=e.n[2],bass=p<60,base=bass?staff2:top,y=base+28-(e.spelling.diatonic-(bass?25:37))*gap/2,shift=0;if(y<base-38){y+=24.5;shift=1}else if(y>base+66){y-=24.5;shift=-1}return{ax:cursor+(e.beat-current)*px,y,base,shift,dia:e.spelling.diatonic-shift*7,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
+let geom=e=>{let p=e.n[2],bass=p<60,base=bass?staff2:top,y=base+28-(e.spelling.diatonic-(bass?25:37))*gap/2,shift=0;if(y<base-38){y+=24.5;shift=1}else if(y>base+66){y-=24.5;shift=-1}return{ax:xPos(e.beat),y,base,shift,dia:e.spelling.diatonic-shift*7,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
 let vis=[];for(let i=l;i<list.length&&list[i].beat<=end+.4;i++)vis.push(list[i]);
 let G=new Map();for(const e of vis){let g=geom(e);g.color=g.on?'#ffcc70':'#d8d0c1';g.hx=g.ax;G.set(e,g)}
 let groups=[];for(const e of vis){let lastG=groups.at(-1);if(lastG&&lastG.cl===e.cluster)lastG.items.push(e);else groups.push({cl:e.cluster,items:[e]})}
@@ -131,15 +155,15 @@ for(const [bass,base] of [[false,top],[true,staff2]]){
  spans.sort((a,b)=>a[0]-b[0]);let merged=[];for(const sp of spans){let lastM=merged.at(-1);if(lastM&&sp[0]<=lastM[1]+.02)lastM[1]=Math.max(lastM[1],sp[1]);else merged.push([...sp])}
  c.fillStyle='#a39a8c';
  let restHalf=cx=>{c.fillRect(cx-4,base+9.5,8,4.5)},restWhole=cx=>{c.fillRect(cx-4,base+7,8,4.5)},
-  restBeat=(u,unit)=>{let cx=cursor+(u+unit/2-current)*px;if(cx<left+8||cx>w-4)return;
+  restBeat=(u,unit)=>{let cx=xPos(u+unit/2);if(cx<left+8||cx>w-4)return;
    if(unit===2)restHalf(cx);else{c.font='20px Georgia,serif';c.fillText(unit===.5?'𝄾':'𝄽',cx-5,base+20);if(unit===1.5){c.beginPath();c.ellipse(cx+6.5,base+10.5,1.6,1.6,0,0,Math.PI*2);c.fill()}}};
  for(let i=1;i<merged.length;i++){let g0=merged[i-1][1],g1=merged[i][0];if(g1-g0<.95)continue;
   let sig=signatureAt(s,g0+.01),barLen=sig.numerator*4/sig.denominator,unit=sig.denominator===8&&sig.numerator%3===0?1.5:4/sig.denominator,pos=g0;
   while(pos<g1-.05){let barStart=sig.beat+Math.floor((pos-sig.beat+1e-6)/barLen)*barLen;
-   if(Math.abs(pos-barStart)<.08&&g1-pos>=barLen-.08){let cx=cursor+(barStart+barLen/2-current)*px;if(cx>=left+8&&cx<=w-4)restWhole(cx);pos+=barLen;continue}
+   if(Math.abs(pos-barStart)<.08&&g1-pos>=barLen-.08){let cx=xPos(barStart+barLen/2);if(cx>=left+8&&cx<=w-4)restWhole(cx);pos+=barLen;continue}
    let u=sig.beat+Math.ceil((pos-sig.beat-.08)/unit)*unit;
    if(u+unit>g1+.08)break;
-   if(unit===1&&barLen>=3){let idx=Math.round(((u-sig.beat)%barLen+barLen)%barLen);if((idx===0||(barLen===4&&idx===2))&&u+2<=g1+.08){let cx=cursor+(u+1-current)*px;if(cx>=left+8&&cx<=w-4)restHalf(cx);u+=2;pos=u;continue}}
+   if(unit===1&&barLen>=3){let idx=Math.round(((u-sig.beat)%barLen+barLen)%barLen);if((idx===0||(barLen===4&&idx===2))&&u+2<=g1+.08){let cx=xPos(u+1);if(cx>=left+8&&cx<=w-4)restHalf(cx);u+=2;pos=u;continue}}
    restBeat(u,unit);pos=u+unit}
  }}
 // Heads, ledger lines, accidentals, octave labels and augmentation dots,
@@ -199,4 +223,4 @@ let activeFingerings=[];c.font='10px Arial';c.fillStyle='#ffcc70';
 for(const cl of list.clusters){let sounding=cl.notes.filter(e=>glyphs.get(e)?.on);if(!sounding.length)continue;let g=glyphs.get(sounding[0]),hand=sounding[0].n[4],digits=sounding.map(e=>hand?5-e.n[5]:e.n[5]+1);c.fillText((hand?'L':'R')+digits.join('·'),(g.ax??g.x)-5,g.base+45+hand*12);for(let j=0;j<sounding.length;j++)activeFingerings.push({hand,pitch:sounding[j].n[2],digit:digits[j]});}
 c.restore();line(cursor,23,cursor,staff2+38,'#dfbe83');c.fillStyle='#dfbe83';c.beginPath();c.moveTo(cursor-5,20);c.lineTo(cursor+5,20);c.lineTo(cursor,27);c.fill();canvas.setAttribute('aria-label',s.title+': automatic transcription. Sounding MIDI pitches '+active.join(', ')+'. Fingering '+activeFingerings.map(f=>(f.hand?'L':'R')+f.digit).join(', '));window.recitalScoreDebug={time:t,beat:current,activeNotes:active,activeFingerings,beamGroups:beamCount};
 }
-window.PianoScore={beatAt,timeAt,model,render,flagCount,signatureAt,keyAt,keyAccidentals,keyGlyphs,spellPitch};})();
+window.PianoScore={beatAt,timeAt,model,render,flagCount,signatureAt,keyAt,keyAccidentals,keyGlyphs,spellPitch,spaceMap};})();
