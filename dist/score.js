@@ -98,6 +98,25 @@ function spaceMap(s,base){let per=spaceCache.get(s);if(!per){per=new Map();space
  let at=beat=>{let f=Math.min(n-1e-6,Math.max(0,beat/q)),i=Math.floor(f);return X[i]+(X[i+1]-X[i])*(f-i)},
   beatAt=x=>{x=Math.min(X[n]-1e-6,Math.max(0,x));let lo=0,hi=n;while(lo<hi){let mid=(lo+hi)>>1;if(X[mid]<=x)lo=mid+1;else hi=mid}let i=Math.max(1,lo)-1;return(i+(x-X[i])/Math.max(1e-9,X[i+1]-X[i]))*q};
  let sm={at,beatAt};per.set(base,sm);return sm}
+// Temporary clef changes in the lower staff, the published piano
+// score's own answer to left-hand passages that climb out of the bass
+// staff: rather than shifting those chords an octave under an 8va mark,
+// the lower staff itself switches to the treble clef until the hand
+// settles back down. A cluster turns the staff to treble when its top
+// tone would need a fourth ledger line in bass clef, and back to bass
+// once the top tone is within one ledger line of the bass staff;
+// clusters between the two thresholds keep the current clef, so the
+// clef never flickers on borderline chords. starts holds the first
+// cluster of each run in the new clef, where render draws the small
+// change-of-clef glyph.
+const clefCache=new WeakMap();
+function clefsOf(s){let hit=clefCache.get(s);if(hit)return hit;
+ let m=model(s),clefOf=new Map(),starts=new Set(),cur='bass',prev='bass';
+ let lhs=m.clusters.filter(cl=>cl.notes[0].n[4]===1).sort((a,b)=>a.beat-b.beat);
+ for(const cl of lhs){let mx=Math.max(...cl.notes.map(e=>e.spelling.diatonic));
+  if(mx>40)cur='treble';else if(mx<=36)cur='bass';
+  clefOf.set(cl,cur);if(cur!==prev)starts.add(cl);prev=cur}
+ let out={clefOf,starts};clefCache.set(s,out);return out}
 function render(canvas,s,t){let c=canvas.getContext('2d');if(!c)return;let w=canvas.clientWidth||900,h=canvas.clientHeight||180,d=Math.min(window.devicePixelRatio||1,2);if(canvas.width!==w*d||canvas.height!==h*d){canvas.width=w*d;canvas.height=h*d}c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,w,h);c.fillStyle='#17191c';c.fillRect(0,0,w,h);let current=beatAt(s,t),px=w<600?49:66,key=keyAt(s,current),keyCount=Math.min(7,Math.abs(key.fifths||0)),
  keyStart=40,timeX=keyStart+Math.max(1,keyCount)*9+5,left=timeX+23,
  cursor=Math.max(left+20,Math.min(w*.32,260)),top=42,gap=7,staff2=top+72;
@@ -114,19 +133,23 @@ let list=model(s),l=0,r=list.length;while(l<r){let m=(l+r)>>1;if(list[m].beat<st
 let active=s.notes.filter(n=>n[0]<=t&&n[0]+n[1]>t).map(n=>n[2]),glyphs=new Map();c.save();c.beginPath();c.rect(left,20,w-left,h-20);c.clip();
 // Note geometry. Each hand is written on its own staff (right hand on
 // the treble staff, left hand on the bass staff), the way piano music is
-// usually laid out. A chord that would need a fourth ledger line on its
-// hand's staff is written an octave closer under an 8va/8vb mark -- the
+// usually laid out. On the upper staff a chord that would need a fourth
+// ledger line below is written an octave closer under an 8vb mark -- the
 // whole chord shifts, so its shape survives -- and a lone note more than
-// five ledger lines out shifts by itself. A shift is one diatonic octave
-// (7 staff steps = 24.5px), so heads land where an octave-away head
-// would sit.
-let geom=e=>{let hand=e.n[4],base=hand?staff2:top,y0=base+28-(e.spelling.diatonic-(hand?25:37))*gap/2,pn=0;
- if(y0<base-38)pn=1;else if(y0>base+66)pn=-1;
- return{ax:xPos(e.beat),y0,base,dia0:e.spelling.diatonic,pn,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
+// five ledger lines out shifts by itself. The lower staff never shifts:
+// high left-hand passages change the lower staff's own clef instead
+// (see clefsOf), so left-hand notes always sit at their written pitch.
+// A shift is one diatonic octave (7 staff steps = 24.5px), so heads land
+// where an octave-away head would sit.
+let clefMap=clefsOf(s);
+let geom=e=>{let hand=e.n[4],base=hand?staff2:top,ref=hand?(clefMap.clefOf.get(e.cluster)==='treble'?37:25):37,
+ y0=base+28-(e.spelling.diatonic-ref)*gap/2,pn=0;
+ if(!hand){if(y0<base-38)pn=1;else if(y0>base+66)pn=-1}
+ return{ax:xPos(e.beat),y0,base,ref,dia0:e.spelling.diatonic,pn,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
 let clShift=cl=>{let dias=cl.notes.map(e=>e.spelling.diatonic);
- return cl.notes[0].n[4]?(Math.max(...dias)>40?1:0):(Math.min(...dias)<30?-1:0)};
+ return cl.notes[0].n[4]?0:(Math.min(...dias)<30?-1:0)};
 let place=(e,cl)=>{let g=geom(e),s=(cl?clShift(cl):0)||g.pn;
- return{ax:g.ax,y:g.y0+24.5*s,base:g.base,dia:g.dia0-7*s,shift:s,on:g.on}};
+ return{ax:g.ax,y:g.y0+24.5*s,base:g.base,ref:g.ref,dia:g.dia0-7*s,shift:s,on:g.on}};
 let vis=[];for(let i=l;i<list.length&&list[i].beat<=end+.4;i++)vis.push(list[i]);
 let G=new Map();for(const e of vis){let g=place(e,e.cluster);g.color=g.on?'#ffcc70':'#d8d0c1';g.hx=g.ax;G.set(e,g)}
 let groups=[];for(const e of vis){let lastG=groups.at(-1);if(lastG&&lastG.cl===e.cluster)lastG.items.push(e);else groups.push({cl:e.cluster,items:[e]})}
@@ -181,6 +204,9 @@ for(const [bass,base] of [[false,top],[true,staff2]]){
 // cluster by cluster (a chord's parts are laid out together, above).
 let dotted=v=>[3,1.5,.75].some(dv=>Math.abs(v-dv)<.06);
 for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){let g=G.get(e);if(!subs.has(g.base))subs.set(g.base,[]);subs.get(g.base).push(e)}
+ // A change of the lower staff's clef is announced by a small clef
+ // glyph just before the first cluster written in the new clef.
+ if(clefMap.starts.has(cl)){let cc=clefMap.clefOf.get(cl);c.fillStyle='#dfbe83';c.font='22px Georgia,serif';c.fillText(cc==='treble'?'𝄞':'𝄢',Math.min(...grp.items.map(e=>G.get(e).ax))-13,staff2+(cc==='treble'?22:17))}
  for(const [base,items] of subs){let color=items.some(e=>G.get(e).on)?'#ffcc70':'#d8d0c1',xs=items.map(e=>G.get(e).hx),xLo=Math.min(...xs)-7.1,xHi=Math.max(...xs)+7.1,
    minY=Math.min(...items.map(e=>G.get(e).y)),maxY=Math.max(...items.map(e=>G.get(e).y));
   // Ledger lines are a little heavier than staff lines and reach a third
@@ -189,7 +215,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
   for(const e of items){let g=G.get(e);
    if(g.accX!==undefined){c.fillStyle=g.color;c.font='15px Georgia,serif';c.fillText(e.spelling.accidental,g.accX,g.y+5)}
    c.fillStyle=g.color;c.strokeStyle=g.color;c.beginPath();c.ellipse(g.hx,g.y,4.8,3.5,-.35,0,Math.PI*2);if(e.duration>=1.8){c.lineWidth=1.6;c.stroke()}else c.fill();
-   glyphs.set(e,{x:g.hx,ax:g.ax,y:g.y,base:g.base,color:g.color,on:g.on,dia:g.dia})}
+   glyphs.set(e,{x:g.hx,ax:g.ax,y:g.y,base:g.base,color:g.color,on:g.on,dia:g.dia,ref:g.ref})}
   let shifted=items.filter(e=>G.get(e).shift);
   if(shifted.length){let g0=G.get(shifted[0]);c.fillStyle=g0.color;c.font='9px Arial';
    if(g0.shift>0)c.fillText('8va',g0.ax-8,Math.max(31,Math.min(...shifted.map(e=>G.get(e).y))-9));
@@ -198,7 +224,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
   // line, the space above that line -- and tones sharing a space (a
   // second apart) share one dot.
   if(dotted(cl.value)){let dotYs=new Set(),maxRight=Math.max(...xs)+4.8;
-   for(const e of items){let g=G.get(e),onLine=(((g.dia-(base===staff2?25:37))%2)+2)%2===0;dotYs.add(onLine?g.y-3.5:g.y)}
+   for(const e of items){let g=G.get(e),onLine=(((g.dia-g.ref)%2)+2)%2===0;dotYs.add(onLine?g.y-3.5:g.y)}
    c.fillStyle=color;for(const dy of dotYs){c.beginPath();c.ellipse(maxRight+4.5,dy,1.6,1.6,0,0,Math.PI*2);c.fill()}}
  }}
 let beamCount=0;
@@ -234,4 +260,4 @@ let activeFingerings=[];c.font='10px Arial';c.fillStyle='#ffcc70';
 for(const cl of list.clusters){let sounding=cl.notes.filter(e=>glyphs.get(e)?.on);if(!sounding.length)continue;let g=glyphs.get(sounding[0]),hand=sounding[0].n[4],digits=sounding.map(e=>hand?5-e.n[5]:e.n[5]+1);c.fillText((hand?'L':'R')+digits.join('·'),(g.ax??g.x)-5,g.base+45+hand*12);for(let j=0;j<sounding.length;j++)activeFingerings.push({hand,pitch:sounding[j].n[2],digit:digits[j]});}
 c.restore();line(cursor,23,cursor,staff2+38,'#dfbe83');c.fillStyle='#dfbe83';c.beginPath();c.moveTo(cursor-5,20);c.lineTo(cursor+5,20);c.lineTo(cursor,27);c.fill();canvas.setAttribute('aria-label',s.title+': automatic transcription. Sounding MIDI pitches '+active.join(', ')+'. Fingering '+activeFingerings.map(f=>(f.hand?'L':'R')+f.digit).join(', '));window.recitalScoreDebug={time:t,beat:current,activeNotes:active,activeFingerings,beamGroups:beamCount};
 }
-window.PianoScore={beatAt,timeAt,model,render,flagCount,signatureAt,keyAt,keyAccidentals,keyGlyphs,spellPitch,spaceMap};})();
+window.PianoScore={beatAt,timeAt,model,render,flagCount,signatureAt,keyAt,keyAccidentals,keyGlyphs,spellPitch,spaceMap,clefsOf};})();
