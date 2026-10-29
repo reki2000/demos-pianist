@@ -87,7 +87,7 @@ function spaceMap(s,base){let per=spaceCache.get(s);if(!per){per=new Map();space
  let m=model(s),q=1/16,lastBeat=0;
  for(const cl of m.clusters)lastBeat=Math.max(lastBeat,cl.beat+1);
  let n=Math.ceil(lastBeat/q)+128,req=new Float32Array(n);
- for(const bass of [true,false]){let onsets=m.clusters.filter(cl=>cl.notes.some(e=>(e.n[2]<60)===bass)).map(cl=>cl.beat).sort((a,b)=>a-b);
+ for(const bass of [true,false]){let onsets=m.clusters.filter(cl=>cl.notes.some(e=>(e.n[4]===1)===bass)).map(cl=>cl.beat).sort((a,b)=>a-b);
   for(let i=1;i<onsets.length;i++){let g=onsets[i]-onsets[i-1];if(g<=.02||g>=.6)continue;let need=12.4/g,
     a=Math.max(0,Math.floor((onsets[i-1]-.5)/q)),b=Math.min(n-1,Math.ceil((onsets[i]+.5)/q));
    for(let k=a;k<=b;k++)if(need>req[k])req[k]=need}}
@@ -112,12 +112,23 @@ let bar=signature.numerator*4/signature.denominator,start=sm.beatAt(Xc-(cursor-l
 for(let b=signature.beat+Math.ceil((start-signature.beat)/bar)*bar;b<end;b+=bar){let x=xPos(b);line(x,top,x,staff2+28,'#49453e');c.font='10px Arial';c.fillStyle='#a39a8c';c.fillText(String(Math.round((b-signature.beat)/bar)+1),x+4,top-10)}
 let list=model(s),l=0,r=list.length;while(l<r){let m=(l+r)>>1;if(list[m].beat<start-.5)l=m+1;else r=m}
 let active=s.notes.filter(n=>n[0]<=t&&n[0]+n[1]>t).map(n=>n[2]),glyphs=new Map();c.save();c.beginPath();c.rect(left,20,w-left,h-20);c.clip();
-// Note geometry. Ledger lines carry a note up to five lines out; only
-// beyond that does an 8va/8vb shift apply, and a shift is one diatonic
-// octave (7 staff steps = 24.5px), so the head lands on the right line.
-let geom=e=>{let p=e.n[2],bass=p<60,base=bass?staff2:top,y=base+28-(e.spelling.diatonic-(bass?25:37))*gap/2,shift=0;if(y<base-38){y+=24.5;shift=1}else if(y>base+66){y-=24.5;shift=-1}return{ax:xPos(e.beat),y,base,shift,dia:e.spelling.diatonic-shift*7,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
+// Note geometry. Each hand is written on its own staff (right hand on
+// the treble staff, left hand on the bass staff), the way piano music is
+// usually laid out. A chord that would need a fourth ledger line on its
+// hand's staff is written an octave closer under an 8va/8vb mark -- the
+// whole chord shifts, so its shape survives -- and a lone note more than
+// five ledger lines out shifts by itself. A shift is one diatonic octave
+// (7 staff steps = 24.5px), so heads land where an octave-away head
+// would sit.
+let geom=e=>{let hand=e.n[4],base=hand?staff2:top,y0=base+28-(e.spelling.diatonic-(hand?25:37))*gap/2,pn=0;
+ if(y0<base-38)pn=1;else if(y0>base+66)pn=-1;
+ return{ax:xPos(e.beat),y0,base,dia0:e.spelling.diatonic,pn,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
+let clShift=cl=>{let dias=cl.notes.map(e=>e.spelling.diatonic);
+ return cl.notes[0].n[4]?(Math.max(...dias)>40?1:0):(Math.min(...dias)<30?-1:0)};
+let place=(e,cl)=>{let g=geom(e),s=(cl?clShift(cl):0)||g.pn;
+ return{ax:g.ax,y:g.y0+24.5*s,base:g.base,dia:g.dia0-7*s,shift:s,on:g.on}};
 let vis=[];for(let i=l;i<list.length&&list[i].beat<=end+.4;i++)vis.push(list[i]);
-let G=new Map();for(const e of vis){let g=geom(e);g.color=g.on?'#ffcc70':'#d8d0c1';g.hx=g.ax;G.set(e,g)}
+let G=new Map();for(const e of vis){let g=place(e,e.cluster);g.color=g.on?'#ffcc70':'#d8d0c1';g.hx=g.ax;G.set(e,g)}
 let groups=[];for(const e of vis){let lastG=groups.at(-1);if(lastG&&lastG.cl===e.cluster)lastG.items.push(e);else groups.push({cl:e.cluster,items:[e]})}
 // Stem direction: a beamed group goes by majority, then by the note
 // farthest from the middle line; a single cluster by its farthest note.
@@ -151,7 +162,7 @@ for(const grp of groups){let cl=grp.cl,up=cl.beam&&beamUp.has(cl.beam)?beamUp.ge
 // beat calls for (never across the half-bar; a full silent bar takes a
 // whole rest centred in the bar).
 for(const [bass,base] of [[false,top],[true,staff2]]){
- let spans=[];for(const cl of list.clusters){let es=cl.notes.filter(e=>(e.n[2]<60)===bass);if(es.length)spans.push([cl.beat,cl.beat+Math.max(...es.map(e=>e.duration))])}
+ let spans=[];for(const cl of list.clusters){let es=cl.notes.filter(e=>(e.n[4]===1)===bass);if(es.length)spans.push([cl.beat,cl.beat+Math.max(...es.map(e=>e.duration))])}
  spans.sort((a,b)=>a[0]-b[0]);let merged=[];for(const sp of spans){let lastM=merged.at(-1);if(lastM&&sp[0]<=lastM[1]+.02)lastM[1]=Math.max(lastM[1],sp[1]);else merged.push([...sp])}
  c.fillStyle='#a39a8c';
  let restHalf=cx=>{c.fillRect(cx-4,base+9.5,8,4.5)},restWhole=cx=>{c.fillRect(cx-4,base+7,8,4.5)},
@@ -192,7 +203,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
  }}
 let beamCount=0;
 for(const beam of list.beams){let visible=beam.clusters.some(cl=>cl.notes.some(e=>glyphs.has(e)));if(!visible)continue;
- const positions=beam.clusters.map(cl=>{let tones=cl.notes.map(e=>glyphs.get(e)||(()=>{let g=geom(e);return{x:g.ax,ax:g.ax,y:g.y,base:g.base,dia:g.dia}})());
+ const positions=beam.clusters.map(cl=>{let tones=cl.notes.map(e=>glyphs.get(e)||(()=>{let g=place(e,cl);return{x:g.ax,ax:g.ax,y:g.y,base:g.base,dia:g.dia}})());
   return{cl,x:tones[0].ax,base:tones[0].base,ys:tones.map(g=>g.y),centre:tones.reduce((a,g)=>a+g.dia,0)/tones.length}}),
  // Beam slope follows the pitch interval between the first and last
  // clusters, quantised to quarter spaces (a second earns 0.25, up to 1.5
