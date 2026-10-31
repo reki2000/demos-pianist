@@ -68,6 +68,28 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
    }
   }
  }
+ // A chord spread in slices is one chord: three or more clusters
+ // of one hand follow within .095 beats, every slice after the
+ // first carries two or more tones, and every tone is still
+ // ringing when the next slice sounds (its measured length is
+ // at least six times the gap -- pedal ring, not a measured
+ // short value). The slices are one harmony delivered as a
+ // spread gesture, so they merge into a single chord at the
+ // first slice's beat, and render draws the arpeggio wave in
+ // front of it -- the standard notation for a rolled chord.
+ // Single-note arpeggio lines (the measured 64th-note runs in
+ // hero and turkish) are a melodic texture, not chord slices,
+ // and stay as written. This runs after the fold above, so a
+ // spread whose root folded into its first slice merges from
+ // the folded shape.
+ {const sorted=[...clusters].sort((a,b)=>a.beat-b.beat);
+  for(const hand of [0,1]){const hc=sorted.filter(c=>c.notes[0].n[4]===hand);let chain=[];
+   const flush=()=>{if(chain.length>=3&&chain.slice(1).every(cl=>cl.notes.length>=2)&&chain.every((cl,i)=>i+1>=chain.length||Math.min(...cl.notes.map(e=>e.duration))>=6*(chain[i+1].beat-cl.beat))){const head=chain[0];head.spread=true;
+     for(const cl of chain.slice(1)){for(const e of cl.notes){e.cluster=head;head.notes.push(e)}const la=lanes[cl.lane];la.splice(la.indexOf(cl),1);clusters.splice(clusters.indexOf(cl),1)}
+     for(const e of head.notes)e.spread=true}
+    chain=[]};
+   for(let i=0;i<hc.length;i++){if(i+1<hc.length){const g=hc[i+1].beat-hc[i].beat;if(g>.01&&g<=.095){if(!chain.length)chain.push(hc[i]);chain.push(hc[i+1]);continue}}flush()}
+   flush()}}
  // Beams are formed per hand, not per pitch lane. The lanes split a
  // hand at middle C -- an artifact from when the staff itself was
  // chosen by pitch -- so a melodic figure that crosses middle C (an
@@ -167,7 +189,7 @@ let clefMap=clefsOf(s);
 let geom=e=>{let hand=e.n[4],base=hand?staff2:top,ref=hand?(clefMap.clefOf.get(e.cluster)==='treble'?37:25):37,
  y0=base+28-(e.spelling.diatonic-ref)*gap/2,pn=0;
  if(!hand){if(y0<base-38)pn=1;else if(y0>base+66)pn=-1}
- return{ax:xPos(e.beat),y0,base,ref,dia0:e.spelling.diatonic,pn,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
+ return{ax:xPos(e.cluster&&e.cluster.spread?e.cluster.beat:e.beat),y0,base,ref,dia0:e.spelling.diatonic,pn,on:e.n[0]<=t&&e.n[0]+e.n[1]>t}};
 let clShift=cl=>{let dias=cl.notes.map(e=>e.spelling.diatonic);
  return cl.notes[0].n[4]?0:(Math.min(...dias)<30?-1:0)};
 let place=(e,cl)=>{let g=geom(e),s=(cl?clShift(cl):0)||g.pn;
@@ -269,6 +291,12 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
  if(clefMap.starts.has(cl)){let cc=clefMap.clefOf.get(cl);c.fillStyle='#dfbe83';c.font='22px Bravura,Georgia,serif';c.fillText(cc==='treble'?'𝄞':'𝄢',Math.min(...grp.items.map(e=>G.get(e).ax))-13,staff2+(cc==='treble'?22:17))}
  for(const [base,items] of subs){let color=items.some(e=>G.get(e).on)?'#ffcc70':'#d8d0c1',xs=items.map(e=>G.get(e).hx),xLo=Math.min(...xs)-7.1,xHi=Math.max(...xs)+7.1,
    minY=Math.min(...items.map(e=>G.get(e).y)),maxY=Math.max(...items.map(e=>G.get(e).y));
+  // A spread chord carries the arpeggio wave in front of it: a
+  // vertical wavy line spanning the chord, left of any accidentals.
+  if(cl.spread){let wx=Math.min(...items.map(e=>{let g=G.get(e);return g.accX!==undefined?g.accX:g.hx-4.8}))-6.5;
+   c.strokeStyle=color;c.lineWidth=1.2;c.beginPath();
+   for(let y=minY-4;y<=maxY+4;y+=1.75){let wxx=wx+2*Math.sin((y-minY+4)/7*Math.PI*2);if(y<=minY-3.9)c.moveTo(wxx,y);else c.lineTo(wxx,y)}
+   c.stroke()}
   // Ledger lines are a little heavier than staff lines and reach a third
   // of a space past the outermost heads, displaced ones included.
   for(let yy=base-7;yy>=minY-1;yy-=7)line(xLo,yy,xHi,yy,color,1.3);for(let yy=base+35;yy<=maxY+1;yy+=7)line(xLo,yy,xHi,yy,color,1.3);
@@ -283,7 +311,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
   // A dot goes in the space to the right of the head -- for a head on a
   // line, the space above that line -- and tones sharing a space (a
   // second apart) share one dot.
-  if(dotted(cl.value)){let dotYs=new Set(),maxRight=Math.max(...xs)+4.8;
+  if(dotted(cl.value)&&!cl.grace){let dotYs=new Set(),maxRight=Math.max(...xs)+4.8;
    for(const e of items){let g=G.get(e),onLine=(((g.dia-g.ref)%2)+2)%2===0;dotYs.add(onLine?g.y-3.5:g.y)}
    c.fillStyle=color;for(const dy of dotYs){c.beginPath();c.ellipse(maxRight+4.5,dy,1.6,1.6,0,0,Math.PI*2);c.fill()}}
  }}
