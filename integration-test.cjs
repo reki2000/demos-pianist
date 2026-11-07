@@ -62,8 +62,26 @@ const PAIRS = [
   ['cello-songs.js', H + '/workspace/demos-cellist/dist/cello-songs.js'],
   ['cello-instrument.js', H + '/workspace/demos-cellist/dist/cello-instrument.js'],
 ];
-for (const [name, src] of PAIRS)
+for (const [name, src] of PAIRS) {
+  if (name === 'violin-gl.js') {
+    // Deliberate, documented divergence (the ONLY one): the integrated
+    // copy's begin() re-binds its shader program every frame
+    // (gl.useProgram) because in the integrated app two RecitalGL
+    // instances share one canvas and the program binding is
+    // context-global — without it, the instance created last hijacks
+    // the binding and the piano renders a black stage after any string
+    // instrument is shown (uniform uploads fail INVALID_OPERATION).
+    // Strip exactly that block and require byte-identity of the rest,
+    // so any OTHER drift from the module repo still fails here.
+    const integ = fs.readFileSync(DI(name), 'utf8');
+    const stripped = integ.replace(/\n\/\/ INTEGRATION DIVERGENCE[\s\S]*?carries the same fix\.\ngl\.useProgram\(prog\);/, '');
+    assert.notEqual(stripped, integ, 'violin-gl.js: documented divergence block not found');
+    const hashText = s => crypto.createHash('sha256').update(s).digest('hex');
+    assert.equal(hashText(stripped), hashText(fs.readFileSync(src, 'utf8')), 'integrated copy drifted from its module repo beyond the documented divergence: ' + name);
+    continue;
+  }
   assert.equal(sha(DI(name)), sha(src), 'integrated copy drifted from its module repo: ' + name);
+}
 // The guitar plan cache must have been generated from THESE engine/song
 // files (stamps are embedded by precompute-guitar-plans.cjs), never a
 // stale build from an older engine.
@@ -71,6 +89,21 @@ for (const [name, src] of PAIRS)
   const plansText = fs.readFileSync(DI('guitar-plans.js'), 'utf8');
   for (const f of ['guitar-fingering.js', 'guitar-songs.js'])
     assert(plansText.includes(f + ' ' + sha(DI(f)).slice(0, 16)), 'guitar-plans.js stamp mismatch for ' + f + ' — rerun precompute-guitar-plans.cjs');
+}
+
+// ---- Part 0b: shared-canvas renderer invariant ----------------------
+// Both RecitalGL copies in the integrated app (host dist/gl.js and
+// instruments/violin-gl.js) must re-bind their shader program inside
+// begin(): two instances share the piano's canvas, the program binding
+// is context-global, and without the re-bind the first-created instance
+// (the piano) renders a black stage after any string instrument is
+// shown. (Verified against a real GL context in headless Chrome:
+// without the re-bind, begin() raises INVALID_OPERATION (1282) and the
+// framebuffer stays at the clear colour.)
+for (const f of ['dist/gl.js', DI('violin-gl.js')]) {
+  const src = fs.readFileSync(f, 'utf8');
+  const begin = src.slice(src.indexOf('function begin('), src.indexOf('function begin(') + 1200);
+  assert(begin.includes('gl.useProgram(prog);'), f + ': begin() must re-bind its program (shared-canvas invariant)');
 }
 
 // ---- Part G: guitar drawn handedness (posture-test formulation) ----

@@ -55,6 +55,15 @@ function bone(a,b,r,c){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(
 // addition the violin module needs beyond the demos-pianist API.
 function oriented(shape,p,s,c,metal,X,Y,Z){let m=new Float32Array([X[0]*s[0],X[1]*s[0],X[2]*s[0],0,Y[0]*s[1],Y[1]*s[1],Y[2]*s[1],0,Z[0]*s[2],Z[1]*s[2],Z[2]*s[2],0,...p,1]);draw(shape,m,c,metal)}
 let vp;function project(p){p=toWorld(p);if(!vp)return null;let q=[...p,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let k=0;k<4;k++)v[i]+=vp[k*4+i]*q[k];return{x:(v[0]/v[3]+1)/2,y:(1-v[1]/v[3])/2,visible:v[3]>0&&Math.abs(v[0]/v[3])<.95&&Math.abs(v[1]/v[3])<.95}}
-function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
+function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up);
+// INTEGRATION DIVERGENCE from demos-violinist/dist/gl.js (the only one;
+// integration-test.cjs Part 0 strips this block before its byte-identity
+// check): the program binding is context-global state. This renderer
+// shares the piano's canvas with the piano's own RecitalGL instance, so
+// begin() must re-bind its program every frame — otherwise whichever
+// instance was created last owns the binding and the other's uniform
+// uploads fail with INVALID_OPERATION (black stage). The host renderer's
+// begin() (dist/gl.js) carries the same fix.
+gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
 return{box,ball,bone,piece,segment,oriented,begin,project,gl};}
 return{create,toWorld,look,perspective,multiply};})();
