@@ -17,9 +17,10 @@ def inline(match):
  before='<script>window.PIANO_AUDIO_DATA='+json.dumps(encoded,separators=(',',':'))+';</script>' if name=='audio-manifest.js' else ''
  source=(root/'dist'/name).read_text().replace('</script','<\\/script')
  return before+'<script>'+source+'</script>'
-page=re.sub(r'<script src="([\w-]+\.js)"></script>',inline,page)
+script_tags=len(re.findall(r'<script src=',page))
+page=re.sub(r'<script src="([\w./-]+\.js)"></script>',inline,page)
 assert not re.search(r'<script src=|href="style.css"',page)
-assert page.count('<script>')==9
+assert page.count('<script>')==script_tags+1
 html=root/'piano-recital-v8.html'
 html.write_text(page)
 
@@ -29,7 +30,7 @@ reports={name:json.loads((root/file).read_text()) for name,file in [
 reports.update(version=8,recordedInstrument=manifest['name'],recordedVelocityLayers=4,
  audioAssets=len(encoded),audioBytes=sum(a['bytes'] for a in manifest['assets'].values()),
  performanceNotesAndFingeringPreservedFromV7=True,
- motionAndScoreUnchangedFromV7=True,characterMesh='smooth-tailcoat',standaloneHTMLBytes=html.stat().st_size,inlineScripts=9,requiresRuntimeNetwork=False,
+ motionAndScoreUnchangedFromV7=True,characterMesh='smooth-tailcoat',standaloneHTMLBytes=html.stat().st_size,inlineScripts=script_tags+1,requiresRuntimeNetwork=False,
  browserUIAndAuditoryCheck=False)
 reports['standaloneValidation']=json.loads(subprocess.check_output(['node','validate-v8.cjs'],cwd=root,text=True))
 (root/'v8-verification.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2)+'\n')
@@ -52,4 +53,4 @@ with zipfile.ZipFile(archive) as z:assert z.testzip() is None
 shutil.copyfile(html,root/'piano-recital.html')
 shutil.copyfile(archive,root/'piano-recital.zip')
 print(json.dumps({'htmlBytes':html.stat().st_size,'zipBytes':archive.stat().st_size,
-                 'audioAssets':len(encoded),'inlineScripts':9,'report':'v8-verification.json'}))
+                 'audioAssets':len(encoded),'inlineScripts':script_tags+1,'report':'v8-verification.json'}))

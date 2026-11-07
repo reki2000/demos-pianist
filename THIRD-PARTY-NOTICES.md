@@ -29,3 +29,11 @@
 ## Arrangements written for this project
 
 - *When the Saints Go Marching In* (traditional) and the three-verse *Amazing Grace* arrangement are written in `arrangements.cjs` for this project.
+
+## String-instrument repertoire data (`dist/instruments/`)
+
+Note data only — all string-instrument sound is synthesized in the browser. Full provenance lives in each module repo's SOURCES.md (demos-guitarist `sources/`, demos-violinist `data/`, demos-cellist `data/`). Compositions are public domain except where an edition licence is noted.
+
+- Guitar: Albéniz *Asturias*, *Granada*, *Sevilla* and Granados *Andaluza* from Classical Guitar MIDI Archives sequencings (no explicit licence published upstream — used here as note data for a personal demo). Tárrega *Recuerdos de la Alhambra*: Mutopia 810, **CC BY-SA 3.0**; *Capricho Árabe*: Mutopia 1951, **CC BY-SA 4.0**.
+- Violin: Massenet *Méditation* from a MusicXML transcription (tedmuller.us; Marsick/Heugel lineage). Bach/Wilhelmj *Air on the G String*: Mutopia 242 (Bach-Gesellschaft edition). Monti *Csárdás*: from a duet MIDI (8notes).
+- Cello: Bach *Suite No. 1* movements (BWV 1007) from Mutopia LilyPond editions of the Schirmer 1916 edition (public domain). Saint-Saëns *The Swan*: WIMA/IMSLP MusicXML, Packham typeset, **CC BY-SA 3.0** — the D-major edition, cross-checked against a Durand scan.
