@@ -272,6 +272,10 @@ function enterString(a) {
 function enterPiano() {
   if (!active) return;
   memory[active.id] = { songId: song.id, position }; pauseStr();
+  // Do not leave the shell's AudioContext running alongside the piano's:
+  // two live contexts compete for the device audio path (and burn CPU).
+  // playStr() resumes it on the next string playback.
+  if (ctx && ctx.state === 'running') ctx.suspend();
   active = null; song = null; plan = null;
   if (pianoButtons) { const wrap = $('songs'); wrap.innerHTML = ''; for (const b of pianoButtons) wrap.append(b); }
   document.querySelector('.edition').innerHTML = pianoDOM.edition;
