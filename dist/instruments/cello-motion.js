@@ -121,6 +121,115 @@ window.CelloMotion = (() => {
     return VARI;
   }
 
+  // ---- Hand-skeleton modes (the setCarriage dev hook) --------
+  // SHIPPED DEFAULT: 'bone' (rk's ruling, 2026-11-08 — the
+  // per-bone metacarpal-frame skeleton is the main line; see
+  // BONE below). The app path produces the bone hand with no
+  // flags. The other modes ('current' = the pre-bone shipped
+  // build, r1/r2/r3, wrap, fan) are the recorded exploration of
+  // the CARRIAGE space — wrist placement, palm orientation,
+  // knuckle-row placement — kept reachable through setCarriage
+  // for re-checking, inert on the default path. Background:
+  // the pre-bone chains folded in the fingerboard's sagittal plane
+  // (bulge reference M.n) while the palm sat rolled ~45-80 deg
+  // against that plane, so in palm coordinates the fold reads
+  // as mostly SIDEWAYS bend (geometry section 9's pinned
+  // baselines: MCP lateral to 87.7 deg, PIP lateral to ~67
+  // deg). These modes explore the CARRIAGE space -- wrist
+  // placement, palm orientation, knuckle-row placement -- with
+  // the fold plane tied to the palm. The default 'current' is
+  // the shipped build, unchanged in behaviour.
+  //   r1 "palm-aligned carriage": the wrist placement rotates
+  //     about the neck axis by rollDeg (weighted out as
+  //     lam -> 1) and the chains fold in the palm plane.
+  //   r2 "palm fold, row adapts": carriage nominal; the chains
+  //     fold in the palm plane; the knuckle roots roll about
+  //     the row axis by rootRollDeg and the wrist trial search
+  //     additionally scores the metacarpal's alignment with
+  //     the primary finger's palm fold plane (alignW).
+  //   r3 "halfway": rollDeg/2 of carriage roll and the fold
+  //     bulge reference blended halfway board -> palm.
+  //   wrap "wrist wraps around the neck" (rk's steer, 2026-
+  //     11-08): instead of rolling the placed wrist in place
+  //     (r1), the wrist TARGET's radial offset from the neck
+  //     axis is rotated around the axis toward the board-back
+  //     direction by wrapDeg -- the wrist position itself is
+  //     carried further around the back of the neck, and the
+  //     palm frame is re-derived from the wrapped wrist and
+  //     the knuckle row as usual. wrapStation 'chord' also
+  //     slides the wrist along the axis so the wrist -> middle
+  //     knuckle chord keeps its unwrapped length (the hand
+  //     screws around the neck as it wraps). The placeWrist
+  //     palm-length band clamp is DISABLED in this mode
+  //     (wrapBand 'off'): at a wrapped station the honest
+  //     chord exceeds the band, and the clamp's chord-scaling
+  //     drags the wrist back toward the front -- it unwraps
+  //     the placement it is meant to serve. The radial neck-
+  //     wood floor stays (clearance, not posture). Chains fold
+  //     in the palm plane, as r1/r2. liftY / liftX bias the
+  //     elbow search (any mode): preferred elbow height raised
+  //     by liftY and pulled toward planning-X liftX -- rk's
+  //     "open the armpit, lift the elbow out to the side".
+  //   fan "rotate the fan" (rk's redesign call, 2026-11-08):
+  //     the R / wrap rounds established that the MCP flexion/
+  //     lateral split is invariant to wrist placement and to
+  //     frame rolls -- it is set by the knuckle row's roll
+  //     about the metacarpal axis. This mode rotates the
+  //     distal assembly itself: after the fan has built the
+  //     knuckle roots, the roots are swung by fanDeg about the
+  //     middle metacarpal's line (the provisional wrist ->
+  //     middle knuckle axis, which the middle root lies on by
+  //     construction), BEFORE the placement snapshot is taken,
+  //     so every wrist trial, the palm frame, the thumb base
+  //     and the chains re-derive from the rotated fan -- a
+  //     skeletal pronation of the fan, not a drawn-frame roll
+  //     and not a wrist move (the wrist is the pivot; the
+  //     trial search then co-designs its placement around the
+  //     rotated row). Targets (board points) never move;
+  //     contact stays exact by chain construction. Chains
+  //     fold in the palm plane, as r1/r2/wrap. (Rotating only
+  //     appDir about the palm axis was probed first and is NOT
+  //     this mode: the wrist placement compensates it, worst
+  //     MCP lateral stayed in the 77-89 deg band at |phi|<=80.)
+  //   bone "per-bone metacarpal frames" (rig-standard
+  //     structure, research input 2026-11-08) — THE SHIPPED
+  //     DEFAULT since rk's ruling of 2026-11-08: production hand
+  //     rigs give every bone its own local frame (axis along
+  //     the bone, flexion axis perpendicular to the bone and
+  //     parallel to the dorsal plane) and zero the rest pose;
+  //     "wrong bone roll -> fingers curl sideways" is the
+  //     classic defect of a single derived frame -- the
+  //     analogue of this model's row-derived palmZ. In this
+  //     mode each finger's chain folds in ITS OWN flexion
+  //     plane: the bulge reference is the finger's dorsal
+  //     axis boneZOf(f) -- the back-of-hand normal projected
+  //     perpendicular to that finger's metacarpal, yawed
+  //     about the metacarpal by the fan angle psi_f =
+  //     fanYawBase + fanYawSpread * (f - 2) (the fan lives in
+  //     the metacarpal bases: progressively oblique planes,
+  //     ulnar side converging -- a property of the hand, not
+  //     of the targets). The drawn palm frame is derived FROM
+  //     the middle finger's bone frame (palm plate drawn from
+  //     the bones, not the other way round), and with
+  //     dipSlave = 1 the chain's distal bend is slaved to the
+  //     PIP bend at the measured FDP coupling (DIP ~ 0.69 *
+  //     PIP) instead of resting at a fixed curl. The fanDeg
+  //     root swing above is also available in this mode.
+  const CARR_OFF = { mode: 'current', rollDeg: 0, rootRollDeg: 0, alignW: 0, rootAlign: 0, wrapDeg: 0, wrapStation: 'keep', wrapBand: 'off', wrapGuard: 'off', liftY: 0, liftX: 0, fanDeg: 0, fanYawBase: 0, fanYawSpread: 0, dipSlave: 0 };
+  // THE SHIPPED HAND (rk's ruling, 2026-11-08): the bone
+  // skeleton at its representative configuration — per-finger
+  // flexion planes from the metacarpal fan (base yaw 0, spread
+  // +20 deg per finger step from the middle), the DIP slaved
+  // to the PIP at the FDP coupling, and the L2 elbow lift
+  // (rk's "open the armpit" steer: +60 mm height pull, lateral
+  // pull to planning X 0.22 in the elbow score).
+  const BONE = { mode: 'bone', fanYawBase: 0, fanYawSpread: 20, dipSlave: 1, liftY: 0.06, liftX: 0.22 };
+  let CARR = { ...CARR_OFF, ...BONE };
+  function setCarriage(c) {
+    CARR = { ...CARR_OFF, ...(c || {}) };
+    return CARR;
+  }
+
   function solveElbow(S, W, pole) {
     const [L1, L2] = ARM;
     let d = sub(W, S), dist = clamp(Math.hypot(...d), 0.05, (L1 + L2) * 0.999);
@@ -196,53 +305,143 @@ window.CelloMotion = (() => {
   // (.infeasible) and the caller repairs the span proximally
   // (knuckle away from the target -- see pose()). The returned
   // array carries .pip/.dip/.curlUsed/.infeasible for the tests.
-  function fingerChain(B, T, lens, planeN, curl = 0.35) {
+  // Scalar bends of a raw chain. The PIP bend and the signed
+  // PIP flexion of fingerChainRaw(B, T, lens, planeN, c)
+  // depend only on (span, c, lens) -- the two-bone IK runs in
+  // the (dir, side) plane, where seg1 = (a, h), the virtual
+  // distal direction is ((span-a), -h), and segment 2 is that
+  // direction rotated by psi about the plane normal (the
+  // rotation sense flips when the joint sits past the target,
+  // span < a). The clamp and slave bisections below evaluate
+  // this closed form instead of building ~14 vector chains
+  // per solve; the chains actually returned are still built
+  // by fingerChainRaw, so drawn geometry is unchanged.
+  // Validated against the vector chain on 60k random cases
+  // (worst deviation 3e-9 rad, incl. clamped spans, 2026-11-08).
+  const chainBendsAt = (span0, c, lens) => {
+    const [l1, l2, l3] = lens;
+    const L23 = Math.sqrt(l2 * l2 + l3 * l3 + 2 * l2 * l3 * Math.cos(c));
+    const dist = Math.min(Math.max(span0, 0.02), (l1 + L23) * 0.999);
+    const a = (l1 * l1 - L23 * L23 + dist * dist) / (2 * dist);
+    const h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+    const sLen = Math.hypot(a, h) || 1;
+    const s1x = a / sLen, s1y = h / sLen;
+    const vdLen = Math.hypot(span0 - a, h) || 1;
+    const vdx = (span0 - a) / vdLen, vdy = -h / vdLen;
+    const psi = Math.atan2(l3 * Math.sin(c), l2 + l3 * Math.cos(c));
+    const th = (span0 - a) < 0 ? -psi : psi, co = Math.cos(th), si = Math.sin(th);
+    const d2x = vdx * co - vdy * si, d2y = vdx * si + vdy * co;
+    const dt = s1x * d2x + s1y * d2y, cr = s1x * d2y - s1y * d2x;
+    return [Math.acos(Math.min(1, Math.max(-1, dt))), -Math.atan2(cr, dt)];
+  };
+  // Set by drawnMCPAngle around its measurement-only chain
+  // builds so they skip the DIP-slave coupling solve (the
+  // drawn chains in buildOne run the full solve).
+  let CHAIN_FAST = false;
+  // Scalar curl solve: every decision fingerChain makes --
+  // the PIP cap trade, the PIP backward floor, the DIP
+  // slave coupling -- is a function of the bends at a curl,
+  // and the bends are the closed form chainBendsAt (the
+  // vector chainBends/pipFlexOf readings on the built chain
+  // are the same numbers, validated to 3e-9 rad). Solving
+  // the curl scalarly first and building ONCE replaces up
+  // to four vector builds + remeasures per chain; it was
+  // the dominant cost of the bone build (the guard probes
+  // build a chain per candidate root). The DIP bend of the
+  // built chain is the curl itself by construction (the
+  // distal segment is segment 2 rotated by exactly -curl),
+  // and the PIP bend is chainBendsAt at the solved curl.
+  const solveCurl = (span0, curl, lens) => {
     const PIPCAP = ROM.FINGER.PIP[1], DIPCAP = ROM.FINGER.DIP[1];
-    let pts = fingerChainRaw(B, T, lens, planeN, curl);
-    let [pip, dip] = chainBends(pts);
-    let cUse = curl, infeasible = false;
-    if (pip > PIPCAP) {
-      const ptsHi = fingerChainRaw(B, T, lens, planeN, DIPCAP);
-      if (chainBends(ptsHi)[0] > PIPCAP) {
-        pts = ptsHi; cUse = DIPCAP; infeasible = true;
-      } else {
+    let cUse = curl, infeasible = false, slaved = false;
+    let bd = chainBendsAt(span0, curl, lens);
+    if (bd[0] > PIPCAP) {
+      if (chainBendsAt(span0, DIPCAP, lens)[0] > PIPCAP) { cUse = DIPCAP; infeasible = true; }
+      else {
         let lo = curl, hi = DIPCAP;
         for (let i = 0; i < 12; i++) {
           const mid = (lo + hi) / 2;
-          if (chainBends(fingerChainRaw(B, T, lens, planeN, mid))[0] > PIPCAP) lo = mid; else hi = mid;
+          if (chainBendsAt(span0, mid, lens)[0] > PIPCAP) lo = mid; else hi = mid;
         }
         cUse = hi;
-        pts = fingerChainRaw(B, T, lens, planeN, cUse);
       }
-      [pip, dip] = chainBends(pts);
+      bd = chainBendsAt(span0, cUse, lens);
     }
-    // PIP FLOOR (rk 2026-11-08, same rule): at near-full span the
-    // fixed rest curl forces the PIP a few degrees BACKWARD (the
-    // DIP holds 31.5 deg and the PIP compensates to still reach)
-    // -- measured -8.6 deg on the little finger in neck-position
-    // contact frames. A stretched finger flattens its DIP in
-    // reality, so the chain trades the other way: bisect the
-    // curl DOWN to the largest value whose PIP flexion is still
-    // >= 0. The tip still lands exactly (the raw construction
-    // reaches T at any curl). If even a straight distal segment
-    // folds backward the span/placement is infeasible -- flagged,
-    // never silently relaxed.
-    if (pipFlexOf(B, T, planeN, pts) < 0) {
-      const flat = fingerChainRaw(B, T, lens, planeN, 0);
-      if (pipFlexOf(B, T, planeN, flat) < 0) {
-        pts = flat; cUse = 0; infeasible = true;
-      } else {
+    if (bd[1] < 0) {
+      if (chainBendsAt(span0, 0, lens)[1] < 0) { cUse = 0; infeasible = true; }
+      else {
         let lo = 0, hi = cUse;
         for (let i = 0; i < 12; i++) {
           const mid = (lo + hi) / 2;
-          if (pipFlexOf(B, T, planeN, fingerChainRaw(B, T, lens, planeN, mid)) < 0.001) hi = mid; else lo = mid;
+          if (chainBendsAt(span0, mid, lens)[1] < 0.001) hi = mid; else lo = mid;
         }
         cUse = lo;
-        pts = fingerChainRaw(B, T, lens, planeN, cUse);
       }
-      [pip, dip] = chainBends(pts);
+      bd = chainBendsAt(span0, cUse, lens);
     }
-    pts.pip = pip; pts.dip = dip; pts.curlUsed = cUse; pts.infeasible = infeasible;
+    if (CARR.mode === 'bone' && CARR.dipSlave && !infeasible && !CHAIN_FAST) {
+      const g = c => c - 0.69 * chainBendsAt(span0, c, lens)[0];
+      if (g(0) <= 0 && g(DIPCAP) >= 0) {
+        let lo = 0, hi = DIPCAP;
+        for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (g(mid) < 0) lo = mid; else hi = mid; }
+        const bq = chainBendsAt(span0, hi, lens);
+        if (bq[0] <= PIPCAP + 1e-9 && bq[1] >= -1e-9) { cUse = hi; slaved = true; bd = bq; }
+      }
+    }
+    return { cUse, infeasible, slaved, pip: bd[0] };
+  };
+  // Planar chain geometry at a solved curl: segment-1
+  // direction and tip position in the (dir, side) basis of
+  // fingerChainRaw, in closed form (the same derivation as
+  // chainBendsAt, carried to the tip: segment 2 at angle
+  // thVd + sgn*psi, segment 3 at a further -sgn*curl, where
+  // sgn = sign(span0 - a) is the orientation of the raw
+  // build's rotation axis cross(vd, side)). Validated
+  // against the vector chain on 30k random cases (worst
+  // coordinate deviation 1.8e-15 m, 2026-11-08).
+  const geomAt = (span0, c, lens) => {
+    const [l1, l2, l3] = lens;
+    const L23 = Math.sqrt(l2 * l2 + l3 * l3 + 2 * l2 * l3 * Math.cos(c));
+    const dist = Math.min(Math.max(span0, 0.02), (l1 + L23) * 0.999);
+    const a = (l1 * l1 - L23 * L23 + dist * dist) / (2 * dist);
+    const h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+    const psi = Math.atan2(l3 * Math.sin(c), l2 + l3 * Math.cos(c));
+    const sgn = (span0 - a) < 0 ? -1 : 1;
+    const thVd = Math.atan2(-h, span0 - a);
+    const th2 = thVd + sgn * psi;
+    const j2x = a + l2 * Math.cos(th2), j2y = h + l2 * Math.sin(th2);
+    const th3 = th2 - sgn * c;
+    return { a, h, tipX: j2x + l3 * Math.cos(th3), tipY: j2y + l3 * Math.sin(th3) };
+  };
+  // The drawn base-joint angle (drawnMCPAngle's measure)
+  // without building the chain: solve the curl scalarly,
+  // take segment 1 and the tip from geomAt, and project the
+  // metacarpal against the fold-plane normal through them.
+  // The guard probes this per candidate root; the closed
+  // form replaces a full vector chain build per probe and
+  // was the dominant remaining cost of the bone build.
+  const drawnAngleCalc = (w, K, T, lens, planeN, curl) => {
+    const span0 = Math.hypot(T[0] - K[0], T[1] - K[1], T[2] - K[2]);
+    const sv = solveCurl(span0, curl, lens);
+    const g = geomAt(span0, sv.cUse, lens);
+    const dir = norm(sub(T, K));
+    let side = sub(planeN, mul(dir, dot(planeN, dir)));
+    side = Math.hypot(...side) < 1e-6 ? [0, 0, 1] : norm(side);
+    const seg = add(mul(dir, g.a), mul(side, g.h));
+    const tip = add(mul(dir, g.tipX), mul(side, g.tipY));
+    let nrm = M.vec.cross(seg, tip);
+    nrm = Math.hypot(...nrm) < 1e-9 ? M.n : norm(nrm);
+    const meta = sub(K, w);
+    const mp = sub(meta, mul(nrm, dot(meta, nrm)));
+    if (Math.hypot(...mp) < 1e-9) return 0;
+    return Math.acos(clamp(dot(norm(mp), norm(seg)), -1, 1));
+  };
+  function fingerChain(B, T, lens, planeN, curl = 0.35) {
+    const span0 = Math.hypot(T[0] - B[0], T[1] - B[1], T[2] - B[2]);
+    const sv = solveCurl(span0, curl, lens);
+    const pts = fingerChainRaw(B, T, lens, planeN, sv.cUse);
+    pts.pip = sv.pip; pts.dip = sv.cUse; pts.curlUsed = sv.cUse;
+    pts.infeasible = sv.infeasible; pts.slaved = sv.slaved;
     return pts;
   }
   // Smallest knuckle->target span at which a finger's chain can
@@ -312,6 +511,20 @@ window.CelloMotion = (() => {
       let lo = 0, hi = B1C;
       for (let i = 0; i < 24; i++) { const mid = (lo + hi) / 2; if (resLen(mid, b2of(mid)) > dT) lo = mid; else hi = mid; }
       b1 = (lo + hi) / 2; b2 = b2of(b1);
+    } else if (dT > resLen(0, b2)) {
+      // OVER-REACH (bone finalization, 2026-11-08): the span
+      // exceeds what the distributed fold reaches with the MCP
+      // straight (resLen(0, 0.35) ~ 95.0 mm against the 95.9 mm
+      // clamp) -- a reaching thumb straightens its IP joint
+      // instead of falling short, so bisect the IP bend DOWN
+      // from its 0.35 floor until the resultant meets the span
+      // (resLen(0, b2) decreases monotonically on [0, 0.35]).
+      // The tip then lands exactly out to the clamp; beyond
+      // it, placement (the wrist trials score the predicted
+      // error) is the fix, not the chain.
+      let lo = 0, hi = b2;
+      for (let i = 0; i < 24; i++) { const mid = (lo + hi) / 2; if (resLen(0, mid) > dT) lo = mid; else hi = mid; }
+      b2 = (lo + hi) / 2;
     }
     const Vx = l1 + l2 * Math.cos(b1) + l3 * Math.cos(b1 + b2);
     const Vy = l2 * Math.sin(b1) + l3 * Math.sin(b1 + b2);
@@ -573,6 +786,22 @@ window.CelloMotion = (() => {
     };
     const knuckles = {};
     for (let f = 1; f <= 4; f++) knuckles[f] = rootOf(f);
+    // R2 knuckle-row roll: rotate the roots about the row axis
+    // (through the primary root, along rowDir). The row keeps
+    // its stations, but every chord tilts with its root, which
+    // swings each finger's palm fold plane toward (or away
+    // from) its metacarpal -- the row repositioning half of
+    // the R2 redesign. Contact is untouched (the chains land
+    // on their targets from any root).
+    if (CARR.mode !== 'current' && CARR.rootRollDeg) {
+      const bta = CARR.rootRollDeg * Math.PI / 180, cb = Math.cos(bta), sb = Math.sin(bta);
+      for (let f = 1; f <= 4; f++) {
+        if (f === prim) continue;
+        const rel = sub(knuckles[f], primRoot);
+        knuckles[f] = add(primRoot, add(add(mul(rel, cb), mul(M.vec.cross(rowDir, rel), sb)),
+          mul(rowDir, dot(rowDir, rel) * (1 - cb))));
+      }
+    }
     // ---- Wrist placement + drawn base-joint (MCP) guard -------
     // The wrist is placed at an ANATOMICAL TARGET in the neck
     // frame (rk round 2): down-neck of the middle knuckle's
@@ -617,8 +846,37 @@ window.CelloMotion = (() => {
       const seedW = add(add(sub(midR, mul(palmAxis, PALM_LEN + axOff)), mul(latDir, latOff)), mul(rowDirW, rowOff));
       const axPt = add(M.NECK_A, mul(neckAxisDir,
         clamp(dot(sub(midR, M.NECK_A), neckAxisDir), 0, axisLen)));
-      const neckW = add(add(axPt, mul(neckAxisDir, -(VARI.stationBack + stOff))),
+      let neckW = add(add(axPt, mul(neckAxisDir, -(VARI.stationBack + stOff))),
         add(mul(M.BOARD.normal, fbOff), mul(M.v, -(VARI.wristSideM + sdOff))));
+      // WRAP carriage (dev only): rotate the target's radial
+      // offset around the neck axis toward the board-back
+      // direction by wrapDeg (the wrist is carried around the
+      // back of the neck; the sense is fixed geometrically so
+      // a positive angle always travels from the player's-left
+      // side toward the back). 'chord' station compensation
+      // then slides the target along the axis so the wrist ->
+      // middle-knuckle chord keeps its unwrapped length.
+      if (CARR.mode === 'wrap' && CARR.wrapDeg) {
+        let bdW = sub(mul(M.n, -1), mul(neckAxisDir, dot(mul(M.n, -1), neckAxisDir)));
+        bdW = Math.hypot(...bdW) > 1e-9 ? norm(bdW) : [0, 0, 1];
+        const offW = sub(neckW, axPt), axC = dot(offW, neckAxisDir);
+        const radW = sub(offW, mul(neckAxisDir, axC));
+        if (Math.hypot(...radW) > 1e-9) {
+          const sgnW = dot(M.vec.cross(neckAxisDir, radW), bdW) < 0 ? -1 : 1;
+          const aW = sgnW * CARR.wrapDeg * Math.PI / 180, cW = Math.cos(aW), sW = Math.sin(aW);
+          const radR = add(add(mul(radW, cW), mul(M.vec.cross(neckAxisDir, radW), sW)),
+            mul(neckAxisDir, dot(neckAxisDir, radW) * (1 - cW)));
+          let axNew = axC;
+          if (CARR.wrapStation === 'chord') {
+            const L0 = Math.hypot(...sub(neckW, midR));
+            const dW = sub(add(axPt, radR), midR), da = dot(dW, neckAxisDir);
+            const disc = da * da - (Math.hypot(...dW) ** 2 - L0 * L0);
+            let sNew = disc >= 0 ? -da + (Math.abs(-da + Math.sqrt(disc) - axC) < Math.abs(-da - Math.sqrt(disc) - axC) ? Math.sqrt(disc) : -Math.sqrt(disc)) : -da;
+            axNew = clamp(sNew, -0.11, 0.02);
+          }
+          neckW = add(axPt, add(radR, mul(neckAxisDir, axNew)));
+        }
+      }
       let w = add(mul(neckW, 1 - lam), mul(seedW, lam));
       const axPtOf = p => add(M.NECK_A, mul(neckAxisDir,
         clamp(dot(sub(p, M.NECK_A), neckAxisDir), 0, axisLen)));
@@ -626,8 +884,29 @@ window.CelloMotion = (() => {
       const radial = sub(w, axPtW), rd = Math.hypot(...radial);
       if (rd < VARI.wristFloor && rd > 1e-9) w = add(w, mul(radial, (VARI.wristFloor - rd) / rd));
       const stretched = Math.hypot(...sub(midR, w));
-      if (stretched > 0.0995) w = add(midR, mul(sub(w, midR), 0.0995 / stretched));
-      else if (stretched < 0.082) w = add(midR, mul(sub(w, midR), 0.082 / stretched));
+      // Wrap mode (wrapBand 'off'): the band is skipped -- its
+      // chord-scaling would drag a wrapped wrist back toward
+      // the front (see the carriage comment at setCarriage).
+      if (!(CARR.mode === 'wrap' && CARR.wrapBand === 'off')) {
+        if (stretched > 0.0995) w = add(midR, mul(sub(w, midR), 0.0995 / stretched));
+        else if (stretched < 0.082) w = add(midR, mul(sub(w, midR), 0.082 / stretched));
+      }
+      // R1/R3 carriage roll: rotate the placed wrist about the
+      // neck axis (radial distance preserved; the palm-length
+      // band is re-clamped after, since the middle knuckle sits
+      // off-axis). Weighted out as lam -> 1, where the seed
+      // placement takes over from the neck-frame target.
+      if (CARR.mode !== 'current' && CARR.rollDeg) {
+        const al = CARR.rollDeg * Math.PI / 180 * (CARR.mode === 'r3' ? 0.5 : 1) * (1 - lam);
+        if (al) {
+          const rel = sub(w, axPtW), ca = Math.cos(al), sa = Math.sin(al);
+          w = add(axPtW, add(add(mul(rel, ca), mul(M.vec.cross(neckAxisDir, rel), sa)),
+            mul(neckAxisDir, dot(neckAxisDir, rel) * (1 - ca))));
+          const st2 = Math.hypot(...sub(midR, w));
+          if (st2 > 0.0995) w = add(midR, mul(sub(w, midR), 0.0995 / st2));
+          else if (st2 < 0.082) w = add(midR, mul(sub(w, midR), 0.082 / st2));
+        }
+      }
       return w;
     };
     // DRAWN MCP (rk round 2): the angle a viewer measures -- the
@@ -648,17 +927,69 @@ window.CelloMotion = (() => {
     // wrist-knuckle-target plane toward the wrist side. Contact
     // is untouched: the chain always lands on its target.
     const MCP_CAP = 1.56; // 89.4 deg: margin under rk's 90 (at 1.54 the guard's whisker-thin excess over its own cap forced the wrist search into a dragged corner with a ~53 mm palm in finger-1-led neck frames; rk's rule is the 90 deg line itself)
+    // PALM-LENGTH FLOOR (bone finalization debit (c)): the
+    // middle knuckle's wrist distance IS the palm length
+    // (section 8 asserts [60, 100] mm). The bone hand's guard
+    // travel swung the middle root to 21.7 mm in low neck
+    // frames (the rotate lever walks the root around its
+    // target toward the wrist, and on its reach sphere a root
+    // can approach the wrist to ||T - w| - reach|). The floor
+    // is enforced by REPAIR, not by freezing the levers --
+    // freezing left the drawn-MCP cap unsatisfiable in
+    // exactly the frames that start inside the floor (the
+    // snapshot palm runs ~53 mm in finger-1-led neck frames),
+    // and with no feasible trial at any wrist those frames
+    // fell back to fallback-3 elbows. See the repair at the
+    // end of correctMCP; the wrist trials also score the
+    // final palm length.
+    const PALM_FLOOR = 0.062;
+    let k2RepairTarget = null; // attempt()-level repair anchor for the middle root
     let mcpSync = null; // set by the post-coplanarity pass to keep roots[] in step
-    const drawnMCPAngle = (w, K, T, f, planeZ) => {
-      const pts = fingerChain(K, T, FINGER_LEN[f], M.n, curlF);
-      const meta = sub(K, w), seg = sub(pts[1], pts[0]);
-      let nrm = M.vec.cross(seg, sub(pts[3], pts[0]));
-      nrm = Math.hypot(...nrm) < 1e-9 ? M.n : norm(nrm);
-      const mp = sub(meta, mul(nrm, dot(meta, nrm)));
-      if (Math.hypot(...mp) < 1e-9) return 0;
-      return Math.acos(clamp(dot(norm(mp), norm(seg)), -1, 1));
+    // Fold (bend-plane) bulge reference for the chains: the
+    // shipped build folds in the board's sagittal plane (M.n);
+    // the carriage redesign modes fold in / toward the palm
+    // plane instead (bulge reference = the palm frame's dorsal
+    // axis). Set provisionally from palmFrameOf before each
+    // guard pass and finally from finishHand's drawn frame.
+    let bendN = M.n;
+    const bendNFor = pz => CARR.mode === 'current' ? M.n
+      : CARR.mode === 'r3' ? norm(add(M.n, pz))
+      : pz;
+    // Per-finger metacarpal (bone) frame dorsal axis, CARR
+    // 'bone' (see the setCarriage comment): the back-of-hand
+    // normal projected perpendicular to the finger's own
+    // metacarpal (wrist -> root), yawed about the metacarpal
+    // by the finger's fan angle. The chain's bulge reference
+    // in this mode, so the finger folds in its own flexion
+    // plane span(metacarpal, dorsal) -- a hinge in its own
+    // frame by construction.
+    const boneZOf = (f, w, K) => {
+      const m = norm(sub(K, w));
+      let z = sub(backN, mul(m, dot(backN, m)));
+      if (Math.hypot(...z) < 1e-6) z = sub(M.n, mul(m, dot(M.n, m)));
+      z = norm(z);
+      const psi = (CARR.fanYawBase + CARR.fanYawSpread * (f - 2)) * Math.PI / 180;
+      if (psi) {
+        const c = Math.cos(psi), s = Math.sin(psi);
+        z = norm(add(add(mul(z, c), mul(M.vec.cross(m, z), s)), mul(m, dot(m, z) * (1 - c))));
+      }
+      return z;
     };
-    const shrinkKnuckle = f => {
+    const bendNOf = (f, w, K) => CARR.mode === 'bone' ? boneZOf(f, w, K) : bendN;
+    const drawnMCPAngle = (w, K, T, f, planeZ) => {
+      // BONE mode measures the REAL chain (DIP slave applied):
+      // the slave moves the tip, the tip sets the fold-plane
+      // normal this angle is projected against, and the fast
+      // (unslaved) probe read ~1-3 deg under the drawn angle
+      // in ~1,500 frames (worst drawn 115 deg against a 89.4
+      // fast reading). Other modes have no slave; their fast
+      // probe is exact.
+      CHAIN_FAST = CARR.mode !== 'bone';
+      const ang = drawnAngleCalc(w, K, T, FINGER_LEN[f], bendNOf(f, w, K), curlF);
+      CHAIN_FAST = false;
+      return ang;
+    };
+    const shrinkKnuckle = (f, w) => {
       const KT = sub(knuckles[f], targets[f]), dNow = Math.hypot(...KT);
       // The shrink floor is also the chain's PIP-feasibility
       // floor: shrinking a knuckle inside MIN_SPAN would fold
@@ -671,18 +1002,95 @@ window.CelloMotion = (() => {
         if (mcpSync) mcpSync(f);
       }
     };
-    const rotateKnuckle = (f, w, step) => {
+    const rotateKnuckle = (f, w, maxStep, planeZ) => {
       const d2 = norm(sub(knuckles[f], targets[f]));
       const w2 = norm(sub(w, targets[f]));
       let axr = M.vec.cross(d2, w2);
       if (Math.hypot(...axr) < 1e-6) return;
       axr = norm(axr);
-      const c = Math.cos(step), s = Math.sin(step);
-      const rot = add(add(mul(d2, c), mul(M.vec.cross(axr, d2), s)),
-        mul(axr, dot(axr, d2) * (1 - c)));
-      knuckles[f] = add(targets[f],
-        mul(rot, Math.hypot(...sub(knuckles[f], targets[f]))));
+      const reachK = Math.hypot(...sub(knuckles[f], targets[f]));
+      const atStep = st => {
+        const c = Math.cos(st), s = Math.sin(st);
+        const rot = add(add(mul(d2, c), mul(M.vec.cross(axr, d2), s)),
+          mul(axr, dot(axr, d2) * (1 - c)));
+        return add(targets[f], mul(rot, reachK));
+      };
+      // PROBED, BIDIRECTIONAL (bone finalization): the legacy
+      // lever rotated by a formula step toward the wrist, up
+      // to 0.35 rad per pass. In the bone frame the drawn
+      // angle's gain per radian of root travel is often far
+      // below 1 (the metacarpal sits near the fold plane's
+      // normal, so the projected angle barely answers), and
+      // the root walked most of the way around its target
+      // sphere to the wrist -- 99.5 -> 29.6 mm measured on
+      // the middle root in one provisional pass, poisoning
+      // the placement snapshot every trial starts from.
+      // Probe the drawn angle at ascending steps in BOTH
+      // directions and take the SMALLEST step that actually
+      // reaches the cap; for the middle finger, when both
+      // directions reach it, keep the root farther from the
+      // wrist (the palm floor's interest). If no probed step
+      // reaches the cap, fall back to the legacy step.
+      // Probe the drawn angle at ascending steps in BOTH
+      // directions and take the SMALLEST step that actually
+      // reaches the cap; for the middle finger, when both
+      // directions reach it, keep the root farther from the
+      // wrist (the palm floor's interest). If no probed step
+      // reaches the cap, fall back to the legacy step: the
+      // consistent-direction walk is what escapes the
+      // degenerate alignments -- over the guard's iterations
+      // the root travels around its sphere until the geometry
+      // answers. (Removing the fallback was tried in the
+      // bone finalization and measurably broke convergence:
+      // the wrist search ran to its caps and fallback-3
+      // assemblies leaked into 31 frames. The palm repair
+      // below reverses whatever travel the final root does
+      // not need.)
+      const STEPS = [0.03, 0.06, 0.10, 0.16, 0.24, 0.35];
+      const probe = sgn => {
+        for (const st of STEPS) {
+          const cand = atStep(sgn * st);
+          if (drawnMCPAngle(w, cand, targets[f], f, planeZ) <= MCP_CAP) return { st: sgn * st, cand };
+        }
+        return null;
+      };
+      const pw = probe(1), pa = probe(-1);
+      let pick = null;
+      if (pw && pa) pick = f === 2
+        ? (Math.hypot(...sub(pa.cand, w)) > Math.hypot(...sub(pw.cand, w)) ? pa : pw)
+        : (Math.abs(pw.st) <= Math.abs(pa.st) ? pw : pa);
+      else pick = pw || pa;
+      knuckles[f] = pick ? pick.cand : atStep(Math.min(0.35, maxStep));
       if (mcpSync) mcpSync(f);
+    };
+    // IN-PLANE ROOT ROTATION (bone mode): rotateKnuckle turns
+    // the root about the wrist->target axis -- but the bone
+    // fold plane is DERIVED from the metacarpal, so plane,
+    // metacarpal and chord rotate rigidly together and the
+    // drawn angle is invariant under it (measured: the
+    // Prelude index-led placement sat at 95.4 deg through
+    // every probed step). Rotating the root about the TARGET
+    // inside its own fold plane instead keeps the root on
+    // its reach sphere and the chain in its plane, but turns
+    // the chord against the metacarpal -- the angle answers.
+    // Probe small steps both ways; smallest that reaches the
+    // cap wins. The root's row station shifts by at most
+    // ~0.10 rad of arc (~9 mm), inside the plate's bridging
+    // margins.
+    const inPlaneFix = (f, w, planeZ) => {
+      const T = targets[f], rel = sub(knuckles[f], T);
+      const axis = boneZOf(f, w, knuckles[f]);
+      for (const d of [0.02, -0.02, 0.045, -0.045, 0.07, -0.07, 0.10, -0.10]) {
+        const c = Math.cos(d), s = Math.sin(d);
+        const cand = add(T, add(add(mul(rel, c), mul(M.vec.cross(axis, rel), s)),
+          mul(axis, dot(axis, rel) * (1 - c))));
+        if (drawnMCPAngle(w, cand, T, f, planeZ) <= MCP_CAP) {
+          knuckles[f] = cand;
+          if (mcpSync) mcpSync(f);
+          return true;
+        }
+      }
+      return false;
     };
     // Provisional palm frame from the CURRENT knuckles + a wrist,
     // for the MCP passes that run before finishHand builds the
@@ -691,6 +1099,18 @@ window.CelloMotion = (() => {
     // board back, variant roll about X; the trial loops'
     // rollAdj is 0 at those points by construction).
     const palmFrameOf = w => {
+      // BONE mode: the provisional frame is the middle
+      // finger's bone frame (Y along its metacarpal, Z its
+      // dorsal axis, X = Y x Z) -- the same derivation
+      // finishHand uses, so the guard passes judge the frame
+      // the assembly will actually draw.
+      if (CARR.mode === 'bone') {
+        const midRoot = knuckles[2];
+        const pY = norm(sub(midRoot, w));
+        const zR = boneZOf(2, w, midRoot);
+        const pX = norm(M.vec.cross(pY, zR));
+        return { x: pX, y: pY, z: M.vec.cross(pX, pY) };
+      }
       const midRoot = knuckles[2];
       let pY = norm(sub(midRoot, w));
       const rowVec = sub(knuckles[4], knuckles[1]);
@@ -708,9 +1128,26 @@ window.CelloMotion = (() => {
       return { x: pX, y: pY, z: pZ };
     };
     const correctMCP = (w, planeZ) => {
+      const k2Entry = [...knuckles[2]];
+      // Wrap mode (wrapGuard 'off'): measure only. The guard's
+      // levers (rotate/shrink the knuckle toward the wrist)
+      // are what collapsed the palm to ~20-50 mm in every
+      // palm-plane-fold experiment: on its reach sphere a root
+      // can swing to within ||T - w| - reach| of the wrist, so
+      // the lever eats the palm whenever the base joint reads
+      // over cap. In the wrap carriage an over-cap base joint
+      // is a WRIST placement fact (the trial search moves the
+      // wrist; the excess stays measured on the pose), not a
+      // knuckle-row defect to be ground away.
+      if (CARR.mode === 'wrap' && CARR.wrapGuard === 'off') {
+        let worstM = 0;
+        for (let f = 1; f <= 4; f++) worstM = Math.max(worstM, drawnMCPAngle(w, knuckles[f], targets[f], f, planeZ));
+        return worstM;
+      }
       let worstOut = 0;
       for (let iter = 0; iter < 5; iter++) {
         let worst = 0;
+        const kSnap = [1, 2, 3, 4].map(f => [...knuckles[f]]);
         for (let f = 1; f <= 4; f++) {
           const ang = drawnMCPAngle(w, knuckles[f], targets[f], f, planeZ);
           worst = Math.max(worst, ang);
@@ -721,15 +1158,122 @@ window.CelloMotion = (() => {
           // fallback for fingers rotation alone cannot fix --
           // firing it unconditionally cost ~20 mm of palm in
           // ordinary neck frames.
-          rotateKnuckle(f, w, Math.min(0.35, (ang - MCP_CAP) * 0.9));
-          if (drawnMCPAngle(w, knuckles[f], targets[f], f, planeZ) > MCP_CAP) shrinkKnuckle(f);
+          rotateKnuckle(f, w, Math.min(0.35, (ang - MCP_CAP) * 0.9), planeZ);
+          if (drawnMCPAngle(w, knuckles[f], targets[f], f, planeZ) > MCP_CAP) {
+            // Bone mode: rotation about the wrist axis is
+            // invariant there (see inPlaneFix) -- turn the
+            // root inside its own fold plane instead, and
+            // shrink only if that also fails.
+            if (!(CARR.mode === 'bone' && inPlaneFix(f, w, planeZ))) shrinkKnuckle(f, w);
+          }
         }
         worstOut = worst;
         if (worst <= MCP_CAP) break;
+        // Stall break: an iteration that moved no root (the
+        // probes found no reaching step and the shrink is at
+        // its floor) will measure identically forever.
+        if (kSnap.every((k0, i) => Math.hypot(...sub(knuckles[i + 1], k0)) < 1e-9)) break;
+      }
+      // PALM REPAIR (bone finalization debit (c)): with the
+      // cap satisfied, walk the middle root back toward its
+      // position before this attempt's guard travel -- the
+      // attempt-level entry root (k2RepairTarget, set by
+      // attempt() ahead of its pre-pass; this pass's own
+      // entry outside attempts) -- reversing the travel the
+      // drawn angle demonstrably answers to, as far as the
+      // cap and the chain's chord bounds allow, up to the
+      // floor. (A radial walk out along the metacarpal ray
+      // was tried first: in the near-degenerate frames the
+      // projected angle does not answer to radial motion at
+      // all, and the repair never fired.) Where the cap
+      // binds along the path the palm stays short by that
+      // measured amount -- the residual class is named in
+      // geometry-test section 8.
+      {
+        const K2 = knuckles[2], rNow = Math.hypot(...sub(K2, w));
+        if (rNow < PALM_FLOOR) {
+          const entry2 = k2RepairTarget || k2Entry;
+          const T2 = targets[2];
+          const atPhi = phi => K2.map((v, i) => v + (entry2[i] - v) * phi);
+          const okPhi = phi => {
+            const Kc = atPhi(phi);
+            const chord = Math.hypot(...sub(Kc, T2));
+            return chord <= reaches[2] * 0.998 && chord >= MIN_SPAN[2] + 0.0005 &&
+              drawnMCPAngle(w, Kc, T2, 2, planeZ) <= MCP_CAP;
+          };
+          if (okPhi(0)) {
+            let lo = 0, hi = 1;
+            for (let i = 0; i < 16; i++) {
+              const mid = (lo + hi) / 2;
+              if (okPhi(mid)) lo = mid; else hi = mid;
+            }
+            if (lo > 0.02) {
+              knuckles[2] = atPhi(lo);
+              if (mcpSync) mcpSync(2);
+            }
+          }
+        }
       }
       return worstOut;
     };
-    { const wProv = placeWrist(knuckles[2], VARI.wristBack); correctMCP(wProv, palmFrameOf(wProv).z); }
+    { const wProv = placeWrist(knuckles[2], VARI.wristBack); bendN = bendNFor(palmFrameOf(wProv).z); correctMCP(wProv, palmFrameOf(wProv).z); }
+    // FAN REDESIGN rotation (dev only, CARR 'fan'): swing the
+    // knuckle roots about the middle metacarpal's line by
+    // fanDeg (see the setCarriage comment). Runs BEFORE the
+    // placement snapshot below, so the rotated row is what
+    // every wrist trial assembles from; the middle root lies
+    // on the axis and is skipped so it stays exact. Chord
+    // lengths change under the swing -- the chains, the span
+    // repair, the clearance pass and the drawn-MCP guard all
+    // re-derive from the rotated roots inside finishHand.
+    if ((CARR.mode === 'fan' || CARR.mode === 'bone') && CARR.fanDeg) {
+      const wP2 = placeWrist(knuckles[2], VARI.wristBack);
+      const axF = norm(sub(knuckles[2], wP2));
+      const fa = CARR.fanDeg * Math.PI / 180, cf = Math.cos(fa), sf = Math.sin(fa);
+      for (let f = 1; f <= 4; f++) {
+        if (f === 2) continue;
+        const rel = sub(knuckles[f], wP2);
+        knuckles[f] = add(wP2, add(add(mul(rel, cf), mul(M.vec.cross(axF, rel), sf)),
+          mul(axF, dot(axF, rel) * (1 - cf))));
+      }
+    }
+    // R2 root alignment: rotate each knuckle root about its
+    // target (on its reach sphere, so contact and span are
+    // untouched) PARTWAY toward the finger's own palm flexion
+    // plane span(metacarpal, palmZ), judged on the provisional
+    // wrist/frame. In a real hand the extended finger lies in
+    // that plane by construction; the shipped fan places the
+    // chords 50-70 deg out of it, which is what the palm-frame
+    // decomposition reads as sideways bend. The FULL
+    // projection (rootAlign = 1) moves a root by up to ~a
+    // hand-width and the assembly's clearance/guard repairs
+    // cascade into collapse in a large frame subset
+    // (measured), so the shipped variant parameter is the
+    // fraction rootAlign in (0, 1]: two fractional passes
+    // here against the provisional assembly, one more against
+    // the winning wrist after the trials. The wrist trials
+    // re-guard and polish (the alignW score term), so this is
+    // a start point, not a constraint.
+    const alignRoots = (wA, pzA, frac) => {
+      for (let f = 1; f <= 4; f++) {
+        const mH = norm(sub(knuckles[f], wA));
+        let nA = M.vec.cross(mH, pzA);
+        if (Math.hypot(...nA) < 1e-6) continue;
+        nA = norm(nA);
+        const ch = sub(targets[f], knuckles[f]), dA = Math.hypot(...ch);
+        const chN = mul(ch, 1 / dA);
+        let c2 = sub(chN, mul(nA, dot(chN, nA)));
+        if (Math.hypot(...c2) < 1e-6) continue;
+        const blended = norm(lerp(chN, norm(c2), frac));
+        knuckles[f] = sub(targets[f], mul(blended, dA));
+      }
+    };
+    if (CARR.mode !== 'current' && CARR.rootAlign) {
+      for (let itA = 0; itA < 2; itA++) {
+        const wA = placeWrist(knuckles[2], VARI.wristBack);
+        alignRoots(wA, palmFrameOf(wA).z, CARR.rootAlign);
+      }
+    }
     // Thumb rest point: one continuous target following the
     // posture parameter (no discrete mode switch, so nothing pops
     // at the neck/thumb boundary). In neck positions the pad rests
@@ -787,6 +1331,16 @@ window.CelloMotion = (() => {
     const restPt = add(add(mul(neckRest, (1 - lamT) ** 3),
       mul(flankMid, 3 * (1 - lamT) * (1 - lamT) * lamT)),
       add(mul(approach, 3 * (1 - lamT) * lamT * lamT), mul(boardRest, lamT ** 3)));
+    // The thumb's dorsal reference (the way its nail faces):
+    // outward from the neck's back-left ridge in neck positions,
+    // rotating to a back-of-hand / board-outward blend as the
+    // hand rolls onto the board. The chain flexes toward the
+    // opposite (palmar) side -- pad toward the neck. Defined
+    // here (a pure function of the posture constants) because
+    // the wrist trials' thumb prediction uses it too.
+    const radialOutT = norm(add(mul(backDir, 0.62), mul(M.v, -0.62)));
+    const dorsalRefT = norm(add(mul(radialOutT, 1 - lam),
+      mul(norm(add(backN, M.n)), lam)));
     // ---- The hand as one assembly: palm frame first ----
     // The palm frame is built from the knuckle row and the palm
     // axis: the wrist JOINT is placed PALM_LEN proximal of the
@@ -830,30 +1384,47 @@ window.CelloMotion = (() => {
       const K = roots.reduce((a, r) => add(a, mul(r, 0.25)), [0, 0, 0]);
       const midRoot = roots[1];
       let palmY = norm(sub(midRoot, w));
+      const palmYRaw = palmY; // un-rolled metacarpal direction (the bone-mode carpal frame below starts from it)
       const palmLen = Math.hypot(...sub(midRoot, w));
       // X is the knuckle row's own direction (index root ->
       // little root), orthonormalised against Y. (A principal-
       // axis fit of the roots went ambiguous in thumb position,
       // where the row runs diagonally across the palm frame.)
-      const rowVec = sub(roots[3], roots[0]);
-      let palmX = sub(rowVec, mul(palmY, dot(rowVec, palmY)));
-      if (Math.hypot(...palmX) < 1e-4) palmX = sub(rowDir, mul(palmY, dot(rowDir, palmY)));
-      palmX = norm(palmX);
-      let palmZ = M.vec.cross(palmX, palmY);
-      if (dot(palmZ, backN) < 0) { palmX = mul(palmX, -1); palmZ = mul(palmZ, -1); }
+      // BONE mode: X/Z come from the middle finger's bone
+      // frame instead (Z = its dorsal axis, X = Y x Z) -- the
+      // plate is drawn from the bones; the row-based fit below
+      // is the shipped derivation.
+      let palmX, palmZ;
+      if (CARR.mode === 'bone') {
+        const zR = boneZOf(2, w, midRoot);
+        palmX = norm(M.vec.cross(palmY, zR));
+        palmZ = M.vec.cross(palmX, palmY);
+      } else {
+        const rowVec = sub(roots[3], roots[0]);
+        palmX = sub(rowVec, mul(palmY, dot(rowVec, palmY)));
+        if (Math.hypot(...palmX) < 1e-4) palmX = sub(rowDir, mul(palmY, dot(rowDir, palmY)));
+        palmX = norm(palmX);
+        palmZ = M.vec.cross(palmX, palmY);
+        if (dot(palmZ, backN) < 0) { palmX = mul(palmX, -1); palmZ = mul(palmZ, -1); }
+      }
       // Variant palm roll (the forearm-pronation reading, bounded
       // by ROM.FOREARM): rotate the palm frame about the knuckle-
       // row axis. The skeleton points (wrist, roots) do not move.
       // rollAdj is the trial loops' last-resort pronation
       // adjustment (pose-scope, set before the attempt; the
       // effective pronation is exported for the ROM sweep).
-      const rollNow = VARI.palmRoll + rollAdj;
+      // BONE mode: the frame IS the bone frame -- variant C's
+      // drawn-frame palmRoll compensation does not apply on
+      // top of it; the trials' rollAdj (a placement lever)
+      // still does.
+      const rollNow = (CARR.mode === 'bone' ? 0 : VARI.palmRoll) + rollAdj;
       if (rollNow) {
         const th = rollNow, c = Math.cos(th), s = Math.sin(th);
         const y2 = add(mul(palmY, c), mul(palmZ, s));
         const z2 = add(mul(palmZ, c), mul(palmY, -s));
         palmY = y2; palmZ = z2;
       }
+      bendN = bendNFor(palmZ);
       // Board-box helpers (signed distance / escape direction),
       // shared by the hover-target clamp below and the root
       // clearance repair after the MCP pass.
@@ -885,16 +1456,25 @@ window.CelloMotion = (() => {
       // reach allows. HOVER fingers' targets are not musical
       // invariants, so the target shifts instead and the fan
       // re-solves.
+      // BONE mode: the plane is each finger's OWN flexion
+      // plane (its bone frame) -- the fan means the outer
+      // roots sit far off the MIDDLE finger's plane by
+      // design, and measuring them against it dragged the
+      // little finger's hover target ~45 mm through the neck
+      // (its chain then crossed the neck cylinder; section 5
+      // caught it). Against its own plane the offset is the
+      // small residual the pass exists to remove.
       for (let f = 1; f <= 4; f++) {
         if (f === prim) continue;
+        const pzF = CARR.mode === 'bone' ? boneZOf(f, w, knuckles[f]) : palmZ;
         if (contacts[f]) {
-          const off = dot(sub(knuckles[f], midRoot), palmZ);
+          const off = dot(sub(knuckles[f], midRoot), pzF);
           if (Math.abs(off) < 0.004) continue;
           const [l1, l2, l3] = FINGER_LEN[f];
           const maxChord = (l1 + Math.sqrt(l2 * l2 + l3 * l3 + 2 * l2 * l3 * Math.cos(curlF))) * 0.998;
           let pull = 0.8;
           while (pull > 0.05) {
-            const cand = sub(knuckles[f], mul(palmZ, off * pull));
+            const cand = sub(knuckles[f], mul(pzF, off * pull));
             if (Math.hypot(...sub(cand, targets[f])) <= maxChord) {
               knuckles[f] = cand; roots[f - 1] = cand; break;
             }
@@ -902,10 +1482,11 @@ window.CelloMotion = (() => {
           }
         } else {
           for (let it = 0; it < 2; it++) {
-            const off = dot(sub(knuckles[f], midRoot), palmZ);
+            const off = dot(sub(knuckles[f], midRoot), pzF);
             if (Math.abs(off) <= 0.006) break;
-            targets[f] = sub(targets[f], mul(palmZ, off * 0.65));
-            knuckles[f] = rootOf(f); roots[f - 1] = knuckles[f];
+            targets[f] = sub(targets[f], mul(pzF, off * 0.65));
+            knuckles[f] = rootOf(f);
+            roots[f - 1] = knuckles[f];
           }
         }
       }
@@ -920,7 +1501,8 @@ window.CelloMotion = (() => {
         const needT = FINGER_R[f][2] + 0.003, bd = boardDistK(targets[f]);
         if (bd < needT) {
           targets[f] = add(targets[f], mul(boardEscape(targets[f]), needT - bd + 0.0005));
-          knuckles[f] = rootOf(f); roots[f - 1] = knuckles[f];
+          knuckles[f] = rootOf(f);
+          roots[f - 1] = knuckles[f];
         }
       }
       // Drawn-MCP final pass: the coplanarity pulls above can
@@ -965,14 +1547,96 @@ window.CelloMotion = (() => {
       };
       const clearAll = () => { let any = false; for (let r = 0; r < 3; r++) { if (!clearRoots()) break; any = true; } return any; };
       // Finger chains from the final knuckles.
+      // CHAIN CLEARANCE REPAIR (bone finalization): the bone
+      // fold plane's bulge direction is the finger's own
+      // dorsal axis, rotated away from the board normal by
+      // the fan and the hand roll -- where the board-plane
+      // fold of the shipped build kept every segment on the
+      // chord's board side by construction, a bone-plane
+      // chain can cut the corner through the fingerboard's
+      // edge (Swan thumb position, finger 1: the middle
+      // phalanx passed ~12 mm under the board surface) or
+      // across the neck. A chain may not pass through the
+      // instrument: sample the built chain against the neck
+      // cylinder and the board box (section 5's measures and
+      // graze bounds); on a breach, blend the fold plane
+      // from the bone axis toward the board normal in steps
+      // and keep the first blend that clears (or the least
+      // breaching). The chain still folds in ONE plane and
+      // the tip still lands exactly; the blended frames are
+      // the named exception in section 9's own-frame table.
+      const chainBreach = (pts, f) => {
+        let worst = Infinity;
+        for (let j = 0; j < 3; j++) for (let kk = 0; kk <= 8; kk++) {
+          const pt = pts[j].map((v, q) => v + (pts[j + 1][q] - v) * kk / 8);
+          if (contacts[f] && Math.hypot(...sub(pt, targets[f])) < 0.006) continue;
+          const ap = add(M.NECK_A, mul(neckAxisDir, clamp(dot(sub(pt, M.NECK_A), neckAxisDir), 0, axisLen)));
+          worst = Math.min(worst, Math.hypot(...sub(pt, ap)) - 0.027 - FINGER_R[f][j] + 0.002);
+          worst = Math.min(worst, boardDistK(pt) - FINGER_R[f][j] + 0.007);
+        }
+        return worst;
+      };
       const buildOne = f => {
-        const target = targets[f], knuckle = knuckles[f];
-        const pts = fingerChain(knuckle, target, FINGER_LEN[f], M.n, curlF);
+        let target = targets[f];
+        const knuckle = knuckles[f];
+        // The drawn base-joint angle of a built chain, from
+        // its own points (fold-plane normal from the chain
+        // itself -- drawnMCPAngle's recipe).
+        const drawnFromPts = pts => {
+          const meta = sub(knuckle, w), seg = sub(pts[1], pts[0]);
+          let nrm = M.vec.cross(seg, sub(pts[3], pts[0]));
+          nrm = Math.hypot(...nrm) < 1e-9 ? M.n : norm(nrm);
+          const mp = sub(meta, mul(nrm, dot(meta, nrm)));
+          return Math.hypot(...mp) < 1e-9 ? 0 : Math.acos(clamp(dot(norm(mp), norm(seg)), -1, 1));
+        };
+        let pts = fingerChain(knuckle, target, FINGER_LEN[f], bendNOf(f, w, knuckle), curlF);
+        if (CARR.mode === 'bone' && chainBreach(pts, f) < 0) {
+          const zB = bendNOf(f, w, knuckle);
+          let bestPts = pts, bestBr = chainBreach(pts, f);
+          for (const beta of [0.3, 0.55, 0.8, 1]) {
+            const pn = norm(add(mul(zB, 1 - beta), mul(M.n, beta)));
+            const cand = fingerChain(knuckle, target, FINGER_LEN[f], pn, curlF);
+            // The blend may not break the drawn base-joint
+            // cap the guard just settled (measured: an
+            // uncapped blend rotated the Prelude index
+            // chain's plane until it read 95.4 deg). A
+            // residual capsule graze inside section 5's
+            // bounds is the lesser evil; the cap is rk's
+            // hard anatomical rule.
+            if (drawnFromPts(cand) > MCP_CAP) continue;
+            const br = chainBreach(cand, f);
+            if (br > bestBr) { bestBr = br; bestPts = cand; }
+            if (br >= 0) break;
+          }
+          pts = bestPts;
+          // HOVER TARGET LIFT (bone finalization): what the
+          // blend cannot clear is the ring finger's distal
+          // segment in neck position -- its hover chain runs
+          // nearly straight at a yawed plane and the middle
+          // joint sags through the board's edge (measured
+          // -13 mm capsule, -17 mm at the neck in two Menuet
+          // placements). A hover target is not a musical
+          // invariant: lift it off the board in steps and
+          // rebuild, keeping the first lift that clears (the
+          // drawn cap and chain feasibility still hold).
+          if (!contacts[f] && chainBreach(pts, f) < 0) {
+            const t0 = targets[f];
+            for (const lift of [0.004, 0.008, 0.012, 0.016]) {
+              const tNew = add(t0, mul(M.BOARD.normal, lift));
+              const cand = fingerChain(knuckle, tNew, FINGER_LEN[f], bendNOf(f, w, knuckle), curlF);
+              if (cand.infeasible || drawnFromPts(cand) > MCP_CAP) continue;
+              const br = chainBreach(cand, f);
+              if (br > chainBreach(pts, f)) { pts = cand; targets[f] = tNew; target = tNew; }
+              if (br >= 0) break;
+            }
+          }
+        }
         // BEND PLANE (rk 2026-11-08, measured outcome): the
-        // chains fold in the board plane, as shipped -- NOT in
-        // span(chord, palmZ). Folding them in the palm plane
-        // (directly, or by twisting the solved joints about
-        // the chord) was tried three ways and measurably
+        // shipped build (CARR 'current') folds the chains in
+        // the board plane -- NOT in span(chord, palmZ). Folding
+        // them in the palm plane at THIS placement (directly,
+        // or by twisting the solved joints about the chord)
+        // was tried three ways and measurably
         // wrecks this placement: the MCP guard re-settles the
         // knuckles (palm length collapses to ~49-60 mm, row
         // span compresses), or, with the placement held, the
@@ -994,7 +1658,7 @@ window.CelloMotion = (() => {
         // internal -- NOT the drawn angle rk reads; see
         // drawnMCPAngle.)
         const mcp = Math.acos(clamp(dot(norm(sub(pts[1], knuckle)), norm(sub(target, knuckle))), -1, 1));
-        return { points: pts, contact: contacts[f], target, mcpAngle: mcp, drawnMcp: drawnMCPAngle(w, knuckle, target, f, palmZ), tipDir: norm(sub(pts[3], pts[2])), pip: pts.pip, dip: pts.dip, curlUsed: pts.curlUsed, chainInfeasible: pts.infeasible };
+        return { points: pts, contact: contacts[f], target, mcpAngle: mcp, drawnMcp: drawnFromPts(pts), tipDir: norm(sub(pts[3], pts[2])), pip: pts.pip, dip: pts.dip, curlUsed: pts.curlUsed, chainInfeasible: pts.infeasible, slaveDip: pts.slaved === true };
       };
       for (let f = 1; f <= 4; f++) fingers[f] = buildOne(f);
       // SPAN REPAIR (proximal fix, rk's method): a chain the
@@ -1009,7 +1673,8 @@ window.CelloMotion = (() => {
         for (let f = 1; f <= 4; f++) {
           let guard = 0;
           while (fingers[f].chainInfeasible && guard < 10) {
-            knuckles[f] = add(knuckles[f], mul(norm(sub(knuckles[f], targets[f])), 0.002));
+            const stepK = add(knuckles[f], mul(norm(sub(knuckles[f], targets[f])), 0.002));
+            knuckles[f] = stepK;
             roots[f - 1] = knuckles[f];
             fingers[f] = buildOne(f);
             guard++;
@@ -1113,6 +1778,14 @@ window.CelloMotion = (() => {
       // (capped 10 mm). Roots stay bridged: they sit inside the
       // plate's knuckle end, and a dorsal lift only buries them
       // deeper, which the root-ball bridging check allows.
+      // BONE mode: the plate sits rotated ~90 deg from the
+      // shipped frame, so its long axis can reach AROUND the
+      // neck and the dorsal lift (capped, and pointing along
+      // the plate rather than away from the wood) left the
+      // surface up to ~20 mm inside the cylinder. The lift
+      // there runs radially off the neck axis instead, capped
+      // at 24 mm -- the direction the measured distance
+      // actually answers to.
       {
         let minD = Infinity;
         for (const sf of SURF_P) {
@@ -1122,7 +1795,17 @@ window.CelloMotion = (() => {
             clamp(dot(sub(pt, M.NECK_A), neckAxisDir), 0, axisLen)));
           minD = Math.min(minD, Math.hypot(...sub(pt, ap)) - 0.027);
         }
-        if (minD < 0.002) palm.centre = add(palm.centre, mul(palmZ, Math.min(0.002 - minD, 0.010)));
+        if (minD < 0.002) {
+          if (CARR.mode === 'bone') {
+            const apC = add(M.NECK_A, mul(neckAxisDir,
+              clamp(dot(sub(palm.centre, M.NECK_A), neckAxisDir), 0, axisLen)));
+            let rd = sub(palm.centre, apC);
+            rd = Math.hypot(...rd) < 1e-6 ? palmZ : norm(rd);
+            palm.centre = add(palm.centre, mul(rd, Math.min(0.002 - minD, 0.024)));
+          } else {
+            palm.centre = add(palm.centre, mul(palmZ, Math.min(0.002 - minD, 0.010)));
+          }
+        }
       }
       // Same lift for the carpus ellipsoid (its wrist-side
       // surface measured 3.0 mm into the neck at the closest
@@ -1137,7 +1820,17 @@ window.CelloMotion = (() => {
             clamp(dot(sub(pt, M.NECK_A), neckAxisDir), 0, axisLen)));
           minD = Math.min(minD, Math.hypot(...sub(pt, ap)) - 0.027);
         }
-        if (minD < 0.002) carpus.centre = add(carpus.centre, mul(palmZ, Math.min(0.002 - minD, 0.008)));
+        if (minD < 0.002) {
+          if (CARR.mode === 'bone') {
+            const apC = add(M.NECK_A, mul(neckAxisDir,
+              clamp(dot(sub(carpus.centre, M.NECK_A), neckAxisDir), 0, axisLen)));
+            let rd = sub(carpus.centre, apC);
+            rd = Math.hypot(...rd) < 1e-6 ? palmZ : norm(rd);
+            carpus.centre = add(carpus.centre, mul(rd, Math.min(0.002 - minD, 0.020)));
+          } else {
+            carpus.centre = add(carpus.centre, mul(palmZ, Math.min(0.002 - minD, 0.008)));
+          }
+        }
       }
       // Elbow: chosen on its IK circle (the hinge locus for the
       // solved wrist) by ANATOMY, not by a pole. Every candidate
@@ -1157,6 +1850,30 @@ window.CelloMotion = (() => {
       // whole assembly; the least-violation elbow is returned
       // flagged (fallback 3) only as the last resort, with its
       // violation recorded on the pose.
+      // BONE mode: the elbow search certifies the WRIST,
+      // whose anatomical reference frame is the carpus --
+      // the shipped row-based frame with the variant roll --
+      // NOT the middle finger's bone frame the plate now
+      // draws from. Measuring the wedge against the bone
+      // frame rotated the flex/dev readings by the frame
+      // difference (~50 deg) and failed certification in
+      // ~15-20% of Prelude frames at fanYawBase >= 0 over
+      // assemblies that were otherwise sound. carpalY /
+      // carpalZ are that carpal frame (built from the
+      // un-rolled metacarpal direction); other modes keep
+      // certifying the drawn frame itself.
+      let carpalY = palmY, carpalZ = palmZ;
+      if (CARR.mode === 'bone') {
+        const rowVecC = sub(roots[3], roots[0]);
+        let cX = sub(rowVecC, mul(palmYRaw, dot(rowVecC, palmYRaw)));
+        if (Math.hypot(...cX) < 1e-4) cX = sub(rowDir, mul(palmYRaw, dot(rowDir, palmYRaw)));
+        cX = norm(cX);
+        let cZ = M.vec.cross(cX, palmYRaw);
+        if (dot(cZ, backN) < 0) { cX = mul(cX, -1); cZ = mul(cZ, -1); }
+        const rc = VARI.palmRoll + rollAdj, cc2 = Math.cos(rc), sc2 = Math.sin(rc);
+        carpalY = add(mul(palmYRaw, cc2), mul(cZ, sc2));
+        carpalZ = add(mul(cZ, cc2), mul(palmYRaw, -sc2));
+      }
       const searchElbow = () => {
         const cC = add(w, mul(palmY, 0.008));
         const limbR = tau => {
@@ -1199,14 +1916,14 @@ window.CelloMotion = (() => {
         const radRefW = norm(sub(roots[0], roots[3]));
         const wristFlexDev = E => {
           const fa = norm(sub(w, E));
-          const t = sub(palmY, mul(fa, dot(fa, palmY)));
-          const along = dot(fa, palmY);
+          const t = sub(carpalY, mul(fa, dot(fa, carpalY)));
+          const along = dot(fa, carpalY);
           const proj = v => {
             const x = sub(v, mul(fa, dot(fa, v)));
             return Math.hypot(...x) < 1e-9 ? [0, 0, 0] : norm(x);
           };
           return {
-            flex: -Math.atan2(dot(t, proj(palmZ)), along),
+            flex: -Math.atan2(dot(t, proj(carpalZ)), along),
             dev: Math.atan2(dot(t, proj(radRefW)), along)
           };
         };
@@ -1215,6 +1932,13 @@ window.CelloMotion = (() => {
           Math.max(0, dev - ROM.WRIST.radial) + Math.max(0, -dev - ROM.WRIST.ulnar);
         const coneOf = cand => Math.acos(clamp(dot(norm(sub(cand, SHOULDER_L)), [0, -1, 0]), -1, 1));
         const scoreOf = (cand, wd, clr) => 1.6 * Math.abs(cand[1] - VARI.elbowY) +
+          // Elbow lift (rk's "open the armpit" steer, dev only):
+          // strong dedicated pulls toward the raised height and
+          // the lateral target, so the scan measures how far
+          // the wedge-feasible arc itself lets the elbow travel
+          // rather than how a weak bias trades against devW.
+          (CARR.liftY ? 3.0 * Math.abs(cand[1] - (VARI.elbowY + CARR.liftY)) : 0) +
+          (CARR.liftX ? 3.0 * Math.abs(cand[0] - CARR.liftX) : 0) +
           VARI.devW * (Math.abs(wd.flex - VARI.flexPref) + Math.abs(wd.dev)) -
           0.8 * clr - 0.25 * cand[0];
         // Evaluate every candidate ONCE (clearance + wrist wedge
@@ -1257,12 +1981,148 @@ window.CelloMotion = (() => {
         roots, K, midRoot, palmX, palmY, palmZ, palmLen, palm, carpus, xHalf: (xHi - xLo) / 2,
         elbow: el.elbow, elbowFallback: el.fallback, elbowFlex: el.flex,
         elbowDev: el.dev, elbowCone: el.cone, elbowViol: el.viol, mcpWorst,
-        pronation: rollNow
+        // The exported pronation is the CARPAL roll (variant
+        // roll + trial adjustment) in every mode; in bone
+        // mode rollNow itself excludes the variant roll
+        // because the drawn frame is the bone frame.
+        pronation: CARR.mode === 'bone' ? VARI.palmRoll + rollAdj : rollNow
       };
     };
     // One full assembly attempt from the snapshot state with a
     // given wrist (provisional drawn-MCP guard, then finishHand).
-    const attempt = wTry => { correctMCP(wTry, palmFrameOf(wTry).z); return finishHand(wTry); };
+    const attempt = wTry => {
+      // The palm repair inside correctMCP reverses toward
+      // the middle root as it stood HERE, before this
+      // attempt's own guard pre-pass travels it: finishHand's
+      // later pass would otherwise only see the pre-dragged
+      // root as its entry and call the damage settled.
+      k2RepairTarget = [...knuckles[2]];
+      bendN = bendNFor(palmFrameOf(wTry).z);
+      correctMCP(wTry, palmFrameOf(wTry).z);
+      const H = finishHand(wTry);
+      k2RepairTarget = null;
+      return H;
+    };
+    // The thumb's root solve from a finished assembly: CMC
+    // base -> thenar slide -> short-span pullback -> neck-
+    // clearance walk (lam < 0.5) -> predicted tip error.
+    // Factored out of the final assembly (which calls it once
+    // with the winning wrist) because the wrist trials now
+    // PREDICT the thumb's tip error from every candidate
+    // assembly and score it (see runTrial): the thumb used to
+    // be solved only after the winning wrist was fixed, so
+    // its reach never influenced the placement -- in thumb
+    // position the root->rest span sat past the chain's reach
+    // at every tried wrist and the settled tip error measured
+    // 5.8 mm (bone-finalization debit (a), 2026-11-08).
+    // Prediction and final solve share this code so they
+    // cannot drift apart.
+    const thumbSolveFor = (wS, H) => {
+      const rootsS = H.roots, KS = H.K;
+      // BONE mode: the thumb's CMC sits in the CARPAL frame
+      // (research rule: the thumb roots at the trapezium at
+      // wrist level, in its own saddle -- it is not slaved to
+      // the middle finger's bone frame). Placing the base
+      // from the bone frame displaced it by ~1-2 cm in some
+      // frames and cost the thumb its settled rest; the
+      // carpal frame is the shipped derivation (row-based,
+      // rolled by the exported pronation).
+      let thY = H.palmY, thX = H.palmX, thZ = H.palmZ;
+      if (CARR.mode === 'bone') {
+        const cY = norm(sub(rootsS[1], wS));
+        const rowC = sub(rootsS[3], rootsS[0]);
+        let cX = sub(rowC, mul(cY, dot(rowC, cY)));
+        cX = Math.hypot(...cX) < 1e-4 ? H.palmX : norm(cX);
+        let cZ = M.vec.cross(cX, cY);
+        if (dot(cZ, backN) < 0) { cX = mul(cX, -1); cZ = mul(cZ, -1); }
+        const rc = H.pronation, cc3 = Math.cos(rc), sc3 = Math.sin(rc);
+        thY = add(mul(cY, cc3), mul(cZ, sc3));
+        thZ = add(mul(cZ, cc3), mul(cY, -sc3));
+        thX = cX;
+      }
+      const base = add(add(add(wS, mul(thY, 0.020)),
+        mul(thX, (Math.sign(dot(sub(rootsS[0], KS), thX)) || 1) * 0.022)), mul(thZ, -0.008));
+      const thumbMax = THUMB_LEN[0] + Math.sqrt(THUMB_LEN[1] ** 2 + THUMB_LEN[2] ** 2 +
+        2 * THUMB_LEN[1] * THUMB_LEN[2] * Math.cos(0.35));
+      // Thenar slide: when the rest point sits near the
+      // chain's reach limit, the root slides toward it within
+      // the palm plane, up to 35 mm -- the thenar mass
+      // rotating toward the neck, as a real hand's does; the
+      // drawn thenar capsule bridges root and base.
+      let root = base;
+      {
+        const toRest = sub(restPt, base), dRest = Math.hypot(...toRest);
+        const slide = clamp(dRest - (thumbMax * 0.999 - 0.004), 0, 0.035);
+        if (slide > 0) {
+          let inDir = sub(toRest, mul(H.palmY, dot(toRest, H.palmY)));
+          inDir = Math.hypot(...inDir) < 1e-6 ? toRest : norm(inDir);
+          root = add(base, mul(inDir, slide));
+        }
+      }
+      // Short-span pullback (proximal fix, rk's method): if
+      // the rest point is closer to the root than the capped
+      // chain can fold to, retreat the root toward the wrist
+      // (bisected so the span equals the chain's true minimum
+      // resultant under its COUPLED caps, else all the way).
+      let pullback = 0;
+      {
+        const [tl1, tl2, tl3] = THUMB_LEN;
+        const b2c = Math.min(ROM.THUMB.IP[1], 0.35 + 1.1 * ROM.THUMB.MCP[1]);
+        const minSpan = Math.hypot(
+          tl1 + tl2 * Math.cos(ROM.THUMB.MCP[1]) + tl3 * Math.cos(ROM.THUMB.MCP[1] + b2c),
+          tl2 * Math.sin(ROM.THUMB.MCP[1]) + tl3 * Math.sin(ROM.THUMB.MCP[1] + b2c));
+        const root0 = root;
+        const spanAt = k => Math.hypot(...sub(restPt, add(root0, mul(sub(wS, root0), k))));
+        if (spanAt(0) < minSpan) {
+          if (spanAt(1) <= minSpan) {
+            root = add(root0, sub(wS, root0));
+            pullback = 1;
+          } else {
+            let lo = 0, hi = 1;
+            for (let i = 0; i < 18; i++) {
+              const mid = (lo + hi) / 2;
+              if (spanAt(mid) < minSpan) lo = mid; else hi = mid;
+            }
+            root = add(root0, mul(sub(wS, root0), hi));
+            pullback = hi;
+          }
+        }
+      }
+      // Neck clearance for the metacarpal capsule (neck
+      // positions): walk the root further along the pullback
+      // locus toward the wrist -- the span grows but stays
+      // inside the chain's reach -- until the 16 mm capsule
+      // clears the neck cylinder (best effort where even the
+      // wrist end cannot clear within reach).
+      if (lam < 0.5) {
+        const need = 0.027 + THUMB_R[0] + 0.001;
+        const axD = q => Math.hypot(...sub(q, add(M.NECK_A, mul(neckAxisDir,
+          clamp(dot(sub(q, M.NECK_A), neckAxisDir), 0, axisLen)))));
+        if (axD(root) < need) {
+          const root0 = root, seg = sub(wS, root0);
+          const spanLim = thumbMax * 0.999 - 0.004;
+          const spanAt = k => Math.hypot(...sub(restPt, add(root0, mul(seg, k))));
+          let kReach = 1;
+          if (spanAt(1) > spanLim) {
+            let lo = 0, hi = 1;
+            for (let i = 0; i < 18; i++) { const mid = (lo + hi) / 2; if (spanAt(mid) <= spanLim) lo = mid; else hi = mid; }
+            kReach = lo;
+          }
+          let kFound = -1, kPrev = 0;
+          for (let i = 1; i <= 24 && kFound < 0; i++) {
+            const k = kReach * i / 24;
+            if (axD(add(root0, mul(seg, k))) >= need) {
+              let lo = kPrev, hi = k;
+              for (let it = 0; it < 14; it++) { const mid = (lo + hi) / 2; if (axD(add(root0, mul(seg, mid))) >= need) hi = mid; else lo = mid; }
+              kFound = hi;
+            }
+            kPrev = k;
+          }
+          if (kFound >= 0) root = add(root0, mul(seg, kFound));
+        }
+      }
+      return { root, base, pullback, tipErr: thumbChain(root, restPt, dorsalRefT).tipErr };
+    };
     // WRIST TRIALS (phase 2): the wrist placement is searched,
     // not just relaxed along one axis. Inner ladder = the pinch-
     // depth relaxation (wristBack +0..24 mm, the round-2 MCP
@@ -1292,6 +2152,84 @@ window.CelloMotion = (() => {
     let bestTry = null;
     const seenTrial = new Set();
     const feasible = H => H.elbowFallback < 3 && H.mcpWorst <= MCP_CAP;
+    const settled = lam < 0.02 || lam > 0.98;
+    // OWN-FRAME MCP SPLIT of the trial just attempted (bone
+    // mode): rk's joint-direction rule read in each finger's
+    // own metacarpal frame -- segment 1's flexion toward the
+    // palm side of the finger's OWN flexion plane must lie in
+    // [0, 90] deg and its lateral deviation within 30 deg
+    // (PIP/DIP lateral are 0 by construction in this
+    // skeleton). Returns the summed excess over the four
+    // fingers, in radians: the quantity the trial score
+    // charges and the clean-trial gate below uses. Read from
+    // the trial's own chains (pose-scope `fingers`, which
+    // attempt() leaves holding the attempted assembly).
+    const ownSplitOf = wT => {
+      let excess = 0;
+      for (let f = 1; f <= 4; f++) {
+        const F = fingers[f];
+        if (!F) continue;
+        const mDir = norm(sub(F.points[0], wT));
+        const pz = boneZOf(f, wT, F.points[0]);
+        let fv = sub(mul(pz, -1), mul(mDir, -dot(pz, mDir)));
+        if (Math.hypot(...fv) < 1e-9) continue;
+        fv = norm(fv);
+        const lv = M.vec.cross(mDir, fv);
+        const s1 = norm(sub(F.points[1], F.points[0]));
+        const flex = Math.atan2(dot(s1, fv), dot(s1, mDir));
+        const lat = Math.asin(clamp(dot(s1, lv), -1, 1));
+        excess += Math.max(0, Math.abs(lat) - 0.524) + Math.max(0, -flex) + Math.max(0, flex - 1.5708);
+      }
+      return excess;
+    };
+    // A CLEAN trial (bone finalization): feasible, its
+    // own-frame split inside tolerance, and -- in settled
+    // frames -- a thumb tip the chain can reach (<= 2 mm,
+    // the section-9 settled bound). In the dev modes both
+    // extra terms are identically zero and this reduces to
+    // feasible().
+    // WINNER TIERS (the fix round's lesson): the trial score
+    // is NOT lexicographic -- its soft terms (split, thumb,
+    // palm) can outweigh a fallback level. The original
+    // search never compared scores across the feasibility
+    // line (the grid simply broke at the first feasible
+    // trial); a score-ordered fallback once the clean gate
+    // replaced that break returned fallback-3 assemblies
+    // with 115 deg drawn MCPs in 49 frames. So the winner is
+    // chosen by TIER first and score only within a tier:
+    //   rank 4 clean    feasible + chains feasible + thumb
+    //                   reached + split inside tolerance
+    //   rank 3 thumb-ok feasible + chains feasible + thumb
+    //                   reached (split out of tolerance)
+    //   rank 2 settled  feasible + chains feasible (settled
+    //                   thumb out of reach)
+    //   rank 1 feasible (a chain clamped at its span -- the
+    //                   elbow gates pass but a finger does
+    //                   not truly reach its target)
+    //   rank 0 any      (nothing feasible was found)
+    // An infeasible trial can therefore never beat a
+    // feasible one, however clean its split reads; a
+    // chain-infeasible trial never beats a chain-feasible
+    // one either (section 9 asserts chain feasibility per
+    // frame, and feasible() alone does not see it).
+    const SPLIT_TOL = 0.35;
+    const okTry = rec => rankOf(rec) >= 4;
+    const rankOf = rec => {
+      if (!feasible(rec.H)) return 0;
+      if (rec.infeasN > 0) return 1;
+      if (settled && rec.thumbErr > 0.002) return 2;
+      if (rec.splitPen > SPLIT_TOL) return 3;
+      return 4;
+    };
+    let bestFeas = null, bestThumb = null, bestClean = null;
+    // Global attempt budget per pose: a safety net only --
+    // set above the search's structural maximum (grid 124 +
+    // descent 30 + polish ~33 + the alignW pass, deduped),
+    // so it never binds in practice; the tiers make even a
+    // capped search return the best trial of the highest
+    // tier it reached.
+    let trialBudget = 260;
+    let attemptsMade = 0;
     // One scored assembly attempt at a placement offset tuple.
     // Offsets whose levers are weighted out at this lam (neck-
     // frame offsets at lam = 1, seed offsets at lam = 0, the MCP
@@ -1306,18 +2244,78 @@ window.CelloMotion = (() => {
       const trialKey = rollOff + '|' + wTry.map(x => x.toFixed(6)).join(',');
       if (seenTrial.has(trialKey)) return null;
       seenTrial.add(trialKey);
+      if (trialBudget-- <= 0) return null;
+      attemptsMade++;
       const H = attempt(wTry);
+      // Chains that clamped at their span in this assembly
+      // (the trial's chains are the pose-scope `fingers` the
+      // attempt just built): counted for the tier rank and
+      // charged in the score -- feasible() does not see them.
+      let infeasN = 0;
+      for (let f = 1; f <= 4; f++) if (fingers[f] && fingers[f].chainInfeasible) infeasN++;
+      // BONE-FINALIZATION SCORE TERMS (default mode only;
+      // the dev modes keep their historical scores):
+      // - thumbPen: the thumb's PREDICTED tip error from
+      //   this assembly (thumbSolveFor -- the same solve the
+      //   final assembly runs). Settled frames carry the
+      //   hard weight (section 9 pins settled error at
+      //   <= 2 mm); mid-shift, where the tip is passing the
+      //   neck and the bound is the looser global one, the
+      //   weight is small and only past 6 mm.
+      // - splitPen: the own-frame MCP split excess
+      //   (ownSplitOf) -- the wrist placement is the only
+      //   lever that turns the metacarpals against the fold
+      //   planes, so the search has to see the split.
+      // - palmPen: the FINAL palm length (middle root after
+      //   finishHand's passes) held at the section-8 floor
+      //   with margin -- the guard levers floor their own
+      //   travel (PALM_FLOOR), this steers the wrist when
+      //   the collapse enters through the placement itself.
+      let thumbErr = 0, splitPen = 0, palmPen = 0, palmLen = null;
+      if (CARR.mode === 'bone') {
+        thumbErr = thumbSolveFor(wTry, H).tipErr;
+        splitPen = ownSplitOf(wTry);
+        palmLen = Math.hypot(...sub(H.roots[1], wTry));
+        palmPen = Math.max(0, 0.064 - palmLen) * 800;
+      }
+      const thumbPen = settled
+        ? Math.max(0, thumbErr - 0.002) * 1500
+        : Math.max(0, thumbErr - 0.006) * 60;
+      // R2 alignment term: penalise the angle between the
+      // palm's metacarpal axis and the primary finger's palm
+      // fold plane (span(chord, palmZ)) -- the quantity the
+      // MCP flexion/lateral split answers to. Only a score
+      // term: the hard gates (elbow wedge/cone, drawn-MCP
+      // cap) are unchanged.
+      let alignPen = 0;
+      if (CARR.alignW) {
+        const fnP = M.vec.cross(sub(targets[prim], H.roots[prim - 1]), H.palmZ);
+        if (Math.hypot(...fnP) > 1e-9)
+          alignPen = CARR.alignW * Math.asin(Math.min(1, Math.abs(dot(H.palmY, norm(fnP)))));
+      }
       const score = (H.elbowFallback >= 3 ? 100 + H.elbowViol * 57.3 : H.elbowFallback * 0.01) +
-        (H.mcpWorst > MCP_CAP ? (H.mcpWorst - MCP_CAP) * 600 : 0) +
+        (H.mcpWorst > MCP_CAP ? (H.mcpWorst - MCP_CAP) * 600 : 0) + alignPen +
+        thumbPen + splitPen * 8 + palmPen + infeasN * 40 +
         (Math.abs(wbOff) + Math.abs(stOff) + Math.abs(sdOff) + Math.abs(axOff) + Math.abs(latOff) + Math.abs(rowOff) + Math.abs(rollOff) * 0.05 + extra) * 2;
-      const rec = { score, wrist: wTry, relax: wbOff + extra, rollAdj: rollOff, off, extra, H };
+      const rec = { score, wrist: wTry, relax: wbOff + extra, rollAdj: rollOff, off, extra, H, thumbErr, splitPen, palmLen, infeasN };
       if (!bestTry || score < bestTry.score) bestTry = rec;
+      const rkT = rankOf(rec);
+      if (rkT >= 1 && (!bestFeas || score < bestFeas.score)) bestFeas = rec;
+      if (rkT >= 3 && (!bestThumb || score < bestThumb.score)) bestThumb = rec;
+      if (rkT >= 4 && (!bestClean || score < bestClean.score)) bestClean = rec;
       return rec;
     };
-    grid: for (const off of OFFSETS) {
-      for (const extra of [0, 0.008, 0.016, 0.024]) {
-        const rec = runTrial(off, extra);
-        if (rec && feasible(rec.H)) break grid;
+    // With an alignment term (R2) the first feasible trial is
+    // not necessarily the best-aligned one: run one pass over
+    // every offset at extra = 0 first, and skip the ladder
+    // entirely if that pass already found a feasible assembly.
+    if (CARR.alignW) for (const off of OFFSETS) runTrial(off, 0);
+    if (!(CARR.alignW && bestTry && feasible(bestTry.H))) {
+      grid: for (const off of OFFSETS) {
+        for (const extra of [0, 0.008, 0.016, 0.024]) {
+          const rec = runTrial(off, extra);
+          if (rec && feasible(rec.H)) break grid;
+        }
       }
     }
     // COORDINATE DESCENT (phase 2): if the grid found no fully
@@ -1332,12 +2330,17 @@ window.CelloMotion = (() => {
     // a legal elbow. Bounded and deterministic; the caps keep
     // the wrist a wrist (<= 30 mm lateral, pronation adjustment
     // inside ROM.FOREARM with margin).
-    if (bestTry && !feasible(bestTry.H)) {
+    if (!bestFeas && bestTry) {
       let cur = bestTry;
-      // step sizes by offset index: row 6, lat 4, roll 5, ax 3
-      const stepOf = { 6: 0.005, 4: 0.006, 5: 0.06, 3: 0.004 };
-      const inCaps = off => Math.abs(off[6]) <= 0.024 && Math.abs(off[4]) <= 0.036 && off[5] <= 0.44 && off[5] >= -0.10 && Math.abs(off[3]) <= 0.012;
-      let budget = 30;
+      // step sizes by offset index: row 6, lat 4, roll 5, ax 3,
+      // wristBack 0 (added in the bone finalization: the Swan
+      // thumb-position frames at t~60-64 sit ~5 deg of wrist
+      // deviation past the radial cap at every grid point, and
+      // the frontier there also runs along the wrist's radial
+      // station, which only the wristBack lever moves)
+      const stepOf = { 6: 0.005, 4: 0.006, 5: 0.06, 3: 0.004, 0: 0.006 };
+      const inCaps = off => Math.abs(off[6]) <= 0.024 && Math.abs(off[4]) <= 0.036 && off[5] <= 0.44 && off[5] >= -0.10 && Math.abs(off[3]) <= 0.012 && off[0] <= 0.036 && off[0] >= -0.024;
+      let budget = 60;
       while (budget > 0 && !feasible(cur.H)) {
         let improved = false;
         const tryStep = delta => {
@@ -1345,26 +2348,43 @@ window.CelloMotion = (() => {
           const off = cur.off.map((v, i) => v + (delta[i] || 0));
           if (!inCaps(off)) return;
           const rec = runTrial(off, cur.extra);
-          if (rec && rec.score < cur.score - 1e-9) { cur = rec; improved = true; }
+          if (!rec) return;
+          // VIOLATION-LEXICOGRAPHIC acceptance (bone
+          // finalization): the hunt's job while nothing is
+          // feasible is to close the violation, not to trade
+          // it against the soft score terms -- in the settled
+          // Swan thumb-position frames the thumb term alone
+          // outweighed ~2 deg of wrist deviation and parked
+          // the walk at viol 0.079 with a 0.041 point already
+          // visited. Feasibility first, then the violation
+          // measure (elbow violation + drawn-MCP excess),
+          // then the score.
+          const violKey = r => r.H.elbowViol + Math.max(0, r.H.mcpWorst - MCP_CAP);
+          const better = feasible(rec.H) !== feasible(cur.H) ? feasible(rec.H)
+            : !feasible(rec.H)
+              ? (violKey(rec) < violKey(cur) - 1e-4 ||
+                  (violKey(rec) <= violKey(cur) + 1e-4 && rec.score < cur.score - 1e-9))
+              : rec.score < cur.score - 1e-9;
+          if (better) { cur = rec; improved = true; }
         };
-        for (const idx of [6, 4, 5, 3]) {
+        for (const idx of [6, 4, 5, 3, 0]) {
           for (const sgn of [1, -1]) {
             const delta = [0, 0, 0, 0, 0, 0, 0];
             delta[idx] = sgn * stepOf[idx];
             tryStep(delta);
-            if (feasible(cur.H) || budget <= 0) break;
+            if (okTry(cur) || budget <= 0) break;
           }
-          if (feasible(cur.H) || budget <= 0) break;
+          if (okTry(cur) || budget <= 0) break;
         }
         // Diagonal moves (row swing + pronation together) when
         // single-coordinate steps stall: the deviation frontier
         // in deep thumb position runs diagonally in (row, roll).
-        if (!improved && !feasible(cur.H)) {
+        if (!improved && !okTry(cur)) {
           for (const sl of [1, -1]) for (const sr of [1, -1]) {
             const delta = [0, 0, 0, 0, 0, 0, 0];
             delta[6] = sl * stepOf[6]; delta[5] = sr * stepOf[5];
             tryStep(delta);
-            if (feasible(cur.H) || budget <= 0) break;
+            if (okTry(cur) || budget <= 0) break;
           }
         }
         if (!improved) {
@@ -1373,13 +2393,98 @@ window.CelloMotion = (() => {
         }
       }
     }
+    // POLISH (bone finalization): the searches above stop
+    // at the first feasible assembly, exactly as the shipped
+    // build did -- but a feasible assembly can still carry
+    // the debits (a chain clamped at its span, a settled
+    // thumb the chain cannot reach from that wrist, a palm
+    // under its floor). When the best feasible trial is
+    // dirty in any of those, a bounded second sweep --
+    // offsets not yet seen, the wristBack ladder, then a
+    // short tier-guarded descent -- looks for a feasible
+    // trial that is cleaner. The winner below is chosen by
+    // tier, so the polish can only ever improve the
+    // assembly, never trade a hard gate for a softer term.
+    // (The own-frame split is scored and tier-gated but
+    // does not by itself trigger the sweep: it is out of
+    // tolerance in most frames for structural reasons the
+    // offsets cannot move, and an always-on sweep measured
+    // ~85 ms/frame while trading away thumb and palm
+    // quality. A bounded split-triggered variant was also
+    // measured and rejected on the same trade.)
+    const polishDirty = r => r && (r.infeasN > 0 || (settled && r.thumbErr > 0.002) || (r.palmLen != null && r.palmLen < 0.064));
+    if (CARR.mode === 'bone' && bestFeas && polishDirty(bestThumb || bestFeas)) {
+      const att0 = attemptsMade;
+      for (const off of OFFSETS) {
+        if (attemptsMade - att0 >= 16 || bestClean) break;
+        const rec = runTrial(off, 0);
+        if (rec && okTry(rec)) break;
+      }
+      // The settled thumb's reach and the palm's length are
+      // both wristBack facts (the root rides the wrist): the
+      // grid's ladder reaches +24 mm of extra wristBack,
+      // which the extra = 0 sweep above never sees. When
+      // either term is the dirty one, climb the ladder on
+      // the plain and wristBack offsets.
+      if (!bestClean && ((settled && (bestThumb || bestFeas).thumbErr > 0.002) ||
+          ((bestThumb || bestFeas).palmLen != null && (bestThumb || bestFeas).palmLen < 0.064))) {
+        ladder: for (const off of [OFFSETS[0], OFFSETS[16], OFFSETS[24]]) {
+          for (const extra of [0.008, 0.016, 0.024]) {
+            if (attemptsMade - att0 >= 24) break ladder;
+            const rec = runTrial(off, extra);
+            if (rec && okTry(rec)) break ladder;
+          }
+        }
+      }
+      let curP = bestClean || bestThumb || bestFeas;
+      if (!bestClean && curP) {
+        const stepOfP = { 6: 0.005, 4: 0.006, 5: 0.06, 3: 0.004 };
+        const inCapsP = off => Math.abs(off[6]) <= 0.024 && Math.abs(off[4]) <= 0.036 && off[5] <= 0.44 && off[5] >= -0.10 && Math.abs(off[3]) <= 0.012;
+        let dBudget = 8;
+        while (dBudget > 0 && !okTry(curP)) {
+          let improved = false;
+          const tryStepP = delta => {
+            if (dBudget-- <= 0) return;
+            const off = curP.off.map((v, i) => v + (delta[i] || 0));
+            if (!inCapsP(off)) return;
+            const rec = runTrial(off, curP.extra);
+            if (rec && feasible(rec.H) && (rankOf(rec) > rankOf(curP) || (rankOf(rec) === rankOf(curP) && rec.score < curP.score - 1e-9))) { curP = rec; improved = true; }
+          };
+          for (const idx of [6, 4, 5, 3]) {
+            for (const sgn of [1, -1]) {
+              const delta = [0, 0, 0, 0, 0, 0, 0];
+              delta[idx] = sgn * stepOfP[idx];
+              tryStepP(delta);
+              if (okTry(curP) || dBudget <= 0) break;
+            }
+            if (okTry(curP) || dBudget <= 0) break;
+          }
+          if (!improved) break;
+        }
+      }
+    }
+    // R2 final re-alignment: the trials settled the wrist
+    // some distance from the provisional placement the roots
+    // were aligned against. Re-align the snapshot roots once
+    // (same fraction) against the WINNING wrist and its drawn
+    // palm frame, so the regenerated assembly starts with its
+    // chords closer to the final fingers' flexion planes.
+    if (CARR.mode !== 'current' && CARR.rootAlign && bestTry) {
+      restoreK(snap0); restoreT(snapT0);
+      alignRoots(bestTry.wrist, bestTry.H.palmZ, CARR.rootAlign);
+      const s2 = snapK();
+      for (let f = 1; f <= 4; f++) snap0[f] = s2[f];
+    }
     // Regenerate the winning assembly deterministically from the
     // snapshot state (finishHand's mutations are not idempotent,
-    // so the end state cannot simply be restored).
+    // so the end state cannot simply be restored). The winner
+    // is the best trial of the highest reached TIER (clean,
+    // then thumb-ok, then feasible, then any) -- see rankOf.
     restoreK(snap0); restoreT(snapT0);
-    rollAdj = bestTry.rollAdj;
-    const wrist = bestTry.wrist;
-    const wristBackRelax = bestTry.relax;
+    const winTry = bestClean || bestThumb || bestFeas || bestTry;
+    rollAdj = winTry.rollAdj;
+    const wrist = winTry.wrist;
+    const wristBackRelax = winTry.relax;
     const H = attempt(wrist);
     const { roots, K, palmX, palmY, palmZ, palm, carpus } = H;
     const elbowL = H.elbow, elbowFallback = H.elbowFallback, mcpWorst = H.mcpWorst;
@@ -1393,105 +2498,62 @@ window.CelloMotion = (() => {
     // thenar mass rotating toward the neck, as a real hand's
     // does; the drawn thenar capsule bridges root and base so
     // the assembly stays connected.
-    const idxSign = Math.sign(dot(sub(roots[0], K), palmX)) || 1;
-    const thumbBase = add(add(add(wrist, mul(palmY, 0.020)),
-      mul(palmX, idxSign * 0.022)), mul(palmZ, -0.008));
-    const thumbMax = THUMB_LEN[0] + Math.sqrt(THUMB_LEN[1] ** 2 + THUMB_LEN[2] ** 2 +
-      2 * THUMB_LEN[1] * THUMB_LEN[2] * Math.cos(0.35));
-    let thumbRoot = thumbBase;
-    {
-      const toRest = sub(restPt, thumbBase), dRest = Math.hypot(...toRest);
-      const slide = clamp(dRest - (thumbMax * 0.999 - 0.004), 0, 0.035);
-      if (slide > 0) {
-        let inDir = sub(toRest, mul(palmY, dot(toRest, palmY)));
-        inDir = Math.hypot(...inDir) < 1e-6 ? toRest : norm(inDir);
-        thumbRoot = add(thumbBase, mul(inDir, slide));
-      }
-    }
-    // Short-span pullback (proximal fix, rk's method): if the
-    // rest point is closer to the root than the capped thumb
-    // chain can fold to, retreat the root toward the wrist
-    // joint -- the CMC base sits at the palm's proximal corner
-    // and the drawn thenar ball covers the retreat -- rather
-    // than folding a joint past its cap. The retreat is
-    // CONTINUOUS (phase 2): k is bisected so the span equals
-    // the chain's true minimum resultant when that is reachable
-    // short of the wrist, else the root goes all the way to the
-    // wrist (k = 1). The minimum resultant uses the chain's
-    // COUPLED caps (IP <= 0.35 + 1.1 * MCP, see thumbChain):
-    // the uncoupled figure (58.9 mm) understated it by ~2 mm
-    // and left that much tip error in every pulled frame. The
-    // retreat used is recorded in thumbSolve.
-    let thumbPullback = 0;
-    {
-      const [tl1, tl2, tl3] = THUMB_LEN;
-      const b2c = Math.min(ROM.THUMB.IP[1], 0.35 + 1.1 * ROM.THUMB.MCP[1]);
-      const minSpan = Math.hypot(
-        tl1 + tl2 * Math.cos(ROM.THUMB.MCP[1]) + tl3 * Math.cos(ROM.THUMB.MCP[1] + b2c),
-        tl2 * Math.sin(ROM.THUMB.MCP[1]) + tl3 * Math.sin(ROM.THUMB.MCP[1] + b2c));
-      const root0 = thumbRoot;
-      const spanAt = k => Math.hypot(...sub(restPt, add(root0, mul(sub(wrist, root0), k))));
-      if (spanAt(0) < minSpan) {
-        if (spanAt(1) <= minSpan) {
-          thumbRoot = add(root0, sub(wrist, root0));
-          thumbPullback = 1;
-        } else {
-          let lo = 0, hi = 1;
-          for (let i = 0; i < 18; i++) {
-            const mid = (lo + hi) / 2;
-            if (spanAt(mid) < minSpan) lo = mid; else hi = mid;
-          }
-          thumbRoot = add(root0, mul(sub(wrist, root0), hi));
-          thumbPullback = hi;
-        }
-      }
-    }
-    // Neck clearance for the metacarpal capsule (neck positions):
-    // the root can sit close enough to the neck that its 16 mm
-    // capsule would sink ~5 mm into the wood. Walk the root
-    // further along the same pullback locus toward the wrist --
-    // the span grows but stays inside the chain's reach -- until
-    // the capsule clears. The root stays on the locus segment, so
-    // the assembly's structure (and section 8's locus check) is
-    // unchanged; where even the wrist end cannot clear within
-    // reach, the root stays (best effort, measured in the test).
-    if (lam < 0.5) {
-      const need = 0.027 + THUMB_R[0] + 0.001;
-      const axD = q => Math.hypot(...sub(q, add(M.NECK_A, mul(neckAxisDir,
-        clamp(dot(sub(q, M.NECK_A), neckAxisDir), 0, axisLen)))));
-      if (axD(thumbRoot) < need) {
-        const root0 = thumbRoot, seg = sub(wrist, root0);
-        const spanLim = thumbMax * 0.999 - 0.004;
-        const spanAt = k => Math.hypot(...sub(restPt, add(root0, mul(seg, k))));
-        let kReach = 1;
-        if (spanAt(1) > spanLim) {
-          let lo = 0, hi = 1;
-          for (let i = 0; i < 18; i++) { const mid = (lo + hi) / 2; if (spanAt(mid) <= spanLim) lo = mid; else hi = mid; }
-          kReach = lo;
-        }
-        let kFound = -1, kPrev = 0;
-        for (let i = 1; i <= 24 && kFound < 0; i++) {
-          const k = kReach * i / 24;
-          if (axD(add(root0, mul(seg, k))) >= need) {
-            let lo = kPrev, hi = k;
-            for (let it = 0; it < 14; it++) { const mid = (lo + hi) / 2; if (axD(add(root0, mul(seg, mid))) >= need) hi = mid; else lo = mid; }
-            kFound = hi;
-          }
-          kPrev = k;
-        }
-        if (kFound >= 0) thumbRoot = add(root0, mul(seg, kFound));
-      }
-    }
-    // The thumb's dorsal reference (the way its nail faces):
-    // outward from the neck's back-left ridge in neck positions,
-    // rotating to a back-of-hand / board-outward blend as the
-    // hand rolls onto the board. The chain flexes toward the
-    // opposite (palmar) side -- pad toward the neck.
-    const radialOutT = norm(add(mul(backDir, 0.62), mul(M.v, -0.62)));
-    const dorsalRefT = norm(add(mul(radialOutT, 1 - lam),
-      mul(norm(add(backN, M.n)), lam)));
+    // The solve itself (base, slide, pullback, clearance
+    // walk) is thumbSolveFor above -- shared with the wrist
+    // trials' tip-error prediction.
+    const thS = thumbSolveFor(wrist, H);
+    const thumbBase = thS.base, thumbRoot = thS.root, thumbPullback = thS.pullback;
     const thumbSol = thumbChain(thumbRoot, restPt, dorsalRefT);
-    const thumbPts = thumbSol.points;
+    let thumbPts = thumbSol.points;
+    // THUMB CLEARANCE ROTATION (bone mode): in thumb
+    // position the proximal phalanx can lie across the
+    // fingerboard box's corner (measured -15.5 mm capsule
+    // against section 5's -8 mm graze bound; the shipped
+    // hand's thumb rode higher). The chain's intrinsic
+    // bends (beta1/beta2, the tip error) are properties of
+    // the chord and the segment lengths, so rotate the two
+    // interior joints rigidly about the root->tip axis --
+    // root, tip and bends unchanged -- by the smallest
+    // angle that clears the board box and the neck.
+    if (CARR.mode === 'bone') {
+      const boxD = pt => {
+        const rel = sub(pt, M.BOARD.A), a = dot(rel, M.BOARD.dir), b = dot(rel, M.v), c = dot(rel, M.BOARD.normal);
+        const halfW = 0.023 + 0.008 * clamp(a / M.BOARD.END, 0, 1);
+        const da = a < 0 ? -a : (a > M.BOARD.END ? a - M.BOARD.END : 0);
+        const db = Math.max(Math.abs(b) - halfW, 0);
+        const dc = c > 0.0008 ? c - 0.0008 : (c < -0.0062 ? -0.0062 - c : 0);
+        if (da === 0 && db === 0 && dc === 0) return -Math.min(halfW - Math.abs(b), c + 0.0062, 0.0008 - c, a, M.BOARD.END - a);
+        return Math.hypot(da, db, dc);
+      };
+      const breachT = pts => {
+        let worst = Infinity;
+        for (let j = 0; j < 3; j++) for (let kk = 0; kk <= 8; kk++) {
+          const pt = pts[j].map((v, q) => v + (pts[j + 1][q] - v) * kk / 8);
+          if (Math.hypot(...sub(pt, restPt)) < 0.012) continue;
+          worst = Math.min(worst, boxD(pt) - THUMB_R[j] + 0.008);
+          const abT = sub(M.NECK_B, M.NECK_A);
+          const ap = add(M.NECK_A, mul(abT, clamp(dot(sub(pt, M.NECK_A), abT) / dot(abT, abT), 0, 1)));
+          worst = Math.min(worst, Math.hypot(...sub(pt, ap)) - 0.027 - THUMB_R[j] + 0.002);
+        }
+        return worst;
+      };
+      if (breachT(thumbPts) < 0) {
+        const axT = norm(sub(restPt, thumbRoot));
+        let best = thumbPts, bestBr = breachT(thumbPts);
+        for (const ang of [0.12, -0.12, 0.24, -0.24, 0.38, -0.38, 0.55, -0.55]) {
+          const c = Math.cos(ang), s = Math.sin(ang);
+          const rotP = p => {
+            const rel = sub(p, thumbRoot);
+            return add(thumbRoot, add(add(mul(rel, c), mul(M.vec.cross(axT, rel), s)), mul(axT, dot(axT, rel) * (1 - c))));
+          };
+          const cand = [thumbPts[0], rotP(thumbPts[1]), rotP(thumbPts[2]), thumbPts[3]];
+          const br = breachT(cand);
+          if (br > bestBr) { bestBr = br; best = cand; }
+          if (br >= 0) break;
+        }
+        thumbPts = best;
+      }
+    }
     const thumbSolve = { beta1: thumbSol.beta1, beta2: thumbSol.beta2, gamma: thumbSol.gamma, tipErr: thumbSol.tipErr, pullback: thumbPullback };
     // Bow + right arm. The stroke fraction is eased to 17%..83% of
     // the bow: at the extreme tip the frog lever (~0.72 m from a
@@ -1683,5 +2745,5 @@ window.CelloMotion = (() => {
     return p;
   }
 
-  return { plan, pose, draw, setVariant, VARIANTS, ROM, _ik: { solveElbow, fingerChain, MIN_SPAN }, SKELETON: { SHOULDER_L, SHOULDER_R, ARM, FINGER_LEN, FINGER_R, THUMB_LEN, THUMB_R, HAND: { PALM_LEN, ROW_S, KNUCKLE_ARC } } };
+  return { plan, pose, draw, setVariant, setCarriage, VARIANTS, BONE, ROM, _ik: { solveElbow, fingerChain, MIN_SPAN }, SKELETON: { SHOULDER_L, SHOULDER_R, ARM, FINGER_LEN, FINGER_R, THUMB_LEN, THUMB_R, HAND: { PALM_LEN, ROW_S, KNUCKLE_ARC } } };
 })();
