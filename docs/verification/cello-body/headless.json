@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "songs": [
+    {
+      "song": "prelude",
+      "timeBefore": 9.43,
+      "timeAfter": 11.312086167800453,
+      "playing": true,
+      "oscillatorsStarted": 15
+    },
+    {
+      "song": "swan",
+      "timeBefore": 20.48,
+      "timeAfter": 24.570884353741498,
+      "playing": true,
+      "oscillatorsStarted": 6
+    },
+    {
+      "song": "gigue",
+      "timeBefore": 30.98,
+      "timeAfter": 33.50063492063492,
+      "playing": true,
+      "oscillatorsStarted": 18
+    },
+    {
+      "song": "menuet",
+      "timeBefore": 29.984,
+      "timeAfter": 34.15615419501134,
+      "playing": true,
+      "oscillatorsStarted": 9
+    }
+  ],
+  "checks": {
+    "meshFrames": 104,
+    "meshUploads": 1,
+    "oscillatorsStarted": 93,
+    "cacheCalls": 4,
+    "glErrors": [],
+    "triangles": 11880,
+    "solver": {
+      "frames": 0,
+      "solves": 0,
+      "ms": 0
+    },
+    "cacheHz": 30
+  },
+  "pageErrors": [],
+  "returnToPiano": true
+}

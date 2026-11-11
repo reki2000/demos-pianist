@@ -1,0 +1,41 @@
+{
+ "ok": true,
+ "copiesIdentical": 20,
+ "guitar": {
+  "frames": 5330,
+  "worstFrettingSide": -0.0484,
+  "worstPluckingSide": 0.0698,
+  "minScreenGap": 0.038,
+  "projFrames": 5330
+ },
+ "violin": {
+  "states": 6563,
+  "bowWristSideMinMm": 93.5,
+  "fingeringWristSideMaxMm": -93.2,
+  "screenBad": 0,
+  "sndFrames": 6397
+ },
+ "cello": {
+  "handednessFrames": 160,
+  "minBowSideWorldMm": 134.9,
+  "maxFinSideWorldMm": -145.3,
+  "screenFrontFrames": 40
+ },
+ "shell": {
+  "guitar": {
+   "songs": 6,
+   "screenSamples": 78,
+   "screenBad": 0
+  },
+  "violin": {
+   "songs": 3,
+   "screenSamples": 39,
+   "screenBad": 0
+  },
+  "cello": {
+   "songs": 4,
+   "screenSamples": 52,
+   "screenBad": 0
+  }
+ }
+}

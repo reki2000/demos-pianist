@@ -308,12 +308,44 @@ function drawStage(R) {
   for (let i = -12; i <= 12; i++) { R.box([i * 0.48, 1.8, 5.2], [0.07, 3.6, 0.15], [0.105, 0.089, 0.064], 0.1); R.box([i * 0.48, 1.8, 5.31], [0.27, 3.6, 0.06], [0.035, 0.035, 0.04]); }
   for (let i = 0; i < 64; i++) { const a = i * Math.PI / 32, b = (i + 1) * Math.PI / 32; R.bone([4 * Math.sin(a), 0.006, 0.4 + 4 * Math.cos(a)], [4 * Math.sin(b), 0.006, 0.4 + 4 * Math.cos(b)], 0.008, gold); }
 }
+// Adapter for the approved cello's immutable planning-space triangle mesh.
+// Keep the vendored violin renderer byte-identical to its source module.
+// The active RecitalGL program uses xyz/normal attributes and the same
+// X-reflected model/normal matrices as piece(); cache uploads per renderer.
+function attachCelloMesh(R) {
+  const gl = R.gl;
+  if (R.mesh || !gl || typeof gl.getParameter !== 'function') return;
+  const program = gl.getParameter(gl.CURRENT_PROGRAM), buffers = new WeakMap();
+  const begin = R.begin;
+  R.begin = (...args) => { gl.useProgram(program); return begin(...args); };
+  const attrs = ['aP', 'aN'].map(name => gl.getAttribLocation(program, name));
+  const U = Object.fromEntries(['uM', 'uN', 'uC', 'uMetal'].map(name => [name, gl.getUniformLocation(program, name)]));
+  const model = new Float32Array([-1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+  const normal = new Float32Array([-1,0,0, 0,1,0, 0,0,1]);
+  R.mesh = (data, color) => {
+    let buffer = buffers.get(data);
+    if (!buffer) {
+      buffer = gl.createBuffer(); buffers.set(data, buffer);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    } else gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    for (let i = 0; i < attrs.length; i++) {
+      gl.enableVertexAttribArray(attrs[i]); gl.vertexAttribPointer(attrs[i], 3, gl.FLOAT, false, 24, i * 12);
+    }
+    gl.uniformMatrix4fv(U.uM, false, model); gl.uniformMatrix3fv(U.uN, false, normal);
+    gl.uniform3fv(U.uC, color); gl.uniform1f(U.uMetal, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, data.length / 6);
+  };
+}
 let lastNow = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - lastNow) / 1000); lastNow = now;
   if (!active) return;
-  if (!renderer) { try { renderer = window.RecitalGL.create($('scene')); } catch (e) { return; } }
+  // Both performers share one WebGL context. Restore the piano's program
+  // after our frame, and rebind ours in begin(), including on switch-back.
+  const sharedGL = $('scene').getContext('webgl');
+  const previousProgram = sharedGL && typeof sharedGL.getParameter === 'function' ? sharedGL.getParameter(sharedGL.CURRENT_PROGRAM) : null;
+  if (!renderer) { try { renderer = window.RecitalGL.create($('scene')); attachCelloMesh(renderer); } catch (e) { return; } }
   const t = currentTime();
   const pose = active.id === 'cello' ? null : active.pose(plan, t);
   // Camera resolution.
@@ -348,6 +380,7 @@ function frame(now) {
   if (document.activeElement !== $('seek')) $('seek').value = t;
   $('bassLabel').classList.add('hidden'); $('trebleLabel').classList.add('hidden');
   window.__multiDebug = { instrument: active.id, song: song.id, time: t, playing, camMode };
+  if (previousProgram) sharedGL.useProgram(previousProgram);
 }
 requestAnimationFrame(frame);
 

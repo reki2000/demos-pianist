@@ -1,0 +1,47 @@
+{
+  "moduleCommit": "d9fceb4",
+  "files": [
+    {
+      "file": "cello-audio.js",
+      "identical": true,
+      "sha256": "5eee03ef605873ed2d483087c1c1a8e3a53fe103a67a12c1d6dce9074f254949",
+      "bytes": 7703
+    },
+    {
+      "file": "cello-fingering.js",
+      "identical": true,
+      "sha256": "c48d7f430a16f56504432ebea4626dbc622fe3c406de2396863e0ec6a29af13d",
+      "bytes": 15604
+    },
+    {
+      "file": "cello-instrument.js",
+      "identical": true,
+      "sha256": "741c68c0adfec3e7593c0a92372615230e53ba65cc4a8d2b0ef7d380376b0163",
+      "bytes": 1474
+    },
+    {
+      "file": "cello-model.js",
+      "identical": true,
+      "sha256": "5e1e58bedf79e7ba01d563c040b85e347e7dff561d42a6af1bca4127b19b1cb4",
+      "bytes": 23033
+    },
+    {
+      "file": "cello-motion.js",
+      "identical": true,
+      "sha256": "0a34495c58b208a4e2d31fe9d4a522126d6b26389d9f28bf9dedf9917fe56764",
+      "bytes": 335613
+    },
+    {
+      "file": "cello-poses.js",
+      "identical": true,
+      "sha256": "62f1670495d0b8e2c60d4e8812eacaf07f186bb9d4699899ec1f8c505200b3de",
+      "bytes": 25640244
+    },
+    {
+      "file": "cello-songs.js",
+      "identical": true,
+      "sha256": "f287899783a082cdc2371a9ff4dd589884c9900849fa211afba6e2b3804df608",
+      "bytes": 36459
+    }
+  ]
+}
