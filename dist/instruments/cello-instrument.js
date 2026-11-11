@@ -27,7 +27,7 @@ window.CELLO_INSTRUMENT = (() => {
     buildPerformer(renderer) {
       return {
         draw(song, t, opts) { return window.CelloMotion.draw(renderer, song, t, opts); },
-        pose(song, t) { return window.CelloMotion.pose(song, t); }
+        pose(song, t) { return window.CelloMotion.poseCached(song, t) || window.CelloMotion.pose(song, t); }
       };
     },
     createVoice(ctx, destination) { return window.CelloAudio.createVoice(ctx, destination); },

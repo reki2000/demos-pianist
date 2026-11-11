@@ -415,7 +415,7 @@ document.querySelector('.score-caption').append(toggle);
 function debugSides() {
   if (!active) return null;
   const t = currentTime();
-  const pose = active.id === 'cello' ? window.CelloMotion.pose(song, t) : active.pose(plan, t);
+  const pose = active.id === 'cello' ? (window.CelloMotion.poseCached(song, t) || window.CelloMotion.pose(song, t)) : active.pose(plan, t);
   const w = active.wrists(pose);
   const mid = w.shB.map((v, i) => (v + w.shF[i]) / 2);
   const right = [-1, 0, 0]; // planning coords: figures face -Z, so anatomical right = up x fwd = -X

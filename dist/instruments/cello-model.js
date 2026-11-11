@@ -28,7 +28,10 @@
  * length: it starts 0.5 mm below the string line at the nut and its
  * extension reaches the bridge 6 mm below the bridge top (the
  * string-action budget of a standard setup), reaching ~71 mm above
- * the plate at its free end. Stopping points come from the fingering
+ * the plate at its free end. STEP 3: this is now the crown centreline;
+ * the physical board is transversely curved (R65) and the neck is D-shaped.
+ * The legacy target rails and placement/scroll axis stay fixed.
+ * Stopping points come from the fingering
  * engine's 690 mm scale: a note k semitones above the open string
  * stops at distFromNut(k) from the nut, and a stopped finger presses
  * the string onto boardPoint().
@@ -95,9 +98,9 @@ window.CelloModel = (() => {
   // indifferent to the sign of its thickness axis, so the solver gets
   // the right-handed triad (v, boardDir, -boardNormal).
   const BOARD_EULER = eulerZYX(v, boardDir, mul(boardNormal, -1));
-  // Neck axis: parallel to the board line, NECK_OFF below the playing
-  // surface (0.007 board thickness + 0.027 neck radius), so the drawn
-  // neck's top meets the board's underside along the glued length.
+  // LEGACY placement/scroll axis, deliberately fixed. STEP 3 no longer
+  // interprets this as a 27 mm physical radius: NECK.distance and
+  // drawNeckBoard below own the D-shaped surface.
   const NECK_OFF = 0.034;
   const neckAxisPt = uc => add(boardSurf(uc), mul(boardNormal, -NECK_OFF));
   const NECK_A = neckAxisPt(0.25);   // heel end
@@ -112,6 +115,73 @@ window.CelloModel = (() => {
     const p = lerp(boardA, boardB, Math.min(d / BOARD_END, 1));
     return add(p, mul(v, offNut(s) + (offBridge(s) - offNut(s)) * (d / SCALE)));
   }
+  // STEP 3: physical surfaces, independent of the legacy placement axis
+  // and boardPoint targets above. Strings, targets, scroll and thumb
+  // anchors MUST NOT move when the old 27 mm collision cylinder is retired.
+  const BOARD_RADIUS = 0.065;
+  // Flat underside: crown thickness grows 7->12 mm, leaving ~4 mm
+  // ebony at the wide end's edges (R65 sag there is ~8 mm). Keeping
+  // 7 mm everywhere would invert the edge ribbons, not form a solid.
+  const thicknessAt = d => 0.007 + 0.005 * Math.max(0, Math.min(1, d / BOARD_END));
+  const widthAt = d => 0.032 + (0.0625 - 0.032) * Math.max(0, Math.min(1, d / BOARD_END));
+  const crown = x => Math.sqrt(Math.max(0, BOARD_RADIUS ** 2 - x * x)) - BOARD_RADIUS;
+  const neckStart = dot(sub(boardSurf(0.685), boardA), boardDir);
+  const neckEnd = dot(sub(boardSurf(0.25), boardA), boardDir);
+  // D: flat glue face, half-elliptic rounded back. Total crown-to-back
+  // thickness is 40 mm at the nut, 46 mm at the heel. No body edits.
+  const neckDepth = d => 0.040 + 0.006 * Math.max(0, Math.min(1, (d - neckStart) / (neckEnd - neckStart)));
+  const section = (kind, d) => {
+    const w = widthAt(d) / 2, out = [], N = 16;
+    if (kind === 'neck') {
+      for (let i = 0; i <= N; i++) {
+        const a = Math.PI * i / N;
+        const thick = thicknessAt(d);
+        out.push([w * Math.cos(a), -thick - (neckDepth(d) - thick) * Math.sin(a)]);
+      }
+    } else {
+      for (let i = 0; i <= N; i++) { const x = -w + 2 * w * i / N; out.push([x, crown(x)]); }
+      for (let i = N; i >= 0; i--) { const x = -w + 2 * w * i / N; out.push([x, -thicknessAt(d)]); }
+    }
+    return out;
+  };
+  // Signed polygon distance in a transverse section. Axial taper is
+  // evaluated at the query station (not a full 3-D closest-point solve;
+  // transverse distances overestimate by <0.2% at these taper slopes).
+  const polygonD = (x, z, poly) => {
+    let dd = Infinity, inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [ax, az] = poly[j], [bx, bz] = poly[i], dx = bx - ax, dz = bz - az;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+      dd = Math.min(dd, (x - ax - t * dx) ** 2 + (z - az - t * dz) ** 2);
+      if ((az > z) !== (bz > z) && x < ax + (bx - ax) * (z - az) / (bz - az)) inside = !inside;
+    }
+    return Math.sqrt(dd) * (inside ? -1 : 1);
+  };
+  const surfaceDistance = (q, kind) => {
+    const rel = sub(q, boardA), a = dot(rel, boardDir), x = dot(rel, v), z = dot(rel, boardNormal);
+    const lo = kind === 'neck' ? neckStart : 0, hi = kind === 'neck' ? neckEnd : BOARD_END;
+    const d = Math.max(lo, Math.min(hi, a)), crossD = polygonD(x, z, section(kind, d));
+    const axial = Math.max(lo - a, a - hi);
+    return Math.hypot(Math.max(crossD, 0), Math.max(axial, 0)) + Math.min(Math.max(crossD, axial), 0);
+  };
+  // Render transverse ribbons using the same section profile. Primitive
+  // boxes approximate the smooth surface at 24 axial x 32 lateral samples.
+  function drawSurface(R, kind, color) {
+    const lo = kind === 'neck' ? neckStart : 0, hi = kind === 'neck' ? neckEnd : BOARD_END;
+    for (let i = 0; i < 24; i++) {
+      const d = lo + (hi - lo) * (i + 0.5) / 24, w = widthAt(d) / 2;
+      for (let j = 0; j < 32; j++) {
+        const x = -w + 2 * w * (j + 0.5) / 32;
+        const thick = thicknessAt(d), top = kind === 'neck' ? -thick : crown(x);
+        const bottom = kind === 'neck' ? -thick - (neckDepth(d) - thick) * Math.sqrt(1 - (x / w) ** 2) : -thick;
+        const c = add(add(add(boardA, mul(boardDir, d)), mul(v, x)), mul(boardNormal, (top + bottom) / 2));
+        R.piece('box', c, [2 * w / 32, (hi - lo) / 24, top - bottom], color, ...BOARD_EULER);
+      }
+    }
+  }
+  const drawNeckBoard = (R, neckColor = COLORS.varnishDark, boardColor = COLORS.ebony) => {
+    drawSurface(R, 'neck', neckColor); drawSurface(R, 'board', boardColor);
+  };
   // Where the bow hair meets string s: ~85 mm from the bridge.
   const bowContact = s => stringPoint(s, SCALE - 0.085);
 
@@ -167,21 +237,9 @@ window.CelloModel = (() => {
     R.segment(bottom, [bottom[0], 0.005, bottom[2] - 0.09], 0.006, [0.55, 0.55, 0.58], 'limb');
     // Neck + heel + scroll: on the neck axis, which parallels the
     // fingerboard; the pegbox/scroll balls sit on its extension.
-    R.segment(NECK_A, NECK_B, 0.027, C.varnishDark, 'limb');
-    R.ball(NECK_A, [0.036, 0.036, 0.036], C.varnishDark);
+    drawNeckBoard(R);
     R.ball(SCROLL[1], [0.042, 0.052, 0.042], C.varnishDark);
     R.ball(SCROLL[0], [0.028, 0.070, 0.026], C.varnishDark);
-    // Fingerboard: three tapered slabs lying on the board line,
-    // oriented by BOARD_EULER so they follow the neck exactly. Sizes
-    // are FULL extents for the 'box' mesh (it spans [-0.5, 0.5]); each
-    // slab's top face lies on the playing surface, embedded 0.8 mm so
-    // no seam opens at the joints.
-    for (let i = 0; i < 3; i++) {
-      const dMid = (i + 0.5) * BOARD_END / 3;
-      const c = add(lerp(boardA, boardB, dMid / BOARD_END), mul(boardNormal, -0.0027));
-      const w = 0.046 + (0.062 - 0.046) * (dMid / BOARD_END);
-      R.piece('box', c, [w, BOARD_END / 3 + 0.004, 0.007], C.ebony, ...BOARD_EULER);
-    }
     // Bridge, tailpiece, f-holes.
     slab(R, 'box', add(AB, mul(n, 0.042)), [0.105, 0.034, 0.086], C.bridge);
     slab(R, 'box', add(axisAt(-0.205), mul(n, 0.014)), [0.072, 0.19, 0.016], C.ebony);
@@ -216,7 +274,8 @@ window.CelloModel = (() => {
 
   return {
     SCALE, AB, BRIDGE, NUT: NUTP, u, v, n, RX, RZ,
-    BOARD: { A: boardA, B: boardB, END: BOARD_END, dir: boardDir, normal: boardNormal, euler: BOARD_EULER, nutN: BOARD_NUT_N, projN: BOARD_PROJ_N, surf: boardSurf, neckOff: NECK_OFF },
+    BOARD: { A: boardA, B: boardB, END: BOARD_END, dir: boardDir, normal: boardNormal, euler: BOARD_EULER, nutN: BOARD_NUT_N, projN: BOARD_PROJ_N, surf: boardSurf, neckOff: NECK_OFF, widthAt, radius: BOARD_RADIUS, thicknessAt, crown, distance: q => surfaceDistance(q, 'board') },
+    NECK: { depthAt: neckDepth, start: neckStart, end: neckEnd, distance: q => surfaceDistance(q, 'neck') }, drawNeckBoard,
     NECK_A, NECK_B, SCROLL,
     nutPoint, bridgePoint, stringPoint, semitonePoint, bowContact, boardPoint,
     BOW_LENGTH, bowDir, bowSegment, stringTilt, COLORS, drawCello, drawBow,
