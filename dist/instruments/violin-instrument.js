@@ -22,6 +22,7 @@ window.VIOLIN_INSTRUMENT = (() => {
     motion: window.ViolinMotion,
     plan,
     stateAt: (p, t) => window.ViolinMotion.at(p, t),
+    stateAtCached: (p, t) => window.ViolinMotion.atCached(p, t),
     draw: (R, state) => window.ViolinModel.draw(R, state),
     createVoice: (ctx, opts) => window.ViolinAudio.createVoice(ctx, opts),
     // Single treble staff; under each note the host may print the string

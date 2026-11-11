@@ -201,7 +201,7 @@ function bowAt(P, t) {
   return { s: clamp(s, 0.01, 0.99), stringF, dir, bowId, sounding };
 }
 
-function at(P, t) {
+function atLegacy(P, t) {
   const G = window.ViolinModel.GEOM;
   const F = window.ViolinModel.frame([0, 0, 0]); // sway applied to the body only; the violin stays put
   const env = P.envelope[clamp(Math.round(t * 10), 0, P.envelope.length - 1)]?.energy || 0;
@@ -320,9 +320,9 @@ function at(P, t) {
   // positions there is no neck to sit behind: the hand comes over the
   // upper bout, so the wrist blends to the bout's E rim at knuckle
   // height (kb) instead of spearing the forearm through the body.
-  const kb = clamp((hd.dist - 150) / 60, 0, 1);
+  const kb = smooth((hd.dist - 90) / 60);
   const wristL = add(palmC, add(mul(G.U, 0.030),
-    add(mul(G.V, mix(0.004, -0.048, kb)), mul(G.W, mix(-0.052, 0.006, kb)))));
+    add(mul(G.V, mix(0.004, -0.110, kb)), mul(G.W, mix(-0.052, 0.020, kb)))));
   // --- bow / right arm ---
   const tilt = mix(BOW_TILT[Math.floor(clamp(bow.stringF, 0, 3))], BOW_TILT[Math.ceil(clamp(bow.stringF, 0, 3))], clamp(bow.stringF, 0, 3) % 1);
   // The axis takes only 60% of the string tilt: the contact point already
@@ -411,5 +411,212 @@ function at(P, t) {
   };
 }
 
-return { plan, at, solveChain, solveArm, handDistAt, bowAt, vibrato, VIB, BOW_TILT, FINGER_LENGTHS };
+// One anatomical FK hand. Frames are solved once, not reconstructed from tips.
+const NH = (() => {
+  const D=.67, ROOT=[[.027,0,0],[.009,.004,0],[-.009,.002,0],[-.027,-.004,0]];
+  const LIMIT=[[-.21,1.54],[-.85,.85],[.10,1.78]], cache=new Map();let solves=0;
+  const G=window.ViolinModel.GEOM;
+  const local=p=>{const d=sub(p,G.O0);return [dot(d,G.U),dot(d,G.V),dot(d,G.W)];};
+  const world=p=>window.ViolinModel.frame().point(...p);
+  function basis(tilt,yaw){const c=Math.cos(tilt),s=Math.sin(tilt),a=Math.cos(yaw),b=Math.sin(yaw);return [[a,b,0],[-b*c,a*c,s],[b*s,-a*s,c]];}
+  const mv=(R,p)=>[0,1,2].map(i=>R[0][i]*p[0]+R[1][i]*p[1]+R[2][i]*p[2]);
+  const inverse=(R,p)=>R.map(a=>dot(a,p));
+  function fk(f,a){
+    const L=FINGER_LENGTHS[f],m=[Math.sin(a[1]),Math.cos(a[1]),0],pts=[ROOT[f]];
+    const angles=[a[0],a[0]+a[2],a[0]+(1+D)*a[2]];
+    for(let j=0;j<3;j++)pts.push(add(pts[j],mul([m[0]*Math.cos(angles[j]),m[1]*Math.cos(angles[j]),-Math.sin(angles[j])],L[j])));
+    return pts;
+  }
+  function linear(A,b){const n=b.length,A0=A.map((r,i)=>[...r,b[i]]);for(let j=0;j<n;j++){let k=j;for(let i=j+1;i<n;i++)if(Math.abs(A0[i][j])>Math.abs(A0[k][j]))k=i;[A0[j],A0[k]]=[A0[k],A0[j]];if(Math.abs(A0[j][j])<1e-15)return null;const v=A0[j][j];for(let c=j;c<=n;c++)A0[j][c]/=v;for(let i=0;i<n;i++)if(i!==j){const q=A0[i][j];for(let c=j;c<=n;c++)A0[i][c]-=q*A0[j][c];}}return A0.map(r=>r[n]);}
+  function minimize(fn,x,max=24,lim=null){
+    let r=fn(x),cost=dot(r,r),lambda=.001;
+    for(let it=0;it<max;it++){
+      const J=x.map((v,j)=>{const y=x.slice(),h=1e-5;y[j]+=h;return mul(sub(fn(y),r),1/h);});
+      const A=J.map(a=>J.map(b=>dot(a,b))),g=J.map(a=>dot(a,r));let accepted=false;
+      for(let trial=0;trial<7;trial++){
+        const dx=linear(A.map((row,i)=>row.map((v,j)=>v+(i===j?lambda*(A[i][i]+1e-8):0))),g);if(!dx)break;
+        const y=x.map((v,i)=>lim?clamp(v-dx[i],...lim[i]):v-dx[i]);
+        if(lim)y[2]=clamp(y[2],Math.max(.10,(1.80-y[0])/1.67),Math.min(1.78,(3.0-y[0])/1.67));
+        else if(y.length===5){y[3]=clamp(y[3],.25,1.35);y[4]=clamp(y[4],-.65,.65);}
+        const rr=fn(y),cc=dot(rr,rr);
+        if(cc<cost){const gain=cost-cc;x=y;r=rr;cost=cc;lambda=Math.max(1e-8,lambda*.25);accepted=gain>1e-12;break;}lambda*=8;
+      }if(!accepted)break;
+    }return x;
+  }
+  function ik(f,a,target){return minimize(x=>sub(fk(f,x)[3],target),a,16,LIMIT);}
+  function build(q,f){return fk(f,q.a[f]).map(p=>add(q.c,mv(q.R,p)));}
+  const box=(p,c,h)=>{const d=p.map((v,i)=>Math.abs(v-c[i])-h[i]);return Math.hypot(...d.map(v=>Math.max(0,v)))+Math.min(0,Math.max(...d));};
+  function surface(p){
+    const board=box(p,[.193,0,G.wFB(.193)-.0032],[.135,.0225,.0032]);
+    const neck=box(p,[.263,0,G.wFB(.263)-.0115],[.065,.0115,.008]);
+    const body=box(p,[.017,0,-.030],[.178,.104,.030]);
+    const heel=Math.hypot((p[0]-.195)/.018,p[1]/.018,(p[2]+.018)/.024)-1;
+    return Math.min(board,neck,body,heel*.018);
+  }
+  function frame(semi,sf,anchors=[]){
+    const key=semi+':'+sf+':'+anchors.map(n=>[n.finger,n.string,n.semi].join('/')).join(',');if(cache.has(key))return cache.get(key);
+    const F=window.ViolinModel.frame(),u=G.STRING_LENGTH-window.ViolinFingering.distMm(semi)/1000;
+    const targets=NOMINAL.map((off,f)=>{const n=anchors.find(n=>n.finger===f+1);return local(F.contactPoint(n?n.string:sf,window.ViolinFingering.distMm(n?n.semi:semi+off)));});
+    const high=smooth((.245-u)/.065),tilt=mix(1.15,.45,high),seed=[u-.028,-.071-high*.010,G.wFB(u)+.018+high*.040,tilt,-.05];
+    const make=x=>{const R=basis(x[3],x[4]),c=x.slice(0,3),a=targets.map((t,f)=>ik(f,[.55,0,1.0],inverse(R,sub(t,c))));return {c,R,a};};
+    const residual=x=>{
+      const q=make(x),r=[];
+      for(let f=0;f<4;f++){
+        const pts=build(q,f);r.push(...mul(sub(pts[3],targets[f]),1/(anchors.some(n=>n.finger===f+1)?.00002:.002)));
+        r.push((q.a[f][0]-.55)/.5,q.a[f][1]/.35,(q.a[f][2]-1.05)/.4);
+        for(let j=0;j<3;j++)for(const t of [0,.5]){const p=add(pts[j],mul(sub(pts[j+1],pts[j]),t));r.push(Math.max(0,.011-surface(p))/.0015);}
+      }
+      const palm=add(q.c,mv(q.R,[0,-.035,0]));r.push(Math.max(0,.025-surface(palm))/.001);
+      const wrist=world(add(q.c,mv(q.R,[0,-.070,0]))),arm=solveArm([.205,1.452,-.03],wrist,.36,.34,add(mul(G.V,-1),mul(G.W,-.5)));
+      for(let j=0;j<=8;j++){const p=local(add(arm.wrist,mul(sub(arm.elbow,arm.wrist),j/8)));const sd=box(p,[.017,0,-.030],[.178,.104,.030]);r.push(Math.max(0,.052-sd)/.0008);}
+      r.push((x[0]-seed[0])/.025,(x[1]-seed[1])/.020,(x[2]-seed[2])/.025,(x[3]-tilt)/.25,x[4]/.3);return r;
+    };
+    let x=minimize(residual,seed,40),cost=dot(residual(x),residual(x));
+    if(cost>100&&anchors.length>1)for(const v of [-.35,.35]){const s=seed.slice();s[4]+=v;const xx=minimize(residual,s,40),cc=dot(residual(xx),residual(xx));if(cc<cost){x=xx;cost=cc;}}
+    const q=make(x);q.key=key;cache.set(key,q);solves++;return q;
+  }
+  function blend(a,b,t){return {c:a.c.map((v,i)=>mix(v,b.c[i],t)),R:basis(mix(Math.atan2(a.R[1][2],a.R[2][2]),Math.atan2(b.R[1][2],b.R[2][2]),t),mix(Math.atan2(a.R[0][1],a.R[0][0]),Math.atan2(b.R[0][1],b.R[0][0]),t)),a:a.a.map((v,f)=>v.map((x,j)=>mix(x,b.a[f][j],t))),key:a.key+'>'+b.key};}
+  function at(P,t,hd,tracks){
+    if(!P.nhKeys){
+      const keys=[];
+      for(const n of P.notes){if(!n.finger)continue;
+        const byFinger=new Map();for(const a of P.notes)if(a.finger&&a.t0<=n.t0&&a.t1>n.t0)byFinger.set(a.finger,a);
+        const anchors=[...byFinger.values()],semi=window.ViolinFingering.POS_BASE[n.position-1];
+        keys.push({t:n.t0,semi,sf:n.string,anchors});
+      }P.nhKeys=keys;
+    }
+    const keys=P.nhKeys,k=Math.max(0,lowerBound(keys,t+1e-6,n=>n.t)-1),cur=keys[k],next=keys[k+1];
+    const get=n=>frame(n.semi,n.sf,n.anchors),a=get(cur),b=next?get(next):a;
+    const lead=next?Math.min(.12,Math.max(.025,(next.t-cur.t)*.45)):.12;
+    const q=blend(a,b,next?smooth((t-next.t+lead)/lead):0);
+    // While an old note is still held during an anticipated shift, the rigid
+    // frame must remain reachable. Correct carriage, never individual roots.
+    const held=tracks.map((c,f)=>{
+      const seq=P.fingerNotes[f+1],k=lowerBound(seq,t+1e-6,n=>n.t0)-1,last=seq[k],next=seq[k+1];
+      const weight=c.contact?1:Math.max(last?smooth(1-(t-last.t1)/.14):0,next?smooth(1-(next.t0-t)/.14):0);
+      return {c,f,weight};
+    }).filter(v=>v.weight>0);
+    // Project the ONE rigid frame onto the active constraints; repeated FK/IK
+    // keeps every metacarpal and phalanx length invariant during a shift.
+    for(let iteration=0;iteration<12;iteration++){
+      let delta=[0,0,0],sum=0;
+      for(const {c,f,weight} of held){const target=local(c.target),a=ik(f,q.a[f],inverse(q.R,sub(target,q.c))),p=add(q.c,mv(q.R,fk(f,a)[3]));delta=add(delta,mul(sub(target,p),weight));sum+=weight;}
+      if(!sum||Math.hypot(...delta)<1e-9)break;
+      q.c=add(q.c,mul(delta,1/Math.max(1,sum)));
+    }
+    const activeHeld=held.filter(v=>v.c.contact);
+    if(activeHeld.length>1){
+      const seed=[...q.c,Math.atan2(q.R[1][2],q.R[2][2]),Math.atan2(q.R[0][1],q.R[0][0])];
+      const fitted=minimize(x=>{const R=basis(x[3],x[4]),c=x.slice(0,3),r=mul(sub(x,seed),.005);for(const {c:track,f} of activeHeld){const target=local(track.target),a=ik(f,q.a[f],inverse(R,sub(target,c)));r.push(...mul(sub(add(c,mv(R,fk(f,a)[3])),target),1/.00001));}return r;},seed,32);
+      q.c=fitted.slice(0,3);q.R=basis(fitted[3],fitted[4]);
+    }
+    for(let iteration=0;iteration<30&&activeHeld.length;iteration++){
+      let delta=[0,0,0];for(const {c,f} of activeHeld){const target=local(c.target),a=ik(f,q.a[f],inverse(q.R,sub(target,q.c)));delta=add(delta,sub(target,add(q.c,mv(q.R,fk(f,a)[3]))));}
+      delta=mul(delta,1/activeHeld.length);q.c=add(q.c,delta);if(Math.hypot(...delta)<1e-10)break;
+    }
+    // Project the dorsal joints out of the board while restoring active pins.
+    for(let pass=0;pass<8;pass++){
+      let lift=0;for(const {c,f} of activeHeld){const a=ik(f,q.a[f],inverse(q.R,sub(local(c.target),q.c))),pts=fk(f,a).map(p=>add(q.c,mv(q.R,p)));for(const j of [1,2])if(pts[j][0]>.06&&pts[j][0]<.335)lift=Math.max(lift,G.wFB(pts[j][0])+.006-pts[j][2]);}
+      if(lift<1e-6)break;q.c[2]+=lift;
+      for(let k=0;k<16;k++){let delta=[0,0,0];for(const {c,f} of activeHeld){const target=local(c.target),a=ik(f,q.a[f],inverse(q.R,sub(target,q.c)));delta=add(delta,sub(target,add(q.c,mv(q.R,fk(f,a)[3]))));}if(!activeHeld.length)break;delta=mul(delta,1/activeHeld.length);q.c=add(q.c,delta);if(Math.hypot(...delta)<1e-10)break;}
+    }
+    // Refit the rigid carriage against exposed neck capsules after a shift.
+    const neckSD=p=>{
+      const slope=-.0125/.328,du=p[0]-.263,dw=p[2]-(G.wFB(.263)-.01295),len=Math.hypot(1,slope);
+      return box([(du+dw*slope)/len,p[1],(dw-du*slope)/len],[0,0,0],[.065,.0115,.00655]);
+    };
+    const poseAngles=(R,c,f)=>{
+      const track=tracks[f],weight=held.find(v=>v.f===f)?.weight||0,pin=ik(f,q.a[f],inverse(R,sub(local(track.target),c))),hover=q.a[f].map((v,j)=>v-(j===0?.12:0));return hover.map((v,j)=>mix(v,pin[j],weight));
+    };
+    const collisionCost=x=>{const R=basis(x[3],x[4]),c=x.slice(0,3),r=[];
+      for(let f=0;f<4;f++){const aa=poseAngles(R,c,f),pts=fk(f,aa).map(p=>add(c,mv(R,p)));
+        if(tracks[f].contact)r.push(...mul(sub(pts[3],local(tracks[f].target)),1/.000005));
+        for(let j=0;j<3;j++)for(const s of [0,.25,.5,.75,1])r.push(Math.max(0,(.0105-j*.0016)*.65+.0005-neckSD(add(pts[j],mul(sub(pts[j+1],pts[j]),s))))/.0001);
+      }return r;};
+    const placement=[...q.c,Math.atan2(q.R[1][2],q.R[2][2]),Math.atan2(q.R[0][1],q.R[0][0])];
+    const r0=collisionCost(placement);
+    if(dot(r0,r0)>1){const fit=minimize(x=>[...collisionCost(x),...mul(sub(x,placement),.1)],placement,24);q.c=fit.slice(0,3);q.R=basis(fit[3],fit[4]);}
+    const fingers=[],contacts=[];
+    for(let f=0;f<4;f++){
+      const c=tracks[f],weight=held.find(v=>v.f===f)?.weight||0;
+      const pinned=ik(f,q.a[f].slice(),inverse(q.R,sub(local(c.target),q.c))),hover=q.a[f].map((v,j)=>v-(j===0?.12:0));
+      const a=hover.map((v,j)=>mix(v,pinned[j],weight));
+      const points=fk(f,a).map(p=>world(add(q.c,mv(q.R,p)))),error=Math.hypot(...sub(points[3],c.target));
+      fingers.push({points,angles:a,error});contacts.push({...c,error});
+    }
+    const palm=add(q.c,mv(q.R,[0,-.035,0])),wrist=add(q.c,mv(q.R,[0,-.070,0]));
+    const u=q.c[0]+.020,back=G.wFB(u)-.033;
+    const thumb=[world([u-.038,-.040,back-.012]),world([u-.012,-.014,back+.004]),world([u+.020,-.014,back])];
+    return {hand:{palmPos:world(palm),basis:q.R.map(v=>add(add(mul(G.U,v[0]),mul(G.V,v[1])),mul(G.W,v[2]))),pitch:0,yaw:0,roll:0,fingers,thumb,model:'natural',frameKey:q.key},wrist:world(wrist),contacts};
+  }
+  return {at,frame,fk,ik,surface,ROOT,LIMIT,stats:()=>({frames:cache.size,solves}),source:()=>[basis,fk,linear,minimize,ik,build,surface,frame,blend,at].map(f=>f.toString()).join('\n')};
+})();
+// Natural remains opt-in until the exposed-neck audit is completely clear.
+let HAND_SOLVER='legacy';
+const setHandSolver=s=>(HAND_SOLVER=s==='legacy'?'legacy':'natural');
+function at(P,t){
+  const S=atLegacy(P,t);if(HAND_SOLVER==='legacy')return S;
+  const L=NH.at(P,t,handDistAt(P,t),S.debug.contacts);S.handL=L.hand;S.debug.contacts=L.contacts;
+  const G=window.ViolinModel.GEOM,origin=S.frame.O;
+  const local=p=>{const d=sub(p,origin);return [dot(d,G.U),dot(d,G.V),dot(d,G.W)];};
+  const safe=p=>{const q=local(p),d=[Math.max(-.161-q[0],q[0]-.195),Math.abs(q[1])-.106,Math.max(-.061-q[2],q[2]-.022)];return Math.hypot(...d.map(v=>Math.max(0,v)))+Math.min(0,Math.max(...d));};
+  let best=null,score=-Infinity;
+  for(let j=0;j<16;j++){
+    const pole=add(mul(S.frame.V,-Math.cos(j*Math.PI/8)),mul(S.frame.W,Math.sin(j*Math.PI/8)));
+    const arm=solveArm(S.armL.shoulder,L.wrist,.36,.34,pole);let clearance=Infinity;
+    for(let k=0;k<=24;k++)clearance=Math.min(clearance,safe(add(arm.wrist,mul(sub(arm.elbow,arm.wrist),k/24)))-(.025+.017*k/24));
+    // Stable tie-break favours an elbow below and outside the instrument.
+    const value=Math.min(clearance,.006)+dot(sub(arm.elbow,arm.shoulder),add(mul(S.frame.W,-1),mul(S.frame.V,-.6)))*.0001;
+    if(value>score){score=value;best=arm;}
+  }
+  S.armL=best;S.debug.arms=[S.armL,S.armR];return S;
+}
+// Optional 30 Hz render stream. Exact at() remains the audit/reference API.
+const CACHE_VERSION=1;
+let POSE_CACHE=null;
+function cacheSchema(v){
+  if(typeof v==='number')return 'n';if(typeof v==='boolean')return 'b';if(typeof v==='string')return 's';if(v===null)return 'z';
+  return Array.isArray(v)?['a',v.map(cacheSchema)]:['o',Object.keys(v),Object.values(v).map(cacheSchema)];
+}
+function cacheFlatten(schema,v,n,s){
+  if(schema==='n'){n.push(Math.fround(v));return;}if(schema==='b'){n.push(v?1:0);return;}if(schema==='s'){s.push(v);return;}if(schema==='z')return;
+  const array=schema[0]==='a',children=array?schema[1]:schema[2];children.forEach((c,i)=>cacheFlatten(c,v[array?i:schema[1][i]],n,s));
+}
+function cacheUnflatten(schema,n,s,cursor){
+  if(schema==='n')return n[cursor.n++];if(schema==='b')return n[cursor.n++]>=.5;if(schema==='s')return s[cursor.s++];if(schema==='z')return null;
+  const array=schema[0]==='a',children=array?schema[1]:schema[2],out=array?[]:{};children.forEach((c,i)=>out[array?i:schema[1][i]]=cacheUnflatten(c,n,s,cursor));return out;
+}
+function cacheView(S){
+  const pad=(a,empty)=>Array.from({length:4},(_,i)=>a[i]??empty);
+  const {frame,...v}=S;
+  return {...v,activeStrings:{count:S.activeStrings.length,values:pad(S.activeStrings,0)},
+    sounding:{count:S.sounding.length,values:pad(S.sounding,{string:0,finger:0,distMm:0,pitch:0})},
+    debug:{...S.debug,activeNotes:{count:S.debug.activeNotes.length,values:pad(S.debug.activeNotes,0)}}};
+}
+function packPose(S){const v=cacheView(S),schema=cacheSchema(v),numbers=[],strings=[];cacheFlatten(schema,v,numbers,strings);return {schema,numbers,strings};}
+const signatureCache=new WeakMap();
+function songSignature(P){if(!signatureCache.has(P))signatureCache.set(P,JSON.stringify([P.song.id,P.song.duration,P.song.notes,P.notes,P.song.harmonics||[]]));return signatureCache.get(P);}
+function cacheStamp(){
+  const source=[atLegacy,at,solveChain,solveArm,handDistAt,bowAt,vibrato,plan,clamp,smooth,mix,rotAxis,lowerBound].map(f=>f.toString()).join('\n')+NH.source()+JSON.stringify([FINGER_LENGTHS,NOMINAL,VIB,BOW_TILT,BOW_LEN,A0,SHIFT_LEAD,window.ViolinModel.GEOM],(k,v)=>typeof v==='function'?v.toString():v)+window.ViolinModel.frame.toString();
+  let h=2166136261;for(let i=0;i<source.length;i++)h=Math.imul(h^source.charCodeAt(i),16777619);return (h>>>0).toString(16);
+}
+function setPoseCache(data){POSE_CACHE=data&&data.version===CACHE_VERSION&&data.stamp===cacheStamp()?data:null;return !!POSE_CACHE;}
+function atCached(P,t){
+  const entry=POSE_CACHE?.solvers?.[HAND_SOLVER]?.[P.song.id];
+  if(!entry||t<0||t>P.song.duration||entry.signature!==songSignature(P))return at(P,t);
+  if(!entry._floats){
+    let bytes;if(typeof atob==='function'){const raw=atob(entry.data);bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));}
+    else if(typeof Buffer!=='undefined')bytes=Uint8Array.from(Buffer.from(entry.data,'base64'));else return at(P,t);
+    entry._floats=new Float32Array(bytes.buffer);
+  }
+  const x=t*30,i=Math.min(entry.frames-1,Math.floor(x)),j=Math.min(entry.frames-1,i+1),u=x-i,n=new Array(entry.width),data=entry._floats;
+  // Fast transitions and ill-conditioned FK intervals are never interpolated.
+  if(u>1e-7 && entry.guard?.[i])return at(P,t);
+  for(let k=0;k<entry.width;k++)n[k]=data[i*entry.width+k]+(data[j*entry.width+k]-data[i*entry.width+k])*u;
+  const S=cacheUnflatten(entry.schema,n,entry.strings[u<.5?i:j],{n:0,s:0});
+  for(const key of ['activeStrings','sounding'])S[key]=S[key].values.slice(0,Math.round(S[key].count));
+  S.debug.activeNotes=S.debug.activeNotes.values.slice(0,Math.round(S.debug.activeNotes.count));S.frame=window.ViolinModel.frame();S.time=t;
+  return S;
+}
+return { plan, at, atCached, packPose, songSignature, cacheStamp, setPoseCache, atLegacy, setHandSolver, NH, solveChain, solveArm, handDistAt, bowAt, vibrato, VIB, BOW_TILT, FINGER_LENGTHS };
 })();
