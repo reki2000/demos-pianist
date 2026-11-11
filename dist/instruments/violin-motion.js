@@ -412,7 +412,7 @@ function atLegacy(P, t) {
 }
 
 // One anatomical FK hand. Frames are solved once, not reconstructed from tips.
-const NH = (() => {
+const NHPrototype = (() => {
   const D=.67, ROOT=[[.027,0,0],[.009,.004,0],[-.009,.002,0],[-.027,-.004,0]];
   const LIMIT=[[-.21,1.54],[-.85,.85],[.10,1.78]], cache=new Map();let solves=0;
   const G=window.ViolinModel.GEOM;
@@ -551,25 +551,17 @@ const NH = (() => {
   }
   return {at,frame,fk,ik,surface,ROOT,LIMIT,stats:()=>({frames:cache.size,solves}),source:()=>[basis,fk,linear,minimize,ik,build,surface,frame,blend,at].map(f=>f.toString()).join('\n')};
 })();
-// Natural remains opt-in until the exposed-neck audit is completely clear.
+const NH = window.ViolinHand?window.ViolinHand({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato}):null;
+// Opt-in until the full natural clearance and temporal audits pass.
+// Without violin-hand.js loaded the natural solver is unavailable and
+// every request falls back to legacy.
 let HAND_SOLVER='legacy';
-const setHandSolver=s=>(HAND_SOLVER=s==='legacy'?'legacy':'natural');
+const setHandSolver=s=>(HAND_SOLVER=s==='natural'&&NH?'natural':'legacy');
 function at(P,t){
   const S=atLegacy(P,t);if(HAND_SOLVER==='legacy')return S;
   const L=NH.at(P,t,handDistAt(P,t),S.debug.contacts);S.handL=L.hand;S.debug.contacts=L.contacts;
-  const G=window.ViolinModel.GEOM,origin=S.frame.O;
-  const local=p=>{const d=sub(p,origin);return [dot(d,G.U),dot(d,G.V),dot(d,G.W)];};
-  const safe=p=>{const q=local(p),d=[Math.max(-.161-q[0],q[0]-.195),Math.abs(q[1])-.106,Math.max(-.061-q[2],q[2]-.022)];return Math.hypot(...d.map(v=>Math.max(0,v)))+Math.min(0,Math.max(...d));};
-  let best=null,score=-Infinity;
-  for(let j=0;j<16;j++){
-    const pole=add(mul(S.frame.V,-Math.cos(j*Math.PI/8)),mul(S.frame.W,Math.sin(j*Math.PI/8)));
-    const arm=solveArm(S.armL.shoulder,L.wrist,.36,.34,pole);let clearance=Infinity;
-    for(let k=0;k<=24;k++)clearance=Math.min(clearance,safe(add(arm.wrist,mul(sub(arm.elbow,arm.wrist),k/24)))-(.025+.017*k/24));
-    // Stable tie-break favours an elbow below and outside the instrument.
-    const value=Math.min(clearance,.006)+dot(sub(arm.elbow,arm.shoulder),add(mul(S.frame.W,-1),mul(S.frame.V,-.6)))*.0001;
-    if(value>score){score=value;best=arm;}
-  }
-  S.armL=best;S.debug.arms=[S.armL,S.armR];return S;
+  S.armL=NH.armOf(L.q,S.armL.shoulder);
+  S.debug.arms=[S.armL,S.armR];return S;
 }
 // Optional 30 Hz render stream. Exact at() remains the audit/reference API.
 const CACHE_VERSION=1;
@@ -597,7 +589,7 @@ function packPose(S){const v=cacheView(S),schema=cacheSchema(v),numbers=[],strin
 const signatureCache=new WeakMap();
 function songSignature(P){if(!signatureCache.has(P))signatureCache.set(P,JSON.stringify([P.song.id,P.song.duration,P.song.notes,P.notes,P.song.harmonics||[]]));return signatureCache.get(P);}
 function cacheStamp(){
-  const source=[atLegacy,at,solveChain,solveArm,handDistAt,bowAt,vibrato,plan,clamp,smooth,mix,rotAxis,lowerBound].map(f=>f.toString()).join('\n')+NH.source()+JSON.stringify([FINGER_LENGTHS,NOMINAL,VIB,BOW_TILT,BOW_LEN,A0,SHIFT_LEAD,window.ViolinModel.GEOM],(k,v)=>typeof v==='function'?v.toString():v)+window.ViolinModel.frame.toString();
+  const source=[atLegacy,at,solveChain,solveArm,handDistAt,bowAt,vibrato,plan,clamp,smooth,mix,rotAxis,lowerBound].map(f=>f.toString()).join('\n')+(NH?NH.source():'')+JSON.stringify([FINGER_LENGTHS,NOMINAL,VIB,BOW_TILT,BOW_LEN,A0,SHIFT_LEAD,window.ViolinModel.GEOM],(k,v)=>typeof v==='function'?v.toString():v)+window.ViolinModel.frame.toString();
   let h=2166136261;for(let i=0;i<source.length;i++)h=Math.imul(h^source.charCodeAt(i),16777619);return (h>>>0).toString(16);
 }
 function setPoseCache(data){POSE_CACHE=data&&data.version===CACHE_VERSION&&data.stamp===cacheStamp()?data:null;return !!POSE_CACHE;}

@@ -29,7 +29,7 @@ for(let i=0;i<n-1;i++)for(let j=0;j<sides;j++){let k=(j+1)%sides;vertex(i,j);ver
 for(let j=0;j<sides;j++){let k=(j+1)%sides,c0=[0,sections[0][0],sections[0][3]||0],c1=[0,sections.at(-1)[0],sections.at(-1)[3]||0];flat(c0,rings[0][k],rings[0][j],[0,-1,0]);flat(c1,rings.at(-1)[j],rings.at(-1)[k],[0,1,0])}return data}
 // Loft along local Z instead of Y (for shoes): swap the Y and Z of positions and normals.
 const alongZ=data=>{let out=data.slice();for(let i=0;i<out.length;i+=3){let y=out[i+1];out[i+1]=out[i+2];out[i+2]=y}return out};
-let shapes={box:mesh(cube),sphere:mesh(sphere),forearm:mesh(loft([[-1,1,1],[-.8,1,1],[.4,.78,.78],[1,.595238,.595238]])),
+let shapes={box:mesh(cube),sphere:mesh(sphere),fingertip:mesh(loft([[-1,.62,.62],[-.8,1,1],[.45,.75,.75],[1,.12,.12]])),forearm:mesh(loft([[-1,1,1],[-.8,1,1],[.4,.78,.78],[1,.595238,.595238]])),
 torso:mesh(loft([[-1,.70,.80],[-.78,.86,.92],[-.3,.97,1],[.4,1,.98],[.8,.9,.86],[1,.55,.6]])),
 jacket:mesh(loft([[-1,.74,.82],[-.62,.70,.80],[-.15,.80,.88],[.38,.95,.94],[.68,1,.88],[.86,.82,.70],[.96,.5,.5],[1,.3,.36]])),
 head:mesh(loft([[-1,.18,.2,.16],[-.92,.42,.45,.13],[-.74,.6,.66,.08],[-.48,.76,.84,.03],[-.15,.88,.95,0],[.2,.95,1,-.02],[.52,.93,.98,-.05],[.78,.8,.85,-.07],[.93,.55,.6,-.08],[1,.2,.24,-.08]],24)),

@@ -238,20 +238,27 @@ function drawPerformer(R, S) {
       R.segment(cuffEnd,cuff,.028,shirt);
     } else R.segment(arm.wrist, cuff, 0.034, shirt);
   }
-  // Left hand: palm block + solved fingers + thumb.
-  if (S.handL.basis) R.oriented('palm', S.handL.palmPos, [.038, .035, .013], skin, 0, ...S.handL.basis);
-  else R.piece('palm', S.handL.palmPos, [.042, .013, .038], skin, S.handL.pitch, S.handL.yaw, S.handL.roll);
-  for (const f of S.handL.fingers) {
-    for (let j = 0; j < 3; j++) {
-      R.segment(f.points[j], f.points[j + 1], (S.handL.model==='natural'?.65:1)*(0.0105 - j * 0.0016), skinLight);
-      if (j > 0) R.piece('joint', f.points[j], S.handL.model==='natural'?[.0065,.00585,.0065]:[.010, .009, .010], skinLight);
-    }
-    R.ball(f.points[3], S.handL.model==='natural'?[.004875,.004875,.006175]:[0.0075, 0.0075, 0.0095], skinLight);
-  }
-  for (let j = 0; j < 2; j++) R.segment(S.handL.thumb[j], S.handL.thumb[j + 1], 0.012, skin);
+  drawLeftHand(R,S.handL);
   // Right hand grips the frog.
   R.piece('palm', S.handR.palmPos, [.052, .015, .048], skin, S.handR.pitch, S.handR.yaw, S.handR.roll);
   for (const f of S.handR.fingers) for (let j = 0; j < 3; j++) R.segment(f.points[j], f.points[j + 1], 0.0095 - j * 0.0015, skinLight);
+}
+
+// Shared by the scene renderer and the actual-triangle clearance audit.
+function drawLeftHand(R,H) {
+  const natural=H.model==='natural';
+  if(H.basis)R.oriented('palm',H.palmPos,[.038,.035,.013],skin,0,...H.basis);
+  else R.piece('palm',H.palmPos,[.042,.013,.038],skin,H.pitch,H.yaw,H.roll);
+  for(const f of H.fingers){
+    for(let j=0;j<3;j++){
+      R.segment(f.points[j],f.points[j+1],(natural?.65:1)*(.0105-j*.0016),skinLight,natural&&j===2?'fingertip':'limb');
+      if(j>0)R.piece('joint',f.points[j],natural?[.0065,.00585,.0065]:[.010,.009,.010],skinLight);
+    }
+    if(natural){const d=norm(sub(f.points[3],f.points[2]));R.ball(sub(f.points[3],mul(d,.0038)),[.0038,.0038,.0038],skinLight);}
+    else R.ball(f.points[3],[.0075,.0075,.0095],skinLight);
+  }
+  for(let j=0;j<H.thumb.length-1;j++)R.segment(H.thumb[j],H.thumb[j+1],natural?[.009,.008,.007][j]:.012,skin);
+  if(natural)for(let j=0;j<4;j++){const r=[.010,.009,.008,.007][j];R.ball(H.thumb[j],[r,r,r],skin);}
 }
 
 function draw(R, S) {
@@ -267,7 +274,7 @@ function draw(R, S) {
 
 return {
   GEOM: { STRING_LENGTH, O0, U, V, W, STRING_V_BRIDGE, STRING_V_NUT, STRING_R, BRIDGE_W, BOW_CONTACT_U, wFB, wStr, vStr },
-  frame, draw, drawViolin, BODY_SPEC, OUTLINE, BODY_MESH, bodyWidth, bodyTop,
+  frame, draw, drawViolin, drawLeftHand, BODY_SPEC, OUTLINE, BODY_MESH, bodyWidth, bodyTop,
   palette: { skin, skinLight, suit, varnish },
 };
 })();
