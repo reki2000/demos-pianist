@@ -5695,7 +5695,8 @@ window.CelloMotion = (() => {
     // the chair back. With it, the 0.38 X-tilt reads as a downward
     // glance toward the fingerboard.
     const headC = [-0.012, 1.315 + p.sway.breath, 0.045], HX = 0.38, HY = Math.PI, HZ = 0.06;
-    R.piece('head', headC, [0.105, 0.125, 0.112], SKIN, HX, HY, HZ);
+    R.setFaceDetail?.(true);
+R.piece('head', headC, [0.105, 0.125, 0.112], SKIN, HX, HY, HZ);
     R.piece('hair', [-0.016, 1.345 + p.sway.breath, 0.062], [0.108, 0.122, 0.115], HAIR, 0.30, Math.PI, 0.06);
     // Face, mirroring the pianist's construction (demos-pianist
     // app.js): the same nose loft piece, two-segment lowered-lid
@@ -5720,6 +5721,7 @@ window.CelloMotion = (() => {
     }
     R.segment(headPoint([-0.0188, -0.0625, 0.0989]), headPoint([0.0188, -0.0625, 0.0989]), 0.0037, LIP1);
     R.segment(headPoint([-0.0113, -0.0701, 0.0963]), headPoint([0.0113, -0.0701, 0.0963]), 0.0031, LIP2);
+R.setFaceDetail?.(false);
     // Arms. Both forearms end at their wrist joints; only the
     // right keeps a wrist ball (the bow hand's mass) -- the left
     // wrist is the palm assembly's proximal end, drawn below.

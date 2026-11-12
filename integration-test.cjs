@@ -2,7 +2,8 @@
 /* Integration test for the multi-instrument shell.
  *
  * Part 0: the module files under dist/instruments/ must be byte-
- * identical to their source repos (so each module's own test-suite
+ * identical to their source repos, except documented renderer and pinned
+ * audio lifecycle fixes (so each module's own test-suite
  * results carry over to the integrated copies).
  * Parts G/V/C: the modules' DRAWN-frame handedness audits, replicated
  * formulation-for-formulation (world frame via the renderer's own
@@ -62,9 +63,24 @@ const PAIRS = [
   ['cello-songs.js', H + '/workspace/demos-cellist/dist/cello-songs.js'],
   ['cello-instrument.js', H + '/workspace/demos-cellist/dist/cello-instrument.js'],
 ];
+const geometryPatches = JSON.parse(fs.readFileSync('geometry-patches.json', 'utf8'));
+const audioLifecyclePatches = JSON.parse(fs.readFileSync('audio-lifecycle-patches.json', 'utf8'));
 for (const [name, src] of PAIRS) {
+  const audioPatch = audioLifecyclePatches[name];
+  if (audioPatch) {
+    // Documented host fixes: source retirement and bounded debug history.
+    assert.equal(sha(src), audioPatch.upstream, 'audio upstream changed: review lifecycle patch for ' + name);
+    assert.equal(sha(DI(name)), audioPatch.integrated, 'audio lifecycle patch changed: review and update hashes for ' + name);
+    continue;
+  }
+  const geometryPatch = geometryPatches[name];
+  if (geometryPatch) {
+    assert.equal(sha(src), geometryPatch.upstream, 'geometry upstream changed: review patch for ' + name);
+    assert.equal(sha(DI(name)), geometryPatch.integrated, 'geometry patch changed: review and update hashes for ' + name);
+    continue;
+  }
   if (name === 'violin-gl.js') {
-    // Deliberate, documented divergence (the ONLY one): the integrated
+    // Deliberate, documented renderer divergence: the integrated
     // copy's begin() re-binds its shader program every frame
     // (gl.useProgram) because in the integrated app two RecitalGL
     // instances share one canvas and the program binding is
@@ -301,4 +317,4 @@ c.multiShell.chooseInstrument('piano');
 assert.equal(c.multiShell.getState().instrument, 'piano');
 assert.equal(getEl('songs').children.length, 18, 'piano song list restored');
 tick(5);
-console.log(JSON.stringify({ ok: true, copiesIdentical: PAIRS.length, guitar: gReport, violin: vReport, cello: cReport, shell: shellReport }, null, 1));
+console.log(JSON.stringify({ ok: true, modulesVerified: PAIRS.length, audioLifecyclePatches: Object.keys(audioLifecyclePatches).length, geometryPatches: Object.keys(geometryPatches).length, guitar: gReport, violin: vReport, cello: cReport, shell: shellReport }, null, 1));

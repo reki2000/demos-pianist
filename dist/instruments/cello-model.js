@@ -165,17 +165,18 @@ window.CelloModel = (() => {
     return Math.hypot(Math.max(crossD, 0), Math.max(axial, 0)) + Math.min(Math.max(crossD, axial), 0);
   };
   // Render transverse ribbons using the same section profile. Primitive
-  // boxes approximate the smooth surface at 24 axial x 32 lateral samples.
+  // boxes approximate the smooth surface at 12 axial x 16 lateral samples.
   function drawSurface(R, kind, color) {
+    const axial = 12, lateral = 16;
     const lo = kind === 'neck' ? neckStart : 0, hi = kind === 'neck' ? neckEnd : BOARD_END;
-    for (let i = 0; i < 24; i++) {
-      const d = lo + (hi - lo) * (i + 0.5) / 24, w = widthAt(d) / 2;
-      for (let j = 0; j < 32; j++) {
-        const x = -w + 2 * w * (j + 0.5) / 32;
+    for (let i = 0; i < axial; i++) {
+      const d = lo + (hi - lo) * (i + 0.5) / axial, w = widthAt(d) / 2;
+      for (let j = 0; j < lateral; j++) {
+        const x = -w + 2 * w * (j + 0.5) / lateral;
         const thick = thicknessAt(d), top = kind === 'neck' ? -thick : crown(x);
         const bottom = kind === 'neck' ? -thick - (neckDepth(d) - thick) * Math.sqrt(1 - (x / w) ** 2) : -thick;
         const c = add(add(add(boardA, mul(boardDir, d)), mul(v, x)), mul(boardNormal, (top + bottom) / 2));
-        R.piece('box', c, [2 * w / 32, (hi - lo) / 24, top - bottom], color, ...BOARD_EULER);
+        R.piece('box', c, [2 * w / lateral, (hi - lo) / axial, top - bottom], color, ...BOARD_EULER);
       }
     }
   }
@@ -258,15 +259,15 @@ window.CelloModel = (() => {
       (-2*t*t*t + 3*t*t)*b[1] + (t*t*t - t*t)*h*tangent(i + 1);
   };
   // One watertight mesh, not hundreds of intersecting capped primitives.
-  // 96 axial intervals (~8 mm) and shared, area-weighted vertex normals
+  // 48 axial intervals and shared, area-weighted vertex normals
   // eliminate the old coplanar intersections/z-fighting and station stripes.
   // Side ribs taper monotonically: 118 mm neck -> 124 mm endpin.
   // Top/back arches rise 30/29 mm above their respective rib-edge planes.
   const BODY_MESH = (() => {
-    const vertices = [], normals = [], faces = [], across = 24;
+    const vertices = [], normals = [], faces = [], across = 12;
     // Include the original extrema exactly, not merely the nearest grid ring.
     const stations = [...new Set([
-      ...Array.from({ length: 97 }, (_, i) => 0.400 - bodySpec.length * i / 96),
+      ...Array.from({ length: 49 }, (_, i) => 0.400 - bodySpec.length * i / 48),
       ...BODY_SLICES.map(s => s[0])
     ].map(d => Number(d.toFixed(9))))].sort((a, b) => b - a);
     const rings = stations.length - 1;

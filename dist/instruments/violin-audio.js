@@ -14,7 +14,7 @@ function createVoice(ctx, { volume = 0.7 } = {}) {
   master.gain.value = volume * 0.9;
   master.connect(ctx.destination);
   const voices = new Set();
-  const stats = { attacks: [] };
+  const stats = { attacks: [], get activeVoices() { return voices.size; } };
   let noiseBuf = null;
   function noise() {
     if (noiseBuf) return noiseBuf;
@@ -67,7 +67,19 @@ function createVoice(ctx, { volume = 0.7 } = {}) {
     ns.start(when); ns.stop(when + 0.1);
     const voice = { oscs, lfo, ns, g, stopAt };
     voices.add(voice);
+    // Retire every node once all sources have actually ended. Clearing the
+    // transport's Set alone leaves the filter/modulation graph connected.
+    const sources = [...oscs, ns, ...(lfo ? [lfo] : [])];
+    let remaining = sources.length;
+    for (const source of sources) source.onended = () => {
+      source.onended = null;
+      source.disconnect();
+      if (--remaining !== 0) return;
+      voices.delete(voice);
+      for (const node of [g, flt, bp, ng, lfoGain]) if (node) node.disconnect();
+    };
     stats.attacks.push({ when, pitch, freq, bow: down ? 'down' : 'up' });
+    if (stats.attacks.length > 512) stats.attacks.shift();
     return voice;
   }
   function stopAll() {

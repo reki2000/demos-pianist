@@ -145,7 +145,8 @@ function drawPerformer(R, pose, t) {
   // Torso + head (gentle lean and sway from the pose).
   R.piece('jacket', [0, 1.165, 0.03], [.205, .295, .148], suit, lean, 0, sway);
   const hf = headFrame(pose), hp = hf.point, hs = hf.scale;
-  R.piece('head', HEAD_C, HEAD_S, skin, hf.rx, hf.ry, hf.rz);
+  R.setFaceDetail?.(true);
+R.piece('head', HEAD_C, HEAD_S, skin, hf.rx, hf.ry, hf.rz);
   R.piece('hair', [0.008, 1.645, 0.012], [.086, .105, .096], hair, hf.rx, hf.ry, hf.rz);
   // Face, mirrored from the demos-pianist performer: serene lowered
   // eyes (lash segments), soft brows, ears, a nose piece and lips, at
@@ -160,6 +161,7 @@ function drawPerformer(R, pose, t) {
   }
   R.segment(hp([-.02, -.074, .113]), hp([.02, -.074, .113]), .0031, [.62, .38, .33]);
   R.segment(hp([-.012, -.083, .11]), hp([.012, -.083, .11]), .0026, [.70, .48, .40]);
+R.setFaceDetail?.(false);
   // Arms (exact two-bone chains from the pose).
   for (const arm of pose.arms) {
     R.segment(arm.shoulder, arm.elbow, .047, suit);

@@ -1,0 +1,40 @@
+{
+  "dist/gl.js": {
+    "faceHash": "c9511aef8be15408cfbb4f5d8d9993fcbead8a29c42e70effa6ace21b82f461a",
+    "bodyTriangles": 89272
+  },
+  "dist/instruments/violin-gl.js": {
+    "faceHash": "c9511aef8be15408cfbb4f5d8d9993fcbead8a29c42e70effa6ace21b82f461a",
+    "bodyTriangles": 89272
+  },
+  "dist/instruments/violin-model.js": {
+    "triangles": 9396,
+    "bounds": [
+      [
+        -0.16099999845027924,
+        -0.10400000214576721,
+        -0.05999999865889549
+      ],
+      [
+        0.19499999284744263,
+        0.10400000214576721,
+        0
+      ]
+    ]
+  },
+  "dist/instruments/cello-model.js": {
+    "triangles": 11880,
+    "bounds": [
+      [
+        -0.24400964379310608,
+        0.47808194160461426,
+        -0.4793805480003357
+      ],
+      [
+        0.21296095848083496,
+        1.2582629919052124,
+        -0.1096382811665535
+      ]
+    ]
+  }
+}

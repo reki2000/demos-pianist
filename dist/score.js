@@ -118,6 +118,16 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
   e.spelling={...written,accidental:written.alteration===previous?null:written.alteration===0?'♮':written.alteration>0?'♯':'♭'};
   barAlterations.set(id,written.alteration);
  }
+ // These staff relationships and sounding spans do not change while playing.
+ // Build them once rather than allocating and sorting the whole piece per frame.
+ m.nextOnStaff=new Map();const lastByHand=[null,null];
+ for(const cl of clusters){const hand=cl.notes[0].n[4];if(lastByHand[hand])m.nextOnStaff.set(lastByHand[hand],cl);lastByHand[hand]=cl}
+ m.soundingSpans=[0,1].map(hand=>{
+  const spans=[];for(const cl of clusters){const es=cl.notes.filter(e=>e.n[4]===hand);if(es.length)spans.push([cl.beat,cl.beat+Math.max(...es.map(e=>e.duration))])}
+  spans.sort((a,b)=>a[0]-b[0]);const merged=[];
+  for(const sp of spans){const last=merged.at(-1);if(last&&sp[0]<=last[1]+.02)last[1]=Math.max(last[1],sp[1]);else merged.push([...sp])}
+  return merged;
+ });
  m.beams=beams;m.clusters=clusters;cache.set(s,m);return m}
 // Horizontal scale that follows the music's density. Real engraving
 // gives crowded bars more width; a scrolling score can do the same with
@@ -203,8 +213,8 @@ let groups=[];for(const e of vis){let lastG=groups.at(-1);if(lastG&&lastG.cl===e
 let dirOf=tones=>{let above=tones.filter(g=>g.y<g.base+14).length,below=tones.length-above;
  if(below>above)return true;if(above>below)return false;
  let far=tones.reduce((a,g)=>Math.abs(g.y-g.base-14)>Math.abs(a.y-a.base-14)?g:a);return far.y>far.base+14};
-let beamUp=new Map();
-for(const beam of list.beams){let tones=[];for(const cl of beam.clusters)for(const e of cl.notes){let g=G.get(e);if(g)tones.push(g)}if(tones.length)beamUp.set(beam,dirOf(tones))}
+let beamUp=new Map(),visibleBeams=new Set(vis.map(e=>e.beam).filter(Boolean));
+for(const beam of visibleBeams){let tones=[];for(const cl of beam.clusters)for(const e of cl.notes){let g=G.get(e);if(g)tones.push(g)}if(tones.length)beamUp.set(beam,dirOf(tones))}
 // Cross-staff flag rule: when a beamed group's or a flagged cluster's
 // flag ink would overlap the other staff -- its beams, flags or
 // noteheads -- the direction is forced instead: the upper staff's flags
@@ -229,7 +239,7 @@ let flagBox=(grp,up)=>{let items=grp.items.map(e=>G.get(e)),ys=items.map(g=>g.y)
  if(up&&edge>base+14)tip=Math.min(tip,base+14);if(!up&&edge<base+14)tip=Math.max(tip,base+14);
  return{x0:stemX,x1:fl?stemX+8:stemX,top:up?tip:tip-span,bot:up?tip+span:tip}};
 let clusterDir=new Map(),flagItems=[];
-for(const beam of list.beams){if(!beamUp.has(beam))continue;let up=beamUp.get(beam);
+for(const beam of visibleBeams){if(!beamUp.has(beam))continue;let up=beamUp.get(beam);
  flagItems.push({staff:beam.clusters[0].notes[0].n[4],box:beamBox(beam,up),up,beam})}
 for(const grp of groups){let cl=grp.cl;if(cl.beam)continue;let up=dirOf(grp.items.map(e=>G.get(e)));clusterDir.set(cl,up);
  flagItems.push({staff:cl.notes[0].n[4],box:flagBox(grp,up),up,cl})}
@@ -240,9 +250,8 @@ for(const it of flagItems){let unsafe=it.staff===0?!it.up:it.up;if(!unsafe)conti
   headsByStaff[1-it.staff].some(g=>xOv(it.box,{x0:g.ax-4.8,x1:g.ax+4.8})&&yOv(it.box,{top:g.y-3.5,bot:g.y+3.5}));
  if(!hit)continue;let nu=it.staff===0;
  if(it.beam)beamUp.set(it.beam,nu);else clusterDir.set(it.cl,nu);it.up=nu}
-for(const beam of list.beams)if(beamUp.has(beam))for(const cl of beam.clusters)clusterDir.set(cl,beamUp.get(beam));
-let nextOnStaff=new Map(),lastByHand=[null,null];
-for(const cl of list.clusters){let hd=cl.notes[0].n[4];if(lastByHand[hd])nextOnStaff.set(lastByHand[hd],cl);lastByHand[hd]=cl}
+for(const beam of visibleBeams)if(beamUp.has(beam))for(const cl of beam.clusters)clusterDir.set(cl,beamUp.get(beam));
+let nextOnStaff=list.nextOnStaff;
 let layout=new Map();
 for(const grp of groups){let cl=grp.cl,up=clusterDir.get(cl)??(cl.beam&&beamUp.has(cl.beam)?beamUp.get(cl.beam):dirOf(grp.items.map(e=>G.get(e))));layout.set(cl,up);
  let subs=new Map();for(const e of grp.items){let g=G.get(e);if(!subs.has(g.base))subs.set(g.base,[]);subs.get(g.base).push(e)}
@@ -267,13 +276,12 @@ for(const grp of groups){let cl=grp.cl,up=clusterDir.get(cl)??(cl.beam&&beamUp.h
 // beat calls for (never across the half-bar; a full silent bar takes a
 // whole rest centred in the bar).
 for(const [bass,base] of [[false,top],[true,staff2]]){
- let spans=[];for(const cl of list.clusters){let es=cl.notes.filter(e=>(e.n[4]===1)===bass);if(es.length)spans.push([cl.beat,cl.beat+Math.max(...es.map(e=>e.duration))])}
- spans.sort((a,b)=>a[0]-b[0]);let merged=[];for(const sp of spans){let lastM=merged.at(-1);if(lastM&&sp[0]<=lastM[1]+.02)lastM[1]=Math.max(lastM[1],sp[1]);else merged.push([...sp])}
+ let merged=list.soundingSpans[bass?1:0];
  c.fillStyle='#a39a8c';
  let restHalf=cx=>{c.fillRect(cx-4,base+9.5,8,4.5)},restWhole=cx=>{c.fillRect(cx-4,base+7,8,4.5)},
   restBeat=(u,unit)=>{let cx=xPos(u+unit/2);if(cx<left+8||cx>w-4)return;
    if(unit===2)restHalf(cx);else{c.font='20px Bravura,Georgia,serif';c.fillText(unit===.5?'𝄾':'𝄽',cx-5,base+20);if(unit===1.5){c.beginPath();c.ellipse(cx+6.5,base+10.5,1.6,1.6,0,0,Math.PI*2);c.fill()}}};
- for(let i=1;i<merged.length;i++){let g0=merged[i-1][1],g1=merged[i][0];if(g1-g0<.95)continue;
+ for(let i=1;i<merged.length;i++){let g0=merged[i-1][1],g1=merged[i][0];if(g1-g0<.95||g1<start||g0>end)continue;
   let sig=signatureAt(s,g0+.01),barLen=sig.numerator*4/sig.denominator,unit=sig.denominator===8&&sig.numerator%3===0?1.5:4/sig.denominator,pos=g0;
   while(pos<g1-.05){let barStart=sig.beat+Math.floor((pos-sig.beat+1e-6)/barLen)*barLen;
    if(Math.abs(pos-barStart)<.08&&g1-pos>=barLen-.08){let cx=xPos(barStart+barLen/2);if(cx>=left+8&&cx<=w-4)restWhole(cx);pos+=barLen;continue}
@@ -316,7 +324,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
    c.fillStyle=color;for(const dy of dotYs){c.beginPath();c.ellipse(maxRight+4.5,dy,1.6,1.6,0,0,Math.PI*2);c.fill()}}
  }}
 let beamCount=0;
-for(const beam of list.beams){let visible=beam.clusters.some(cl=>cl.notes.some(e=>glyphs.has(e)));if(!visible)continue;
+for(const beam of visibleBeams){let visible=beam.clusters.some(cl=>cl.notes.some(e=>glyphs.has(e)));if(!visible)continue;
  const positions=beam.clusters.map(cl=>{let tones=cl.notes.map(e=>glyphs.get(e)||(()=>{let g=place(e,cl);return{x:g.ax,ax:g.ax,y:g.y,base:g.base,dia:g.dia}})());
   return{cl,x:tones[0].ax,base:tones[0].base,ys:tones.map(g=>g.y),centre:tones.reduce((a,g)=>a+g.dia,0)/tones.length}}),
  // Beam slope follows the pitch interval between the first and last

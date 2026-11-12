@@ -37,6 +37,7 @@ reports['standaloneValidation']=json.loads(subprocess.check_output(['node','vali
 files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  root/'v8-verification.json',root/'audio-manifest.json',
  root/'audio-verification.json',root/'audio-render-verification.json',root/'verification.json',
+ root/'audio-lifecycle-patches.json',root/'geometry-patches.json',root/'geometry-baseline.json',
  root/'pack-v8.py',root/'prepare-audio.py',root/'render-audio-preview.py',
  root/'piano-audio-preview-v8.mp3',root/'verify.cjs',root/'validate-v8.cjs',root/'v6-note-hashes.json',
  root/'convert.py',root/'replan.cjs',root/'hanging-replan.cjs',*root.glob('raw-*.b64'),

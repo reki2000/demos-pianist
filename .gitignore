@@ -8,6 +8,8 @@ v8-verification.json
 # Test and verification outputs
 verification.json
 audio-verification.json
+string-audio-verification.json
+geometry-verification.json
 audio-render-fixture.json
 audio-render-verification.json
 piano-audio-preview-v*.mp3

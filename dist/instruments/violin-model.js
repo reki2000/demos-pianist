@@ -93,8 +93,8 @@ function bodyTop(u,v) {
 // Shared-ring surface and area-weighted normals, following the final cello.
 // Coordinates remain local; renderer uploads once and transforms the rigid mesh.
 const BODY_MESH = (() => {
-  const stations=[...new Set([...Array.from({length:81},(_,i)=>-.161+.356*i/80),...OUTLINE.map(p=>p[0])])].sort((a,b)=>a-b);
-  const vertices=[], normals=[], faces=[], samples=[], across=24;
+  const stations=[...new Set([...Array.from({length:41},(_,i)=>-.161+.356*i/40),...OUTLINE.map(p=>p[0])])].sort((a,b)=>a-b);
+  const vertices=[], normals=[], faces=[], samples=[], across=12;
   for(let j=0;j<=across;j++) samples.push(['top',j/across]);
   samples.push(['side',1/3],['side',2/3]);
   for(let j=across;j>=0;j--) samples.push(['back',j/across]);
@@ -206,7 +206,8 @@ function drawPerformer(R, S) {
   // rides the instrument's sway with the chin on the rest).
   const hs = S.headSway || up;
   R.segment([0.012 + hs[0], 1.47 + hs[1], -0.01 + hs[2]], H.pos, 0.048, skin);
-  R.piece('head', H.pos, [.112, .148, .128], skinLight, H.pitch, H.yaw, H.roll);
+  R.setFaceDetail?.(true);
+R.piece('head', H.pos, [.112, .148, .128], skinLight, H.pitch, H.yaw, H.roll);
   const hp = (p) => { // head-local point, same rotation convention as the pianist
     const cr = Math.cos(H.roll), sr = Math.sin(H.roll), px = p[0] * cr - p[1] * sr, py = p[0] * sr + p[1] * cr;
     const c = Math.cos(H.pitch), s = Math.sin(H.pitch), cy = Math.cos(H.yaw), sy = Math.sin(H.yaw);
@@ -223,6 +224,7 @@ function drawPerformer(R, S) {
     R.piece('joint', hp([x * 0.109, -0.008, -0.008]), [.012, .03, .022], skin, H.pitch, H.yaw, H.roll);
   }
   R.segment(hp([-0.02, -0.074, 0.113]), hp([0.02, -0.072, 0.113]), 0.0042, [.62, .38, .33]);
+R.setFaceDetail?.(false);
   // Arms (joints solved by motion): suit sleeves, white cuff, skin hands.
   for (const arm of [S.armL, S.armR]) {
     R.piece('joint', arm.shoulder, [.062, .066, .062], suit);
