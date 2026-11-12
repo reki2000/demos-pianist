@@ -48,6 +48,12 @@ function piece(shape,p,s,c,rx=0,ry=0,rz=0){let m=model(p,s,rx);if(ry){let cy=Mat
 function segment(a,b,r,c,shape='limb'){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(Math.abs(y[2])>.9?[1,0,0]:[0,0,1],y)),z=cross(x,y),mid=a.map((v,i)=>(v+b[i])/2);let m=new Float32Array([...x.map(v=>v*r),0,...y.map(v=>v*l/2),0,...z.map(v=>v*r),0,...mid,1]);draw(shape,m,c)}
 function bone(a,b,r,c){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(Math.abs(y[2])>.9?[1,0,0]:[0,0,1],y)),z=cross(x,y),mid=a.map((v,i)=>(v+b[i])/2);let m=new Float32Array([...x.map(v=>v*r),0,...y.map(v=>v*l/2),0,...z.map(v=>v*r),0,...mid,1]);draw('sphere',m,c)}
 let vp;function project(p){p=toWorld(p);if(!vp)return null;let q=[...p,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let k=0;k<4;k++)v[i]+=vp[k*4+i]*q[k];return{x:(v[0]/v[3]+1)/2,y:(1-v[1]/v[3])/2,visible:v[3]>0&&Math.abs(v[0]/v[3])<.95&&Math.abs(v[1]/v[3])<.95}}
-function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
+function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up);
+// The program binding is context-global state: when several RecitalGL
+// instances share one canvas (the multi-instrument shell creates its own
+// instance on the piano's canvas), a later create() hijacks the binding
+// and this instance's uniform uploads would fail with INVALID_OPERATION,
+// leaving a black stage. Re-bind every frame.
+gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
 return{box,ball,bone,piece,segment,begin,project,gl};}
 return{create,toWorld,look,perspective,multiply};})();
