@@ -19,6 +19,7 @@ const add = (a, b) => a.map((v, i) => v + b[i]);
 const mul = (a, s) => a.map(v => v * s);
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const sub = (a, b) => a.map((v, i) => v - b[i]);
+const dot = (a, b) => a.reduce((s,v,i)=>s+v*b[i],0);
 
 const STRING_LENGTH = 0.328;
 const O0 = [0.105, 1.438, -0.205];                    // top plate under the bridge
@@ -232,11 +233,12 @@ R.setFaceDetail?.(false);
     // Capsule radii asserted against the body by clearance-test.cjs.
     R.segment(arm.shoulder, arm.elbow, 0.055, suit);
     const natural = arm === S.armL && S.handL.model === 'natural';
-    R.segment(arm.elbow, arm.wrist, 0.042, suit, natural ? 'forearm' : 'limb');
     R.piece('joint', arm.elbow, [.050, .050, .050], suit);
     const fl = Math.hypot(...arm.elbow.map((v, i) => v - arm.wrist[i])) || 1;
     const cuff = arm.wrist.map((v, i) => v + (arm.elbow[i] - v) * 0.05 / fl);
+    R.segment(arm.elbow, natural ? cuff : arm.wrist, .042, suit, natural ? 'forearm' : 'limb');
     if (natural) {
+      R.segment(arm.wrist,cuff,.024,skin,'bodyLimb');
       const cuffEnd=arm.wrist.map((v,i)=>v+(arm.elbow[i]-v)*.030/fl);
       R.segment(cuffEnd,cuff,.028,shirt);
     } else R.segment(arm.wrist, cuff, 0.034, shirt);
@@ -249,18 +251,27 @@ R.setFaceDetail?.(false);
 // Shared by the scene renderer and the actual-triangle clearance audit.
 function drawLeftHand(R,H) {
   const natural=H.model==='natural';
+  if(natural&&H.wrist)R.oriented('joint',H.wrist,[.022,.018,.016],skin,0,...H.basis);
   if(H.basis)R.oriented('palm',H.palmPos,[.038,.035,.013],skin,0,...H.basis);
   else R.piece('palm',H.palmPos,[.042,.013,.038],skin,H.pitch,H.yaw,H.roll);
   for(const f of H.fingers){
     for(let j=0;j<3;j++){
-      R.segment(f.points[j],f.points[j+1],(natural?.65:1)*(.0105-j*.0016),skinLight,natural&&j===2?'fingertip':'limb');
-      if(j>0)R.piece('joint',f.points[j],natural?[.0065,.00585,.0065]:[.010,.009,.010],skinLight);
+      R.segment(f.points[j],f.points[j+1],(natural?(j===2?.004:.65*(.0105-j*.0016)):(.0105-j*.0016)),skinLight,natural?(j===2?'fingertip':'bodyLimb'):'limb');
+      if(natural)R.oriented('rod',f.points[j],j?[.0065,.00585,.0065]:[.008,.008,.0045],skinLight,0,...H.basis);
+      else if(j>0)R.piece('joint',f.points[j],[.010,.009,.010],skinLight);
     }
-    if(natural){const d=norm(sub(f.points[3],f.points[2]));R.ball(sub(f.points[3],mul(d,.0038)),[.0038,.0038,.0038],skinLight);}
+    if(natural){
+      const d=norm(sub(f.points[3],f.points[2])),pad=sub(f.points[3],mul(d,.0038)),delta=sub(pad,O0);
+      const u=dot(delta,U),v=dot(delta,V),w=dot(delta,W),width=u<.210?.0225:.0165;
+      // The soft pad flattens against the board while the fingertip's bone
+      // and contact coordinates remain those of the shared FK skeleton.
+      if(u>=.058&&u<=.328&&Math.abs(v)<width+.0038&&dot(sub(f.points[3],O0),W)>=wFB(u)-.0001){const floor=wFB(u)+.0021;if(w<floor){const lift=mul(W,floor-w);for(let i=0;i<3;i++)pad[i]+=lift[i];}}
+      R.oriented('rod',pad,[.0038,.0038,.0020],skinLight,0,U,V,W);
+    }
     else R.ball(f.points[3],[.0075,.0075,.0095],skinLight);
   }
-  for(let j=0;j<H.thumb.length-1;j++)R.segment(H.thumb[j],H.thumb[j+1],natural?[.009,.008,.007][j]:.012,skin);
-  if(natural)for(let j=0;j<4;j++){const r=[.010,.009,.008,.007][j];R.ball(H.thumb[j],[r,r,r],skin);}
+  for(let j=0;j<H.thumb.length-1;j++)R.segment(H.thumb[j],H.thumb[j+1],natural?[.009,.007,.007][j]:.012,skin);
+  if(natural)for(let j=0;j<4;j++){const r=[.010,.009,H.thumbPadRadius||.008,.007][j];R.oriented('rod',H.thumb[j],[r,r,r],skin,0,...H.basis);}
 }
 
 function draw(R, S) {

@@ -540,14 +540,13 @@ const NHPrototype = (() => {
   }
   return {at,frame,fk,ik,surface,ROOT,LIMIT,stats:()=>({frames:cache.size,solves}),source:()=>[basis,fk,linear,minimize,ik,build,surface,frame,blend,at].map(f=>f.toString()).join('\n')};
 })();
-const NH = window.ViolinHand?window.ViolinHand({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato}):null;
-// Opt-in until the full natural clearance and temporal audits pass.
-// Without violin-hand.js loaded the natural solver is unavailable and
-// every request falls back to legacy.
-let HAND_SOLVER='legacy';
+const NH = window.ViolinHand?window.ViolinHand({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato,handDistAt}):null;
+// Natural hand playback uses precomputed joint tracks. Missing or stale
+// tracks fall back to legacy instead of running nonlinear planning in a frame.
+let HAND_SOLVER='natural';
 const setHandSolver=s=>(HAND_SOLVER=s==='natural'&&NH?'natural':'legacy');
 function at(P,t){
-  const S=atLegacy(P,t);if(HAND_SOLVER==='legacy')return S;
+  const S=atLegacy(P,t);if(HAND_SOLVER==='legacy'||!NH||!NH.available(P))return S;
   const L=NH.at(P,t,handDistAt(P,t),S.debug.contacts);S.handL=L.hand;S.debug.contacts=L.contacts;
   S.armL=NH.armOf(L.q,S.armL.shoulder);
   S.debug.arms=[S.armL,S.armR];return S;

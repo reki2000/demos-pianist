@@ -1,0 +1,16 @@
+{
+  "samples": 10261,
+  "maxContactError": 5.452447585422444e-11,
+  "maxBoneError": 5.48172618408671e-16,
+  "maxRootError": 4.611102534756203e-16,
+  "maxWristAngle": 61.62697194938171,
+  "maxWristStep": 0.08383103008910682,
+  "maxFingertipStep": 0.07768989048066212,
+  "maxKnotWristJump": 4.075480813093604e-11,
+  "renderedSkinPenetration": {
+    "body": 0.0007392813626832667,
+    "board": 0.0008369383687443265,
+    "neck": 0.0005947942864435053,
+    "forearm": 0
+  }
+}

@@ -11,7 +11,7 @@ Violin/cello body grids keep the original outline extrema, arch equations and
 closed caps, using fewer axial/lateral samples. Their body meshes fall from
 9,396 to 2,820 and 11,880 to 3,720 triangles respectively. Cello neck/fingerboard
 ribbons use 12 × 16 cells instead of 24 × 32, reducing draw calls substantially.
-Motion planning and contact/collision functions are unchanged.
+The mesh reductions preserve the fingering and audio plans; the hand pose changes are documented separately.
 
 Measured full-scene counts in headless Chromium/SwiftShader at 12 seconds of
 the default piece for each instrument, Wide camera, paused:
@@ -20,10 +20,10 @@ the default piece for each instrument, Wide camera, paused:
 |---|---:|---:|---:|---:|---:|
 | Piano | 112,612 | 56,536 | 49.8% | 454 | 454 |
 | Guitar | 146,396 | 89,636 | 38.8% | 365 | 365 |
-| Violin | 90,520 | 45,992 | 49.2% | 260 | 282 |
+| Violin | 90,520 | 43,192 | 52.3% | 260 | 293 |
 | Cello | 114,148 | 68,176 | 40.3% | 1,803 | 679 |
 
-After counts include the five-finger bow-grip update.
+After counts include the five-finger bow-grip and violin left-hand updates.
 These counts include the stage; they are not FPS or audio-underrun measurements.
 Wide and portrait views of all four performers were inspected in Chromium.
 `counts.json` records the measurements.

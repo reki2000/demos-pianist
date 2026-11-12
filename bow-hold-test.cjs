@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const c={console,atob,Uint8Array,Buffer};c.window=c;vm.createContext(c);
-for(const name of ['bow-hand','violin-fingering','violin-songs','violin-model','violin-motion','cello-fingering','cello-model','cello-motion','cello-songs','cello-poses'])
+for(const name of ['bow-hand','violin-fingering','violin-songs','violin-model','violin-hand','violin-hand-frames','violin-motion','cello-fingering','cello-model','cello-motion','cello-songs','cello-poses'])
   vm.runInContext(fs.readFileSync(`dist/instruments/${name}.js`,'utf8'),c);
 const sub=(a,b)=>a.map((v,i)=>v-b[i]),dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0),length=a=>Math.hypot(...a),dist=(a,b)=>length(sub(a,b));
 const local=(H,p)=>H.basis.map(axis=>dot(sub(p,H.origin),axis));
