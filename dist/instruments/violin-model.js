@@ -176,9 +176,10 @@ function drawBow(R, bow) {
   R.bone(bow.frogStick, bow.tipStick, 0.0029, bowWood, 0.25);
   R.bone(bow.frogHair, bow.tipHair, 0.0013, bowHair, 0);
   R.ball(bow.tipStick, [0.0045, 0.006, 0.004], [.85, .80, .70], 0.3);
-  const mid = bow.frogStick.map((v, i) => v + bow.axis[i] * 0.012);
-  R.oriented('box', mid, [0.013, 0.0075, 0.0105], ebony, 0, bow.axis, bow.down, bow.side);
-  R.ball(bow.frogStick.map((v, i) => v - bow.axis[i] * 0.018), [0.005, 0.005, 0.005], [.6, .6, .62], 0.8);
+  const frog = window.BowHand.frog('violin', bow.frogStick, bow.axis, bow.down);
+  window.BowHand.drawFrog(R, frog, ebony, [.7,.7,.72]);
+  R.bone(bow.frogStick.map((v,i)=>v-bow.axis[i]*.025), bow.frogStick.map((v,i)=>v-bow.axis[i]*.037), .0029, [.6,.6,.62]);
+  R.ball(bow.frogStick.map((v, i) => v - bow.axis[i] * 0.037), [0.005, 0.005, 0.005], [.6, .6, .62], 0.8);
 }
 
 function drawPerformer(R, S) {
@@ -241,9 +242,8 @@ R.setFaceDetail?.(false);
     } else R.segment(arm.wrist, cuff, 0.034, shirt);
   }
   drawLeftHand(R,S.handL);
-  // Right hand grips the frog.
-  R.piece('palm', S.handR.palmPos, [.052, .015, .048], skin, S.handR.pitch, S.handR.yaw, S.handR.roll);
-  for (const f of S.handR.fingers) for (let j = 0; j < 3; j++) R.segment(f.points[j], f.points[j + 1], 0.0095 - j * 0.0015, skinLight);
+  // Five articulated digits share the exact bow frame.
+  window.BowHand.draw(R, S.handR, skin, skinLight);
 }
 
 // Shared by the scene renderer and the actual-triangle clearance audit.

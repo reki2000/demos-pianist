@@ -31,6 +31,7 @@ jobs:
           node audio-test.cjs > audio-verification.json
           node string-audio-test.cjs > string-audio-verification.json
           node geometry-test.cjs > geometry-verification.json
+          node bow-hold-test.cjs > bow-hold-verification.json
           node score-test.cjs > score-verification.json
           node pedal-test.cjs > pedal-verification.json
       - name: Build standalone HTML and zip

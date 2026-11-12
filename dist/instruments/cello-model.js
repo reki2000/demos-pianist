@@ -387,12 +387,12 @@ window.CelloModel = (() => {
   // stick was drawn on the contact line and the hair floated 20 mm in
   // front of the string, never touching it -- the bow read as
   // approaching the string from the wrong side.)
-  function drawBow(R, s, f) {
-    const { frog, tip } = bowSegment(s, f);
+  function drawBow(R, s, f, geometry = null) {
+    const { frog, tip } = geometry || bowSegment(s, f);
     R.segment(frog, tip, 0.0016, COLORS.hair, 'limb');
     const sF = add(frog, mul(n, 0.020)), sT = add(tip, mul(n, 0.020));
     R.segment(sF, sT, 0.006, COLORS.bowWood, 'limb');
-    R.ball(sF, [0.016, 0.022, 0.016], COLORS.ebony);
+    window.BowHand.drawFrog(R, window.BowHand.frog('cello', sF, sub(sT, sF), n), COLORS.ebony, [.7,.7,.72]);
     return { frog, tip, stickFrog: sF, stickTip: sT };
   }
 

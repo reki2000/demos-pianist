@@ -10,6 +10,7 @@ verification.json
 audio-verification.json
 string-audio-verification.json
 geometry-verification.json
+bow-hold-verification.json
 audio-render-fixture.json
 audio-render-verification.json
 piano-audio-preview-v*.mp3

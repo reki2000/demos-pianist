@@ -30,6 +30,7 @@ const dot = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const unit = a => { const l = Math.hypot(...a) || 1; return a.map(v => v / l); };
 function freshCtx(files) {
+  files = [DI('bow-hand.js'), ...files];
   const c = { window: null, console }; c.window = c; vm.createContext(c);
   for (const f of files) vm.runInContext(fs.readFileSync(f, 'utf8'), c, { filename: path.basename(f) });
   return c;
@@ -270,7 +271,7 @@ const c = { window: null, document: documentStub, performance: { now: () => 0 },
 c.window = c; vm.createContext(c);
 const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'app.js',
   'instruments/guitar-songs.js', 'instruments/guitar-fingering.js', 'instruments/guitar-motion.js', 'instruments/guitar-model.js', 'instruments/guitar-audio.js', 'instruments/guitar-score.js', 'instruments/guitar-instrument.js', 'instruments/guitar-plans.js',
-  'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/violin-model.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
+  'instruments/bow-hand.js', 'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/violin-model.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
   'instruments/cello-fingering.js', 'instruments/cello-model.js', 'instruments/cello-motion.js', 'instruments/cello-audio.js', 'instruments/cello-songs.js', 'instruments/cello-instrument.js',
   'instruments/staff-score.js', 'instruments/shell.js'];
 for (const f of SCRIPTS) vm.runInContext(fs.readFileSync(path.join('dist', f), 'utf8'), c, { filename: f });

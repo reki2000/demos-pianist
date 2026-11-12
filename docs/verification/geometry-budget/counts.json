@@ -27,10 +27,10 @@
       "draws": 260
     },
     "after": {
-      "triangles": 42556,
-      "draws": 260
+      "triangles": 45992,
+      "draws": 282
     },
-    "triangleReductionPercent": 53.0
+    "triangleReductionPercent": 49.2
   },
   "cello": {
     "before": {
@@ -38,9 +38,9 @@
       "draws": 1803
     },
     "after": {
-      "triangles": 65892,
-      "draws": 651
+      "triangles": 68176,
+      "draws": 679
     },
-    "triangleReductionPercent": 42.3
+    "triangleReductionPercent": 40.3
   }
 }
