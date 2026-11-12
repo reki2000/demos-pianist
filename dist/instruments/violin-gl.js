@@ -29,7 +29,7 @@ for(let i=0;i<n-1;i++)for(let j=0;j<sides;j++){let k=(j+1)%sides;vertex(i,j);ver
 for(let j=0;j<sides;j++){let k=(j+1)%sides,c0=[0,sections[0][0],sections[0][3]||0],c1=[0,sections.at(-1)[0],sections.at(-1)[3]||0];flat(c0,rings[0][k],rings[0][j],[0,-1,0]);flat(c1,rings.at(-1)[j],rings.at(-1)[k],[0,1,0])}return data}
 // Loft along local Z instead of Y (for shoes): swap the Y and Z of positions and normals.
 const alongZ=data=>{let out=data.slice();for(let i=0;i<out.length;i+=3){let y=out[i+1];out[i+1]=out[i+2];out[i+2]=y}return out};
-let shapes={box:mesh(cube),sphere:mesh(sphere),
+let shapes={box:mesh(cube),sphere:mesh(sphere),fingertip:mesh(loft([[-1,.62,.62],[-.8,1,1],[.45,.75,.75],[1,.12,.12]])),forearm:mesh(loft([[-1,1,1],[-.8,1,1],[.4,.78,.78],[1,.595238,.595238]])),
 torso:mesh(loft([[-1,.70,.80],[-.78,.86,.92],[-.3,.97,1],[.4,1,.98],[.8,.9,.86],[1,.55,.6]])),
 jacket:mesh(loft([[-1,.74,.82],[-.62,.70,.80],[-.15,.80,.88],[.38,.95,.94],[.68,1,.88],[.86,.82,.70],[.96,.5,.5],[1,.3,.36]])),
 head:mesh(loft([[-1,.18,.2,.16],[-.92,.42,.45,.13],[-.74,.6,.66,.08],[-.48,.76,.84,.03],[-.15,.88,.95,0],[.2,.95,1,-.02],[.52,.93,.98,-.05],[.78,.8,.85,-.07],[.93,.55,.6,-.08],[1,.2,.24,-.08]],24)),
@@ -54,6 +54,8 @@ function bone(a,b,r,c){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(
 // are built the same way. Host integration: this is the one renderer
 // addition the violin module needs beyond the demos-pianist API.
 function oriented(shape,p,s,c,metal,X,Y,Z){let m=new Float32Array([X[0]*s[0],X[1]*s[0],X[2]*s[0],0,Y[0]*s[1],Y[1]*s[1],Y[2]*s[1],0,Z[0]*s[2],Z[1]*s[2],Z[2]*s[2],0,...p,1]);draw(shape,m,c,metal)}
+const meshBuffers=new WeakMap();
+function drawMesh(data,color,F){let key=meshBuffers.get(data);if(!key){key='custom'+Object.keys(shapes).length;shapes[key]=mesh(data);meshBuffers.set(data,key)}const {U,V,W,O}=F||{U:[1,0,0],V:[0,1,0],W:[0,0,1],O:[0,0,0]};draw(key,new Float32Array([...U,0,...V,0,...W,0,...O,1]),color)}
 let vp;function project(p){p=toWorld(p);if(!vp)return null;let q=[...p,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let k=0;k<4;k++)v[i]+=vp[k*4+i]*q[k];return{x:(v[0]/v[3]+1)/2,y:(1-v[1]/v[3])/2,visible:v[3]>0&&Math.abs(v[0]/v[3])<.95&&Math.abs(v[1]/v[3])<.95}}
 function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up);
 // INTEGRATION DIVERGENCE from demos-violinist/dist/gl.js (the only one;
@@ -65,5 +67,5 @@ function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up)
 // uploads fail with INVALID_OPERATION (black stage). The host renderer's
 // begin() (dist/gl.js) carries the same fix.
 gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
-return{box,ball,bone,piece,segment,oriented,begin,project,gl};}
+return{box,ball,bone,piece,segment,oriented,mesh:drawMesh,begin,project,gl};}
 return{create,toWorld,look,perspective,multiply};})();
