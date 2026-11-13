@@ -12,11 +12,13 @@ function create(canvas){
 const gl=canvas.getContext('webgl',{antialias:true,alpha:false,powerPreference:'high-performance'});if(!gl)throw Error('WebGL is not available in this browser. Please try another browser.');
 function shader(kind,src){let s=gl.createShader(kind);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
 let prog=gl.createProgram();gl.attachShader(prog,shader(gl.VERTEX_SHADER,`attribute vec3 aP;attribute vec3 aN;uniform mat4 uM,uVP;uniform mat3 uN;varying vec3 vP,vN;void main(){vec4 p=uM*vec4(aP,1.);vP=p.xyz;vN=normalize(uN*aN);gl_Position=uVP*p;}`));
-gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,`precision mediump float;uniform vec3 uC,uEye;uniform float uMetal;varying vec3 vP,vN;void main(){vec3 N=normalize(vN);vec3 L=normalize(vec3(1.5,5.,-1.)-vP);vec3 V=normalize(uEye-vP);float diffuse=max((dot(N,L)+.25)/1.25,0.);float rim=pow(1.-max(dot(N,V),0.),3.);float spec=pow(max(dot(N,normalize(L+V)),0.),mix(20.,100.,uMetal));float spot=max(.2,1.-length(vP.xz)*.115);float fill=max(dot(N,normalize(vec3(-2.,3.,3.)-vP)),0.);vec3 c=uC*(vec3(.40)+diffuse*.72*vec3(1.,.91,.78)+fill*.25*vec3(.75,.84,1.))*spot; c+=vec3(.9,.76,.5)*spec*(.1+uMetal*.65);c+=vec3(.30,.37,.50)*rim*.38;float fog=clamp(length(vP-uEye)/25.,0.,.6);gl_FragColor=vec4(pow(mix(c,vec3(.027,.031,.041),fog),vec3(.82)),1.);}`));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);
-let attrs=['aP','aN'].map(n=>gl.getAttribLocation(prog,n)),u={};for(let n of ['uM','uVP','uN','uC','uEye','uMetal'])u[n]=gl.getUniformLocation(prog,n);
+gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,`precision mediump float;uniform vec3 uC,uEye;uniform float uMetal,uWorldScale;varying vec3 vP,vN;void main(){vec3 Q=vP/uWorldScale,E=uEye/uWorldScale;vec3 N=normalize(vN);vec3 L=normalize(vec3(1.5,5.,-1.)-Q);vec3 V=normalize(E-Q);float diffuse=max((dot(N,L)+.25)/1.25,0.);float rim=pow(1.-max(dot(N,V),0.),3.);float spec=pow(max(dot(N,normalize(L+V)),0.),mix(20.,100.,uMetal));float spot=max(.2,1.-length(Q.xz)*.115);float fill=max(dot(N,normalize(vec3(-2.,3.,3.)-Q)),0.);vec3 c=uC*(vec3(.40)+diffuse*.72*vec3(1.,.91,.78)+fill*.25*vec3(.75,.84,1.))*spot; c+=vec3(.9,.76,.5)*spec*(.1+uMetal*.65);c+=vec3(.30,.37,.50)*rim*.38;float fog=clamp(length(Q-E)/25.,0.,.6);gl_FragColor=vec4(pow(mix(c,vec3(.027,.031,.041),fog),vec3(.82)),1.);}`));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);
+let attrs=['aP','aN'].map(n=>gl.getAttribLocation(prog,n)),u={};for(let n of ['uM','uVP','uN','uC','uEye','uMetal','uWorldScale'])u[n]=gl.getUniformLocation(prog,n);
 function mesh(data){let b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);return{b,count:data.length/6}}
 let cube=[];for(let [n,verts] of [[[0,0,1],[[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5]]],[[0,0,-1],[[.5,-.5,-.5],[-.5,-.5,-.5],[-.5,.5,-.5],[.5,.5,-.5]]],[[1,0,0],[[.5,-.5,.5],[.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5]]],[[-1,0,0],[[-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[-.5,.5,-.5]]],[[0,1,0],[[-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5]]],[[0,-1,0],[[-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5]]]])for(let i of [0,1,2,0,2,3])cube.push(...verts[i],...n);
 let sphere=[];const uv=(a,b)=>[Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)];for(let i=0;i<14;i++)for(let j=0;j<20;j++){let a=i*Math.PI/14,b=j*Math.PI*2/20,da=Math.PI/14,db=Math.PI*2/20;let ps=[uv(a,b),uv(a+da,b),uv(a+da,b+db),uv(a,b+db)];for(let k of [0,1,2,0,2,3])sphere.push(...ps[k],...ps[k])}
+// Thin strings, bows and stage rails do not need the full ball mesh.
+let rod=[];for(let i=0;i<8;i++)for(let j=0;j<10;j++){let a=i*Math.PI/8,b=j*Math.PI*2/10,da=Math.PI/8,db=Math.PI*2/10;let ps=[uv(a,b),uv(a+da,b),uv(a+da,b+db),uv(a,b+db)];for(let k of [0,1,2,0,2,3])rod.push(...ps[k],...ps[k])}
 function loft(sections,sides=20){let data=[],n=sections.length;
 // Rings are elliptical sections [y,rx,rz,dz]; vertex normals are averaged so curved parts shade smoothly.
 const se=(v,e)=>Math.sign(v)*Math.abs(v)**(2/e);
@@ -29,31 +31,49 @@ for(let i=0;i<n-1;i++)for(let j=0;j<sides;j++){let k=(j+1)%sides;vertex(i,j);ver
 for(let j=0;j<sides;j++){let k=(j+1)%sides,c0=[0,sections[0][0],sections[0][3]||0],c1=[0,sections.at(-1)[0],sections.at(-1)[3]||0];flat(c0,rings[0][k],rings[0][j],[0,-1,0]);flat(c1,rings.at(-1)[j],rings.at(-1)[k],[0,1,0])}return data}
 // Loft along local Z instead of Y (for shoes): swap the Y and Z of positions and normals.
 const alongZ=data=>{let out=data.slice();for(let i=0;i<out.length;i+=3){let y=out[i+1];out[i+1]=out[i+2];out[i+2]=y}return out};
-let shapes={box:mesh(cube),sphere:mesh(sphere),
-torso:mesh(loft([[-1,.70,.80],[-.78,.86,.92],[-.3,.97,1],[.4,1,.98],[.8,.9,.86],[1,.55,.6]])),
-jacket:mesh(loft([[-1,.74,.82],[-.62,.70,.80],[-.15,.80,.88],[.38,.95,.94],[.68,1,.88],[.86,.82,.70],[.96,.5,.5],[1,.3,.36]])),
+let shapes={box:mesh(cube),sphere:mesh(sphere),rod:mesh(rod),
+torso:mesh(loft([[-1,.70,.80],[-.78,.86,.92],[-.3,.97,1],[.4,1,.98],[.8,.9,.86],[1,.55,.6]],12)),
+jacket:mesh(loft([[-1,.74,.82],[-.62,.70,.80],[-.15,.80,.88],[.38,.95,.94],[.68,1,.88],[.86,.82,.70],[.96,.5,.5],[1,.3,.36]],12)),
 head:mesh(loft([[-1,.18,.2,.16],[-.92,.42,.45,.13],[-.74,.6,.66,.08],[-.48,.76,.84,.03],[-.15,.88,.95,0],[.2,.95,1,-.02],[.52,.93,.98,-.05],[.78,.8,.85,-.07],[.93,.55,.6,-.08],[1,.2,.24,-.08]],24)),
 hair:mesh(loft([[-.45,.8,.6,-.42],[-.2,.95,.8,-.28],[.12,1.0,.88,-.17],[.4,1.0,.9,-.13],[.64,.96,1.02,-.05],[.86,.76,.82,-.06],[.98,.46,.52,-.07],[1.03,.1,.12,-.07]],24)),
-palm:mesh(loft([[-1,.4,.5,0,2.6],[-.6,.85,.9,0,2.6],[.3,1,1,0,2.6],[.8,.9,.92,0,2.6],[1,.5,.55,0,2.6]])),
-shoe:mesh(alongZ(loft([[-1,.55,.55,-.05],[-.82,.78,.92,0],[-.25,.82,1,0],[.35,.86,.78,-.18],[.75,.66,.52,-.3],[1,.22,.22,-.36]],16))),
+palm:mesh(loft([[-1,.4,.5,0,2.6],[-.6,.85,.9,0,2.6],[.3,1,1,0,2.6],[.8,.9,.92,0,2.6],[1,.5,.55,0,2.6]],10)),
+shoe:mesh(alongZ(loft([[-1,.55,.55,-.05],[-.82,.78,.92,0],[-.25,.82,1,0],[.35,.86,.78,-.18],[.75,.66,.52,-.3],[1,.22,.22,-.36]],10))),
 limb:mesh(loft([[-1.04,.25,.25],[-1,.62,.62],[-.9,.9,.9],[-.7,1,1],[.7,1,1],[.9,.9,.9],[1,.62,.62],[1.04,.25,.25]])),
+bodyLimb:mesh(loft([[-1.04,.25,.25],[-1,.62,.62],[-.9,.9,.9],[-.7,1,1],[.7,1,1],[.9,.9,.9],[1,.62,.62],[1.04,.25,.25]],8)),
 joint:mesh(loft([[-1,.35,.35],[-.8,.75,.75],[-.4,.96,.96],[.4,.96,.96],[.8,.75,.75],[1,.35,.35]])),
 nose:mesh(loft([[-1,.62,.55,.25],[-.7,1,.95,.35],[-.2,.72,.7,.18],[.4,.5,.5,.05],[1,.38,.4,0]],12)),
 tail:mesh(loft([[-1,.5,.1],[-.6,.92,.13],[.4,1,.14],[1,.8,.12]],12)),
-cushion:mesh(loft([[-1,.9,.88,0,5],[-.55,1,1,0,5],[.45,1,1,0,5],[.85,.96,.94,0,5],[1,.84,.8,0,5]],32))};
-function draw(shape,m,c,metal=0){m=new Float32Array(m);for(let i of [0,4,8,12])m[i]=-m[i];let normal=new Float32Array(9);for(let j=0;j<3;j++){let k=j*4,n=m[k]*m[k]+m[k+1]*m[k+1]+m[k+2]*m[k+2];for(let i=0;i<3;i++)normal[j*3+i]=m[k+i]/Math.max(n,1e-12)}gl.uniformMatrix3fv(u.uN,false,normal);let me=shapes[shape];gl.bindBuffer(gl.ARRAY_BUFFER,me.b);for(let i=0;i<2;i++){gl.enableVertexAttribArray(attrs[i]);gl.vertexAttribPointer(attrs[i],3,gl.FLOAT,false,24,i*12)}gl.uniformMatrix4fv(u.uM,false,m);gl.uniform3fv(u.uC,c);gl.uniform1f(u.uMetal,metal);gl.drawArrays(gl.TRIANGLES,0,me.count)}
+cushion:mesh(loft([[-1,.9,.88,0,5],[-.55,1,1,0,5],[.45,1,1,0,5],[.85,.96,.94,0,5],[1,.84,.8,0,5]],12))};
+let faceDetail=false,worldScale=1;
+function setWorldScale(value){worldScale=value;}
+function setFaceDetail(value){faceDetail=!!value}
+function draw(shape,m,c,metal=0,physical=false){m=new Float32Array(m);if(!physical)for(let j=0;j<4;j++)for(let i=0;i<3;i++)m[j*4+i]*=worldScale;for(let i of [0,4,8,12])m[i]=-m[i];let normal=new Float32Array(9);for(let j=0;j<3;j++){let k=j*4,n=m[k]*m[k]+m[k+1]*m[k+1]+m[k+2]*m[k+2];for(let i=0;i<3;i++)normal[j*3+i]=m[k+i]/Math.max(n,1e-12)}gl.uniformMatrix3fv(u.uN,false,normal);let me=shapes[shape];gl.bindBuffer(gl.ARRAY_BUFFER,me.b);for(let i=0;i<2;i++){gl.enableVertexAttribArray(attrs[i]);gl.vertexAttribPointer(attrs[i],3,gl.FLOAT,false,24,i*12)}gl.uniformMatrix4fv(u.uM,false,m);gl.uniform3fv(u.uC,c);gl.uniform1f(u.uMetal,metal);gl.drawArrays(gl.TRIANGLES,0,me.count)}
 function box(p,s,c,metal=0,r=0){draw('box',model(p,s,r),c,metal)}
 function ball(p,s,c,metal=0,r=0){draw('sphere',model(p,s,r),c,metal)}
 function piece(shape,p,s,c,rx=0,ry=0,rz=0){let m=model(p,s,rx);if(ry){let cy=Math.cos(ry),sy=Math.sin(ry);for(let i=0;i<3;i++){let x=m[i*4],z=m[i*4+2];m[i*4]=x*cy+z*sy;m[i*4+2]=z*cy-x*sy}}if(rz){let c=Math.cos(rz),s=Math.sin(rz);for(let j=0;j<3;j++){let k=j*4,x=m[k],y=m[k+1];m[k]=x*c-y*s;m[k+1]=x*s+y*c}}draw(shape,m,c,0)}
-function segment(a,b,r,c,shape='limb'){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(Math.abs(y[2])>.9?[1,0,0]:[0,0,1],y)),z=cross(x,y),mid=a.map((v,i)=>(v+b[i])/2);let m=new Float32Array([...x.map(v=>v*r),0,...y.map(v=>v*l/2),0,...z.map(v=>v*r),0,...mid,1]);draw(shape,m,c)}
-function bone(a,b,r,c){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(Math.abs(y[2])>.9?[1,0,0]:[0,0,1],y)),z=cross(x,y),mid=a.map((v,i)=>(v+b[i])/2);let m=new Float32Array([...x.map(v=>v*r),0,...y.map(v=>v*l/2),0,...z.map(v=>v*r),0,...mid,1]);draw('sphere',m,c)}
-let vp;function project(p){p=toWorld(p);if(!vp)return null;let q=[...p,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let k=0;k<4;k++)v[i]+=vp[k*4+i]*q[k];return{x:(v[0]/v[3]+1)/2,y:(1-v[1]/v[3])/2,visible:v[3]>0&&Math.abs(v[0]/v[3])<.95&&Math.abs(v[1]/v[3])<.95}}
-function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up);
+function segment(a,b,r,c,shape=faceDetail?'limb':'bodyLimb'){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(Math.abs(y[2])>.9?[1,0,0]:[0,0,1],y)),z=cross(x,y),mid=a.map((v,i)=>(v+b[i])/2);let m=new Float32Array([...x.map(v=>v*r),0,...y.map(v=>v*l/2),0,...z.map(v=>v*r),0,...mid,1]);draw(shape,m,c)}
+function bone(a,b,r,c){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(Math.abs(y[2])>.9?[1,0,0]:[0,0,1],y)),z=cross(x,y),mid=a.map((v,i)=>(v+b[i])/2);let m=new Float32Array([...x.map(v=>v*r),0,...y.map(v=>v*l/2),0,...z.map(v=>v*r),0,...mid,1]);draw('rod',m,c)}
+const dynamicBuffers=new Map(),identity=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+let dynamicUploads=0,dynamicBytes=0;
+function dynamicMesh(key,data,color){
+  let entry=dynamicBuffers.get(key);
+  if(!entry){
+    const b=gl.createBuffer();entry={b,count:data.length/6,bytes:data.byteLength,shape:'dynamic:'+key};dynamicBuffers.set(key,entry);shapes[entry.shape]=entry;
+    gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
+  }else{
+    if(entry.bytes!==data.byteLength)throw Error('Dynamic mesh topology changed: '+key);
+    gl.bindBuffer(gl.ARRAY_BUFFER,entry.b);gl.bufferSubData(gl.ARRAY_BUFFER,0,data);
+  }
+  dynamicUploads++;dynamicBytes+=data.byteLength;draw(entry.shape,identity,color,0,true);
+}
+function dynamicStats(){return {buffers:dynamicBuffers.size,uploads:dynamicUploads,bytes:dynamicBytes};}
+let vp;function project(p){p=toWorld(p.map(v=>v*worldScale));if(!vp)return null;let q=[...p,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let k=0;k<4;k++)v[i]+=vp[k*4+i]*q[k];return{x:(v[0]/v[3]+1)/2,y:(1-v[1]/v[3])/2,visible:v[3]>0&&Math.abs(v[0]/v[3])<.95&&Math.abs(v[1]/v[3])<.95}}
+function begin(eye,at,up=[0,1,0]){eye=toWorld(eye.map(v=>v*worldScale));at=toWorld(at.map(v=>v*worldScale));up=toWorld(up);
 // The program binding is context-global state: when several RecitalGL
 // instances share one canvas (the multi-instrument shell creates its own
 // instance on the piano's canvas), a later create() hijacks the binding
 // and this instance's uniform uploads would fail with INVALID_OPERATION,
 // leaving a black stage. Re-bind every frame.
-gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
-return{box,ball,bone,piece,segment,begin,project,gl};}
+gl.useProgram(prog);gl.uniform1f(u.uWorldScale,worldScale);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
+return{box,ball,bone,piece,segment,setFaceDetail,setWorldScale,dynamicMesh,dynamicStats,begin,project,gl};}
 return{create,toWorld,look,perspective,multiply};})();

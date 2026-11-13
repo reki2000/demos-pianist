@@ -19,6 +19,7 @@ const add = (a, b) => a.map((v, i) => v + b[i]);
 const mul = (a, s) => a.map(v => v * s);
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const sub = (a, b) => a.map((v, i) => v - b[i]);
+const dot = (a, b) => a.reduce((s,v,i)=>s+v*b[i],0);
 
 const STRING_LENGTH = 0.328;
 const O0 = [0.105, 1.438, -0.205];                    // top plate under the bridge
@@ -93,8 +94,8 @@ function bodyTop(u,v) {
 // Shared-ring surface and area-weighted normals, following the final cello.
 // Coordinates remain local; renderer uploads once and transforms the rigid mesh.
 const BODY_MESH = (() => {
-  const stations=[...new Set([...Array.from({length:81},(_,i)=>-.161+.356*i/80),...OUTLINE.map(p=>p[0])])].sort((a,b)=>a-b);
-  const vertices=[], normals=[], faces=[], samples=[], across=24;
+  const stations=[...new Set([...Array.from({length:41},(_,i)=>-.161+.356*i/40),...OUTLINE.map(p=>p[0])])].sort((a,b)=>a-b);
+  const vertices=[], normals=[], faces=[], samples=[], across=12;
   for(let j=0;j<=across;j++) samples.push(['top',j/across]);
   samples.push(['side',1/3],['side',2/3]);
   for(let j=across;j>=0;j--) samples.push(['back',j/across]);
@@ -176,9 +177,10 @@ function drawBow(R, bow) {
   R.bone(bow.frogStick, bow.tipStick, 0.0029, bowWood, 0.25);
   R.bone(bow.frogHair, bow.tipHair, 0.0013, bowHair, 0);
   R.ball(bow.tipStick, [0.0045, 0.006, 0.004], [.85, .80, .70], 0.3);
-  const mid = bow.frogStick.map((v, i) => v + bow.axis[i] * 0.012);
-  R.oriented('box', mid, [0.013, 0.0075, 0.0105], ebony, 0, bow.axis, bow.down, bow.side);
-  R.ball(bow.frogStick.map((v, i) => v - bow.axis[i] * 0.018), [0.005, 0.005, 0.005], [.6, .6, .62], 0.8);
+  const frog = window.BowHand.frog('violin', bow.frogStick, bow.axis, bow.down);
+  window.BowHand.drawFrog(R, frog, ebony, [.7,.7,.72]);
+  R.bone(bow.frogStick.map((v,i)=>v-bow.axis[i]*.025), bow.frogStick.map((v,i)=>v-bow.axis[i]*.037), .0029, [.6,.6,.62]);
+  R.ball(bow.frogStick.map((v, i) => v - bow.axis[i] * 0.037), [0.005, 0.005, 0.005], [.6, .6, .62], 0.8);
 }
 
 function drawPerformer(R, S) {
@@ -206,7 +208,8 @@ function drawPerformer(R, S) {
   // rides the instrument's sway with the chin on the rest).
   const hs = S.headSway || up;
   R.segment([0.012 + hs[0], 1.47 + hs[1], -0.01 + hs[2]], H.pos, 0.048, skin);
-  R.piece('head', H.pos, [.112, .148, .128], skinLight, H.pitch, H.yaw, H.roll);
+  R.setFaceDetail?.(true);
+R.piece('head', H.pos, [.112, .148, .128], skinLight, H.pitch, H.yaw, H.roll);
   const hp = (p) => { // head-local point, same rotation convention as the pianist
     const cr = Math.cos(H.roll), sr = Math.sin(H.roll), px = p[0] * cr - p[1] * sr, py = p[0] * sr + p[1] * cr;
     const c = Math.cos(H.pitch), s = Math.sin(H.pitch), cy = Math.cos(H.yaw), sy = Math.sin(H.yaw);
@@ -223,42 +226,60 @@ function drawPerformer(R, S) {
     R.piece('joint', hp([x * 0.109, -0.008, -0.008]), [.012, .03, .022], skin, H.pitch, H.yaw, H.roll);
   }
   R.segment(hp([-0.02, -0.074, 0.113]), hp([0.02, -0.072, 0.113]), 0.0042, [.62, .38, .33]);
+R.setFaceDetail?.(false);
   // Arms (joints solved by motion): suit sleeves, white cuff, skin hands.
   for (const arm of [S.armL, S.armR]) {
     R.piece('joint', arm.shoulder, [.062, .066, .062], suit);
     // Capsule radii asserted against the body by clearance-test.cjs.
     R.segment(arm.shoulder, arm.elbow, 0.055, suit);
     const natural = arm === S.armL && S.handL.model === 'natural';
-    R.segment(arm.elbow, arm.wrist, 0.042, suit, natural ? 'forearm' : 'limb');
     R.piece('joint', arm.elbow, [.050, .050, .050], suit);
     const fl = Math.hypot(...arm.elbow.map((v, i) => v - arm.wrist[i])) || 1;
     const cuff = arm.wrist.map((v, i) => v + (arm.elbow[i] - v) * 0.05 / fl);
+    R.segment(arm.elbow, natural ? cuff : arm.wrist, .042, suit, natural ? 'forearm' : 'limb');
     if (natural) {
+      R.segment(arm.wrist,cuff,.024,skin,'bodyLimb');
       const cuffEnd=arm.wrist.map((v,i)=>v+(arm.elbow[i]-v)*.030/fl);
       R.segment(cuffEnd,cuff,.028,shirt);
     } else R.segment(arm.wrist, cuff, 0.034, shirt);
   }
   drawLeftHand(R,S.handL);
-  // Right hand grips the frog.
-  R.piece('palm', S.handR.palmPos, [.052, .015, .048], skin, S.handR.pitch, S.handR.yaw, S.handR.roll);
-  for (const f of S.handR.fingers) for (let j = 0; j < 3; j++) R.segment(f.points[j], f.points[j + 1], 0.0095 - j * 0.0015, skinLight);
+  // Five articulated digits share the exact bow frame.
+  window.BowHand.draw(R, S.handR, skin, skinLight);
 }
 
 // Shared by the scene renderer and the actual-triangle clearance audit.
+const fingerSkins=new WeakMap(),fingerBoard={O:O0,U,V,W,top:wFB};
 function drawLeftHand(R,H) {
   const natural=H.model==='natural';
+  if(natural&&window.HandSurface&&R.dynamicMesh){
+    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true);fingerSkins.set(R,state);}
+    R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skin);return;
+  }
+  if(natural&&H.wrist)R.oriented('joint',H.wrist,[.022,.018,.016],skin,0,...H.basis);
   if(H.basis)R.oriented('palm',H.palmPos,[.038,.035,.013],skin,0,...H.basis);
   else R.piece('palm',H.palmPos,[.042,.013,.038],skin,H.pitch,H.yaw,H.roll);
-  for(const f of H.fingers){
+  if(natural&&window.ViolinFingerSkin&&R.dynamicMesh){
+    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create();fingerSkins.set(R,state);}
+    R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skinLight);
+  }else for(const f of H.fingers){
     for(let j=0;j<3;j++){
-      R.segment(f.points[j],f.points[j+1],(natural?.65:1)*(.0105-j*.0016),skinLight,natural&&j===2?'fingertip':'limb');
-      if(j>0)R.piece('joint',f.points[j],natural?[.0065,.00585,.0065]:[.010,.009,.010],skinLight);
+      R.segment(f.points[j],f.points[j+1],(natural?(j===2?.004:.65*(.0105-j*.0016)):(.0105-j*.0016)),skinLight,natural?(j===2?'fingertip':'bodyLimb'):'limb');
+      if(natural)R.oriented('rod',f.points[j],j?[.0065,.00585,.0065]:[.008,.008,.0045],skinLight,0,...H.basis);
+      else if(j>0)R.piece('joint',f.points[j],[.010,.009,.010],skinLight);
     }
-    if(natural){const d=norm(sub(f.points[3],f.points[2]));R.ball(sub(f.points[3],mul(d,.0038)),[.0038,.0038,.0038],skinLight);}
+    if(natural){
+      const d=norm(sub(f.points[3],f.points[2])),pad=sub(f.points[3],mul(d,.0038)),delta=sub(pad,O0);
+      const u=dot(delta,U),v=dot(delta,V),w=dot(delta,W),width=u<.210?.0225:.0165;
+      // The soft pad flattens against the board while the fingertip's bone
+      // and contact coordinates remain those of the shared FK skeleton.
+      if(u>=.058&&u<=.328&&Math.abs(v)<width+.0038&&dot(sub(f.points[3],O0),W)>=wFB(u)-.0001){const floor=wFB(u)+.0021;if(w<floor){const lift=mul(W,floor-w);for(let i=0;i<3;i++)pad[i]+=lift[i];}}
+      R.oriented('rod',pad,[.0038,.0038,.0020],skinLight,0,U,V,W);
+    }
     else R.ball(f.points[3],[.0075,.0075,.0095],skinLight);
   }
-  for(let j=0;j<H.thumb.length-1;j++)R.segment(H.thumb[j],H.thumb[j+1],natural?[.009,.008,.007][j]:.012,skin);
-  if(natural)for(let j=0;j<4;j++){const r=[.010,.009,.008,.007][j];R.ball(H.thumb[j],[r,r,r],skin);}
+  for(let j=0;j<H.thumb.length-1;j++)R.segment(H.thumb[j],H.thumb[j+1],natural?[.009,.007,.007][j]:.012,skin);
+  if(natural)for(let j=0;j<4;j++){const r=[.010,.009,H.thumbPadRadius||.008,.007][j];R.oriented('rod',H.thumb[j],[r,r,r],skin,0,...H.basis);}
 }
 
 function draw(R, S) {

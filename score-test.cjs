@@ -62,3 +62,5 @@ assert.equal(spreadTotal,3,'spread chord total '+spreadTotal);
 let clairSpread=PianoScore.model(SONGS.find(s=>s.id==='clair')).clusters.filter(c=>c.spread).sort((a,b)=>a.beat-b.beat);
 assert.deepEqual(clairSpread.map(c=>c.notes.length),[6,6,7],'clair spread chord sizes');
 console.log(JSON.stringify({beamGroups:groups,simpleMeter:true,compoundMeter:true,restsBreakBeams:true,quarterNotesUnbeamed:true,chordStems:true,mixedSecondaryBeams:true,keySignatures:true,measureAccidentals:true,lowerStaffClefChanges:clefChanges}));
+
+assert(SONGS.some(s=>PianoScore.model(s).clusters.some(c=>c.performedRoll)),'Performed rolls need arpeggio notation');

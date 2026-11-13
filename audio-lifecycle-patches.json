@@ -1,0 +1,14 @@
+{
+  "guitar-audio.js": {
+    "upstream": "96df9598192ad9a63cdeb61c671a606702446179a69c14fc5aad8ee0fd0f56a9",
+    "integrated": "c74fec32d7249233c6dbaccce8b634568162712b8a8db00627f162d7b6a0f23a"
+  },
+  "violin-audio.js": {
+    "upstream": "db5a72d892ba2dede028e14dddef34ad779cc10f210d13c3000cd76cc8ecb4f1",
+    "integrated": "0142bfd9f954e6d70de7f9ed958d613e9d550161ed17f5a5b2b5e576ee1d2ece"
+  },
+  "cello-audio.js": {
+    "upstream": "5eee03ef605873ed2d483087c1c1a8e3a53fe103a67a12c1d6dce9074f254949",
+    "integrated": "b4d3040af498a3730ad511eec61284866858180b8464c88094342bca60019f9e"
+  }
+}

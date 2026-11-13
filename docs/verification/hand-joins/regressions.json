@@ -1,0 +1,136 @@
+{
+  "leftGpu": {
+    "poses": 303,
+    "frames": 4500,
+    "componentSurface": {
+      "vertices": 392,
+      "triangles": 768,
+      "closedComponents": 4
+    },
+    "wholeHandTriangles": 1688,
+    "uploadBytes": 121536,
+    "newGpuBuffers": 1,
+    "gpuAllocations": 1,
+    "bufferSubData": 4499,
+    "dynamicDraws": 4500,
+    "cpuMilliseconds": 525.257338
+  },
+  "bowGpu": {
+    "poses": 707,
+    "componentSurface": {
+      "triangles": 960,
+      "closedDigits": 5
+    },
+    "wholeHandTriangles": 1688,
+    "maxSurfaceContactGap": 0.000814264897746274,
+    "frames": 4500,
+    "gpuBuffers": 2,
+    "gpuUploads": 2,
+    "gpuUpdates": 0
+  },
+  "faceGeometry": {
+    "dist/gl.js": {
+      "faceUnchanged": true,
+      "before": 89272,
+      "after": 29476
+    },
+    "dist/instruments/violin-gl.js": {
+      "faceUnchanged": true,
+      "before": 89272,
+      "after": 29476
+    },
+    "dist/instruments/violin-model.js": {
+      "before": 9396,
+      "after": 2820,
+      "boundsPreservedWithinMm": 2
+    },
+    "dist/instruments/cello-model.js": {
+      "before": 11880,
+      "after": 3720,
+      "boundsPreservedWithinMm": 2
+    }
+  },
+  "bowHold": {
+    "violin": {
+      "samples": 303,
+      "maxContactError": 0.000499999997501591,
+      "maxBoneError": 2.5673907444456745e-16
+    },
+    "cello": {
+      "samples": 404,
+      "maxContactError": 0.0005000000012633891,
+      "maxBoneError": 3.122502256758253e-16
+    }
+  },
+  "leftHand": {
+    "fingerLengthScale": 0.8,
+    "fingerLengthsMm": [
+      75.2,
+      84.8,
+      79.2,
+      63.2
+    ],
+    "thumbLengthsMm": [
+      42,
+      32,
+      26
+    ],
+    "samples": 10261,
+    "maxContactError": 4.3822762934554913e-11,
+    "maxBoneError": 6.036837696399289e-16,
+    "maxRootError": 6.684427777288334e-16,
+    "maxWristAngle": 49.62690798417793,
+    "maxWristStep": 0.09726480066142129,
+    "maxFingertipStep": 0.06001673148889961,
+    "maxKnotWristJump": 1.3885927627274502e-10,
+    "renderedSkinPenetration": {
+      "body": 0,
+      "board": 0.0008674569708234073,
+      "neck": 0.000978071286953366,
+      "forearm": 0
+    }
+  },
+  "localIntegration": {
+    "ok": true,
+    "modulesVerified": 20,
+    "audioLifecyclePatches": 3,
+    "geometryPatches": 6,
+    "guitar": {
+      "frames": 5330,
+      "worstFrettingSide": -0.0484,
+      "worstPluckingSide": 0.0698,
+      "minScreenGap": 0.038,
+      "projFrames": 5330
+    },
+    "violin": {
+      "states": 6563,
+      "bowWristSideMinMm": 51.3,
+      "fingeringWristSideMaxMm": -148.5,
+      "screenBad": 0,
+      "sndFrames": 6397
+    },
+    "cello": {
+      "handednessFrames": 160,
+      "minBowSideWorldMm": 106.1,
+      "maxFinSideWorldMm": -145.3,
+      "screenFrontFrames": 40
+    },
+    "shell": {
+      "guitar": {
+        "songs": 6,
+        "screenSamples": 78,
+        "screenBad": 0
+      },
+      "violin": {
+        "songs": 3,
+        "screenSamples": 39,
+        "screenBad": 0
+      },
+      "cello": {
+        "songs": 4,
+        "screenSamples": 52,
+        "screenBad": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "realTimeSeconds": 75,
+  "observations": [
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 0,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 2,
+          "bytes": 243072,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 4.5639909297052155,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 25,
+          "bytes": 3038400,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 9.347301587301589,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 44,
+          "bytes": 5347584,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 13.991292517006803,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 62,
+          "bytes": 7535232,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 18.44952380952381,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 82,
+          "bytes": 9965952,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 23.11673469387755,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 107,
+          "bytes": 13004352,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 27.92326530612245,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 137,
+          "bytes": 16650432,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 32.54403628117914,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 146,
+          "bytes": 17744256,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 37.37378684807256,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 155,
+          "bytes": 18838080,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 42.249977324263035,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 168,
+          "bytes": 20418048,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 47.056507936507934,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 199,
+          "bytes": 24185664,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 51.77015873015873,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 229,
+          "bytes": 27831744,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 56.48380952380952,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 258,
+          "bytes": 31356288,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 61.15102040816326,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 288,
+          "bytes": 35002368,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 65.81823129251701,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 319,
+          "bytes": 38769984,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "air",
+        "time": 70.50866213151927,
+        "playing": true
+      },
+      "buffers": 35,
+      "renderers": [
+        {
+          "buffers": 1,
+          "uploads": 345,
+          "bytes": 41929920,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    }
+  ],
+  "afterSwitches": {
+    "state": {
+      "instrument": "violin",
+      "song": "air",
+      "time": 20,
+      "playing": false
+    },
+    "buffers": 37,
+    "renderers": [
+      {
+        "buffers": 1,
+        "uploads": 358,
+        "bytes": 43509888,
+        "gl": 0
+      }
+    ],
+    "solves": 0
+  },
+  "pageErrors": [],
+  "auditoryCheck": false
+}

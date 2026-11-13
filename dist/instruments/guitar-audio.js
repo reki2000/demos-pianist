@@ -23,7 +23,7 @@ function createVoice(ctx, opts = {}) {
   const presence = ctx.createBiquadFilter(); presence.type = 'peaking'; presence.frequency.value = 2600; presence.gain.value = 2.5; presence.Q.value = 0.7;
   master.connect(presence); presence.connect(comp); comp.connect(ctx.destination);
   const cache = new Map(), live = new Set();
-  const stats = { attacks: [] };
+  const stats = { attacks: [], get activeVoices() { return live.size; } };
   function render(pitch, velocity, string) {
     const key = pitch + ':' + (string || 0) + ':' + Math.round(velocity / 32);
     if (cache.has(key)) return cache.get(key);
@@ -60,8 +60,9 @@ function createVoice(ctx, opts = {}) {
     const src = ctx.createBufferSource();
     src.buffer = render(note.pitch, note.velocity ?? 80, note.string);
     src.connect(master); src.start(when);
-    live.add(src); src.onended = () => live.delete(src);
+    live.add(src); src.onended = () => { live.delete(src); src.disconnect(); src.onended = null; };
     stats.attacks.push({ when, pitch: note.pitch, string: note.string || 0 });
+    if (stats.attacks.length > 512) stats.attacks.shift();
     return src;
   }
   function stopAll() { for (const s of live) { try { s.stop(); } catch (e) { /* already stopped */ } } live.clear(); }

@@ -1,0 +1,306 @@
+{
+  "uiAudioSync": {
+    "boundedRenderRate": true,
+    "inactivePianoSkipsRendering": true,
+    "playbackBuffering": true,
+    "pausedContextSuspended": true,
+    "loadingCancellation": true,
+    "speedChangeWithSamples": true,
+    "songs": 18,
+    "scoreTempoRoundTripSamples": 777,
+    "keyboardSyncSamples": 108,
+    "fixedSkeletonSamples": 777,
+    "maxContactError": 0.0040497364825213805,
+    "maxArmError": 0,
+    "continuousFrames": 2016,
+    "maxTipStepAt240Hz": 0.02320451442584187,
+    "keyboardRatios": true,
+    "pedalRenderSamples": 36,
+    "fixedHeel": true,
+    "pedalCamera": true,
+    "audioPitchAndOnsetSamples": 244,
+    "sampledGrand": true,
+    "limiterLatencyCompensated": true,
+    "pause": true,
+    "selection": true,
+    "finiteSceneTransforms": true,
+    "webmcpStateAndValidation": true,
+    "renderCalls": 333152
+  },
+  "audio": {
+    "preloadedSongs": [
+      {
+        "id": "hero",
+        "samples": 92,
+        "notes": 6052
+      },
+      {
+        "id": "elise",
+        "samples": 61,
+        "notes": 1041
+      },
+      {
+        "id": "moon",
+        "samples": 60,
+        "notes": 1144
+      },
+      {
+        "id": "clair",
+        "samples": 59,
+        "notes": 1491
+      },
+      {
+        "id": "turkish",
+        "samples": 60,
+        "notes": 2819
+      },
+      {
+        "id": "prelude",
+        "samples": 40,
+        "notes": 549
+      },
+      {
+        "id": "rain",
+        "samples": 60,
+        "notes": 1518
+      },
+      {
+        "id": "revolution",
+        "samples": 90,
+        "notes": 2088
+      },
+      {
+        "id": "fantasy",
+        "samples": 74,
+        "notes": 3050
+      },
+      {
+        "id": "lament",
+        "samples": 41,
+        "notes": 604
+      },
+      {
+        "id": "entertainer",
+        "samples": 65,
+        "notes": 2621
+      },
+      {
+        "id": "maple",
+        "samples": 65,
+        "notes": 2566
+      },
+      {
+        "id": "saints",
+        "samples": 60,
+        "notes": 547
+      },
+      {
+        "id": "grace",
+        "samples": 54,
+        "notes": 445
+      },
+      {
+        "id": "gymnopedie",
+        "samples": 51,
+        "notes": 455
+      },
+      {
+        "id": "traumerei",
+        "samples": 39,
+        "notes": 456
+      },
+      {
+        "id": "liebestraum",
+        "samples": 84,
+        "notes": 1886
+      },
+      {
+        "id": "cakewalk",
+        "samples": 74,
+        "notes": 1307
+      }
+    ],
+    "allSongNotes": 30639,
+    "songCacheEviction": true,
+    "repeatedStrikeTailLimit": true,
+    "voiceFadePreservesDecay": true,
+    "mappingSamples": 11176,
+    "maxTranspositionSemitones": 2,
+    "recordedLayers": 4,
+    "layerCrossfadesContinuous": true,
+    "naturalSampleDecay": true,
+    "pedalHoldAndRelease": true,
+    "repedalCannotRestoreEnergy": true,
+    "legatoSoundRelease": true,
+    "undampedTreble": true,
+    "loadedSamples": 92,
+    "scheduledNotes": 244,
+    "recordedKeyAndPedalNoise": true,
+    "moderateReverb": true,
+    "limiterLatency": 0.006,
+    "stopCancelsVoices": true,
+    "performedNoteHashesVerified": true
+  },
+  "score": {
+    "beamGroups": 5911,
+    "simpleMeter": true,
+    "compoundMeter": true,
+    "restsBreakBeams": true,
+    "quarterNotesUnbeamed": true,
+    "chordStems": true,
+    "mixedSecondaryBeams": true,
+    "keySignatures": true,
+    "measureAccidentals": true,
+    "lowerStaffClefChanges": 157
+  },
+  "pedal": {
+    "pedalEvents": 5511,
+    "noteOffPedalState": true,
+    "longSustain": true,
+    "pedalUpDamping": true,
+    "heldKeyUnaffected": true,
+    "repedalling": true,
+    "partialPedal": true,
+    "speedSynchronization": true,
+    "footPedalTimeline": true,
+    "legatoRelease": true,
+    "phraseBreaks": true
+  },
+  "faceGeometry": {
+    "dist/gl.js": {
+      "faceUnchanged": true,
+      "before": 89272,
+      "after": 29476
+    },
+    "dist/instruments/violin-gl.js": {
+      "faceUnchanged": true,
+      "before": 89272,
+      "after": 29476
+    },
+    "dist/instruments/violin-model.js": {
+      "before": 9396,
+      "after": 2820,
+      "boundsPreservedWithinMm": 2
+    },
+    "dist/instruments/cello-model.js": {
+      "before": 11880,
+      "after": 3720,
+      "boundsPreservedWithinMm": 2
+    }
+  },
+  "stringHands": {
+    "violinLeft": {
+      "vertices": 846,
+      "triangles": 1688,
+      "components": 1,
+      "openEdges": 0,
+      "poses": 303,
+      "uploadBytes": 121536
+    },
+    "violinRight": {
+      "vertices": 846,
+      "triangles": 1688,
+      "components": 1,
+      "openEdges": 0,
+      "poses": 303,
+      "uploadBytes": 121536
+    },
+    "celloRight": {
+      "vertices": 846,
+      "triangles": 1688,
+      "components": 1,
+      "openEdges": 0,
+      "poses": 404,
+      "uploadBytes": 121536
+    }
+  },
+  "anatomy": {
+    "thumbCMCOnRadialProximalSide": true,
+    "mirroredHands": true,
+    "fixedWristPivot": true,
+    "palmRotationRange": [
+      -0.14268537179216326,
+      0.10450492900985803
+    ]
+  },
+  "relaxedFingers": {
+    "samples": 38370,
+    "pressed": 11720,
+    "idle": 26650,
+    "curvedIdle": 25406,
+    "maxMCPExtension": 9.540979117872439e-18,
+    "maxBoneError": 1.249000902703301e-16,
+    "maxKeyError": 0.004052448079643312,
+    "noRootLift": true,
+    "noBackwardJoints": true,
+    "sourcePitchesPreservedWithPerformedRolls": true
+  },
+  "technique": {
+    "examples": 19,
+    "sourceNotes": 30639,
+    "scaleFingeringsBothHands": true,
+    "descendingScales": true,
+    "multipleOctaves": true,
+    "arpeggios": true,
+    "fastRepeatSubstitution": true,
+    "slowRepeatReuse": true,
+    "turnConsistency": true,
+    "blackOctaveException": true,
+    "lookahead": true,
+    "thumbPasses": 1061,
+    "validatedSharedPositions": 4189
+  },
+  "localIntegration": {
+    "ok": true,
+    "modulesVerified": 20,
+    "audioLifecyclePatches": 3,
+    "geometryPatches": 6,
+    "guitar": {
+      "frames": 5330,
+      "worstFrettingSide": -0.0484,
+      "worstPluckingSide": 0.0698,
+      "minScreenGap": 0.038,
+      "projFrames": 5330
+    },
+    "violin": {
+      "states": 6563,
+      "bowWristSideMinMm": 51.3,
+      "fingeringWristSideMaxMm": -148.5,
+      "screenBad": 0,
+      "sndFrames": 6397
+    },
+    "cello": {
+      "handednessFrames": 160,
+      "minBowSideWorldMm": 106.1,
+      "maxFinSideWorldMm": -145.3,
+      "screenFrontFrames": 40
+    },
+    "shell": {
+      "guitar": {
+        "songs": 6,
+        "screenSamples": 78,
+        "screenBad": 0
+      },
+      "violin": {
+        "songs": 3,
+        "screenSamples": 39,
+        "screenBad": 0
+      },
+      "cello": {
+        "songs": 4,
+        "screenSamples": 52,
+        "screenBad": 0
+      }
+    }
+  },
+  "precompute": {
+    "songs": 18,
+    "visualRolledChords": 2,
+    "maxFrameContactError": 0.004066918290283155,
+    "pitchesAndFingeringsPreserved": true,
+    "movedNotes": 4,
+    "maxOnsetDelay": 0.04000000000000625,
+    "pedalBridges": 2
+  },
+  "planningToWorldScale": 0.618421052631579
+}

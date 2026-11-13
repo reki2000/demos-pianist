@@ -34,7 +34,9 @@ const rotAxis = (v, axis, ang) => { // Rodrigues
 };
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 
-const FINGER_LENGTHS = [[.046, .028, .020], [.052, .032, .022], [.048, .030, .021], [.038, .024, .017]]; // fingers 1-4
+// Selected proportion B: shorten the four left fingers by 20%; palm/thumb stay unchanged.
+const FINGER_LENGTH_SCALE = .8;
+const FINGER_LENGTHS = [[.046, .028, .020], [.052, .032, .022], [.048, .030, .021], [.038, .024, .017]].map(finger=>finger.map(length=>length*FINGER_LENGTH_SCALE));
 const NOMINAL = [0, 2, 4, 5.5];               // hover semitone offset of fingers 1-4 inside a position
 const SHIFT_LEAD = 0.18;                      // hand starts shifting this long before the target note
 const VIB = { minDur: 0.55, delay: 0.22, ramp: 0.35, rate: 5.6, extentMm: 1.5 };
@@ -347,10 +349,9 @@ function atLegacy(P, t) {
   const tipHair = add(C, mul(axis, (1 - gs) * BOW_LEN));
   const frogStick = add(frogHair, mul(down, 0.019));
   const tipStick = add(tipHair, mul(down, 0.0125));
-  // The wrist sits behind the frog along the stick — further at the
-  // frog end, where the forearm otherwise clips the waist rim, and
-  // less toward the tip, where the arm is already near its reach.
-  const wristR = add(add(frogStick, mul(down, 0.016)), mul(axis, -0.075 * (1 - bow.s)));
+  // Anchor the complete right hand to the frog; the arm meets its carpus.
+  const handR = window.BowHand.create('violin', frogStick, axis, down);
+  const wristR = handR.wrist;
   // Torso follow: if the wrist is still out of comfortable reach, the
   // right shoulder leans toward it (capped), and the upper body follows
   // at reduced amplitude — the pianist's torso-follow trick.
@@ -370,16 +371,6 @@ function atLegacy(P, t) {
   const kbL = clamp((hd.dist - 190) / 70, 0, 1);
   const hintL = add(mul([0.30, -1, 0.35], 1 - kbL), mul([0.85, -0.55, 0.30], kbL));
   const armL = solveArm(add(add([0.205, 1.452, -0.03], sway), mul(follow, 0.45)), wristL, 0.36, 0.34, hintL);
-  // Right-hand grip: four fingers curled over the stick near the frog.
-  const gripRoot = add(frogStick, mul(down, 0.006));
-  const rFingers = [];
-  for (let f = 0; f < 4; f++) {
-    const r0 = add(gripRoot, add(mul(axis, 0.004 + f * 0.011), mul(side, 0.013)));
-    const r1 = add(r0, add(mul(down, -0.016), mul(axis, 0.002)));
-    const r2 = add(r1, add(mul(side, -0.016), mul(down, -0.004)));
-    const r3 = add(r2, add(mul(side, -0.010), mul(axis, -0.002)));
-    rFingers.push({ points: [r0, r1, r2, r3] });
-  }
   // The head is clamped to the violin by the chin, so it rides the
   // instrument's sway only — not the torso's bow follow (the neck
   // absorbs the difference, and the chin stays on the rest). The base
@@ -398,7 +389,7 @@ function atLegacy(P, t) {
     lean: 0.05 + env * 0.035, torsoYaw: 0.05, torsoRoll: 0.02 * Math.sin(t * 0.4),
     head, armL, armR,
     handL: { palmPos: add(add(add(palmC, mul(G.W, mix(-0.076, -0.034, kb))), mul(G.U, -0.026)), mul(G.V, -0.004)), pitch: -0.45, yaw: Math.atan2(G.U[0], G.U[2]) + 0.5, roll: 0.35, fingers, thumb },
-    handR: { palmPos: add(add(frogStick, mul(down, 0.028)), mul(axis, -0.030)), pitch: -0.3, yaw: Math.atan2(axis[0], axis[2]), roll: 0, fingers: rFingers },
+    handR,
     bow: { frogHair, tipHair, frogStick, tipStick, axis, down, side, contact: C, string: bow.stringF, s: bow.s, geoS: gs, dir: bow.dir, id: bow.bowId },
     activeStrings: [...new Set(active.map(n => n.string))],
     sounding: active.map(n => ({ string: n.string, finger: n.finger, distMm: n.distMm + vibrato(n, t), pitch: n.pitch })),
@@ -551,14 +542,13 @@ const NHPrototype = (() => {
   }
   return {at,frame,fk,ik,surface,ROOT,LIMIT,stats:()=>({frames:cache.size,solves}),source:()=>[basis,fk,linear,minimize,ik,build,surface,frame,blend,at].map(f=>f.toString()).join('\n')};
 })();
-const NH = window.ViolinHand?window.ViolinHand({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato}):null;
-// Opt-in until the full natural clearance and temporal audits pass.
-// Without violin-hand.js loaded the natural solver is unavailable and
-// every request falls back to legacy.
-let HAND_SOLVER='legacy';
+const NH = window.ViolinHand?window.ViolinHand({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato,handDistAt}):null;
+// Natural hand playback uses precomputed joint tracks. Missing or stale
+// tracks fall back to legacy instead of running nonlinear planning in a frame.
+let HAND_SOLVER='natural';
 const setHandSolver=s=>(HAND_SOLVER=s==='natural'&&NH?'natural':'legacy');
 function at(P,t){
-  const S=atLegacy(P,t);if(HAND_SOLVER==='legacy')return S;
+  const S=atLegacy(P,t);if(HAND_SOLVER==='legacy'||!NH||!NH.available(P))return S;
   const L=NH.at(P,t,handDistAt(P,t),S.debug.contacts);S.handL=L.hand;S.debug.contacts=L.contacts;
   S.armL=NH.armOf(L.q,S.armL.shoulder);
   S.debug.arms=[S.armL,S.armR];return S;
@@ -589,7 +579,7 @@ function packPose(S){const v=cacheView(S),schema=cacheSchema(v),numbers=[],strin
 const signatureCache=new WeakMap();
 function songSignature(P){if(!signatureCache.has(P))signatureCache.set(P,JSON.stringify([P.song.id,P.song.duration,P.song.notes,P.notes,P.song.harmonics||[]]));return signatureCache.get(P);}
 function cacheStamp(){
-  const source=[atLegacy,at,solveChain,solveArm,handDistAt,bowAt,vibrato,plan,clamp,smooth,mix,rotAxis,lowerBound].map(f=>f.toString()).join('\n')+(NH?NH.source():'')+JSON.stringify([FINGER_LENGTHS,NOMINAL,VIB,BOW_TILT,BOW_LEN,A0,SHIFT_LEAD,window.ViolinModel.GEOM],(k,v)=>typeof v==='function'?v.toString():v)+window.ViolinModel.frame.toString();
+  const source=[atLegacy,at,solveChain,solveArm,handDistAt,bowAt,vibrato,plan,clamp,smooth,mix,rotAxis,lowerBound].map(f=>f.toString()).join('\n')+(NH?NH.source():'')+window.BowHand.source()+JSON.stringify([FINGER_LENGTHS,NOMINAL,VIB,BOW_TILT,BOW_LEN,A0,SHIFT_LEAD,window.ViolinModel.GEOM],(k,v)=>typeof v==='function'?v.toString():v)+window.ViolinModel.frame.toString();
   let h=2166136261;for(let i=0;i<source.length;i++)h=Math.imul(h^source.charCodeAt(i),16777619);return (h>>>0).toString(16);
 }
 function setPoseCache(data){POSE_CACHE=data&&data.version===CACHE_VERSION&&data.stamp===cacheStamp()?data:null;return !!POSE_CACHE;}
@@ -608,6 +598,9 @@ function atCached(P,t){
   const S=cacheUnflatten(entry.schema,n,entry.strings[u<.5?i:j],{n:0,s:0});
   for(const key of ['activeStrings','sounding'])S[key]=S[key].values.slice(0,Math.round(S[key].count));
   S.debug.activeNotes=S.debug.activeNotes.values.slice(0,Math.round(S.debug.activeNotes.count));S.frame=window.ViolinModel.frame();S.time=t;
+  // Rebuild rigid contacts after cache interpolation instead of stretching fingers.
+  S.handR=window.BowHand.create('violin',S.bow.frogStick,S.bow.axis,S.bow.down);
+  S.armR=solveArm(S.armR.shoulder,S.handR.wrist,.36,.34,[-.30,-.9,.50]);S.debug.arms=[S.armL,S.armR];
   return S;
 }
 return { plan, at, atCached, packPose, songSignature, cacheStamp, setPoseCache, atLegacy, setHandSolver, NH, solveChain, solveArm, handDistAt, bowAt, vibrato, VIB, BOW_TILT, FINGER_LENGTHS };

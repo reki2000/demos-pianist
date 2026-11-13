@@ -1,0 +1,26 @@
+{
+  "violin-gl.js": {
+    "upstream": "ce2ac51a132a8c5e42f254f50e1f070b77530a1a69182c057180add5f7d2282d",
+    "integrated": "b39d9e236538f774e52445399dd0de5249e8d28614794eb12020a3be8c1398f2"
+  },
+  "guitar-model.js": {
+    "upstream": "980c261eac805797a9b4299dd66ea6c16aa2bffc3d26644574499b9bc17f682e",
+    "integrated": "571c590868efbb38b2461abb951879f3ba8678988d45e5a4b720d6083d34e811"
+  },
+  "violin-model.js": {
+    "upstream": "9bc9750b38592f52501c820decbcf8086ee698937f8a51baed9128ad85d31ad4",
+    "integrated": "a0c0c5cb3e5d607935db0cbc55ff0e35aa5af5046fe16a218f098acb12856eef"
+  },
+  "cello-model.js": {
+    "upstream": "5e1e58bedf79e7ba01d563c040b85e347e7dff561d42a6af1bca4127b19b1cb4",
+    "integrated": "91fa434d29b7afeac0e50c67f7d218ecfa083894198e4a866ae8fee1071126cc"
+  },
+  "cello-motion.js": {
+    "upstream": "0a34495c58b208a4e2d31fe9d4a522126d6b26389d9f28bf9dedf9917fe56764",
+    "integrated": "6f8884b090813493592d5dd3e0f611d8599e124d2dbd182d5506da3810046ae6"
+  },
+  "violin-motion.js": {
+    "upstream": "171c7dc5fa30925204389955c3226e2ed931977059327267dcac2fa058e96531",
+    "integrated": "011e91b537f47ec5dc02f7605bbf2950cb80f909b28fb6cf8b00b78a148fdf49"
+  }
+}

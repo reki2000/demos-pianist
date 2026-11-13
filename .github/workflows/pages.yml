@@ -27,8 +27,16 @@ jobs:
           python-version: '3.13'
       - name: Verify
         run: |
+          node piano-hand-test.cjs > piano-hand-verification.json
           node verify.cjs > verification.json
           node audio-test.cjs > audio-verification.json
+          node string-audio-test.cjs > string-audio-verification.json
+          node geometry-test.cjs > geometry-verification.json
+          node bow-hold-test.cjs > bow-hold-verification.json
+          node bow-skin-test.cjs > bow-skin-verification.json
+          node hand-surface-test.cjs > hand-surface-verification.json
+          node violin-skin-test.cjs > violin-skin-verification.json
+          node violin-left-hand-test.cjs > violin-left-hand-verification.json
           node score-test.cjs > score-verification.json
           node pedal-test.cjs > pedal-verification.json
       - name: Build standalone HTML and zip

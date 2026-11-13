@@ -1,0 +1,92 @@
+{
+  "hero": {
+    "source": "9e2007568d211d22e14a1aaf3555a240971a414b09e863b7f8d863c90299429c",
+    "notes": "9e2007568d211d22e14a1aaf3555a240971a414b09e863b7f8d863c90299429c",
+    "pedals": "ad9dd9b1051b3cceccf0034dd7e8888fa7195f699ca266eba0790a8f2671d28e"
+  },
+  "elise": {
+    "source": "eac7ce8fb1d63e56e7bc6b31e93c1bbe675a9b3c1788343b1fc4deaa8703a961",
+    "notes": "eac7ce8fb1d63e56e7bc6b31e93c1bbe675a9b3c1788343b1fc4deaa8703a961",
+    "pedals": "33e3ea737682d3f3eaae063639114fa567b9fcdc90750f0c17d610aaaed5594e"
+  },
+  "moon": {
+    "source": "6fd775957e3fb768fd4476be6756198f048ca31ddc29a2c35efff85aa6ad0ad3",
+    "notes": "6fd775957e3fb768fd4476be6756198f048ca31ddc29a2c35efff85aa6ad0ad3",
+    "pedals": "88b61d84d5567e253681b46d9d9c7e903534a8f23217f6f1be3b335d15b308e3"
+  },
+  "clair": {
+    "source": "4b3d00b6d238b9c0d97d9184df95453b44b5ca0ade59368bc22f9678ce23666e",
+    "notes": "4b3d00b6d238b9c0d97d9184df95453b44b5ca0ade59368bc22f9678ce23666e",
+    "pedals": "c7c6e32ef2ec6906df497d5fceed55e8f4511450fcf812c9b77120e458ebe44a"
+  },
+  "turkish": {
+    "source": "e82827f855a38f9fc58ac6b4df67a3456e6c8b29906b684513d44d32e14394af",
+    "notes": "e82827f855a38f9fc58ac6b4df67a3456e6c8b29906b684513d44d32e14394af",
+    "pedals": "8d3882d40c6ea7d62b2bf7bbe5eb6d5bc07f175c3b0e7a3e047f027ed9951d3e"
+  },
+  "prelude": {
+    "source": "bf5240f885cb68fb67e9268fd43b7efa1b44f8c55f38da89fafcfd82ba6923e5",
+    "notes": "bf5240f885cb68fb67e9268fd43b7efa1b44f8c55f38da89fafcfd82ba6923e5",
+    "pedals": "ec18ef2896f52f9d50eb2374903d289e06ca2f5ca036b73cc37b5d881f44158d"
+  },
+  "rain": {
+    "source": "e9a99881d08130dbcf27493d062861ac023573fafcd00e88b9be303ef5229c95",
+    "notes": "e9a99881d08130dbcf27493d062861ac023573fafcd00e88b9be303ef5229c95",
+    "pedals": "d36d2eae17a30aacec2d570e870d24c26afa32810f584eb4cbe33e3c13ed2bd6"
+  },
+  "revolution": {
+    "source": "c41d321c03be2b3ce381b84bda09cd5081ffe81cdcf8937e82b57b5ec6c09508",
+    "notes": "c41d321c03be2b3ce381b84bda09cd5081ffe81cdcf8937e82b57b5ec6c09508",
+    "pedals": "e1febc5f2d762e038d64e1d1458af5da7282dc1a8c6f29fbf1db794892013abb"
+  },
+  "fantasy": {
+    "source": "3aa07fb267daf6319c2de306acb70a3897be72662ce30fadd525b80f23c9fb5e",
+    "notes": "3aa07fb267daf6319c2de306acb70a3897be72662ce30fadd525b80f23c9fb5e",
+    "pedals": "dcab0aa21164aef1c62ccdc4326c9720c3acae3328393af15f2e6c723177061a"
+  },
+  "lament": {
+    "source": "c73d67dc94c8b3af39dc86b26185b2cb3e8537eb0eca71b7498b8a60a235b2c5",
+    "notes": "c73d67dc94c8b3af39dc86b26185b2cb3e8537eb0eca71b7498b8a60a235b2c5",
+    "pedals": "ae338ee15225f0186b862392e5f1ca193e9e8b992127ffe347806d61b6be219c"
+  },
+  "entertainer": {
+    "source": "fd6c492cf7fe5b59e7c798d9dccf6ec548d259484d63aa62efced00568458407",
+    "notes": "fd6c492cf7fe5b59e7c798d9dccf6ec548d259484d63aa62efced00568458407",
+    "pedals": "d9494743d60cfcd0d1f8c4334bc9d3ea1abc78701bf5c0c10b19a8cd715f5182"
+  },
+  "maple": {
+    "source": "b9658e622ee64f3161872113e166a7e1a0c25aaa34c0ffb2c1a4ca72afaeac34",
+    "notes": "b9658e622ee64f3161872113e166a7e1a0c25aaa34c0ffb2c1a4ca72afaeac34",
+    "pedals": "a24fe2fdcdcb4fe00f5e16e8ededcb5861ed2912988cb2348148b25dc8072886"
+  },
+  "saints": {
+    "source": "4d865474bbdd246344916b02d21b2b80f85c2b7b49c328b1a5bbc219ff8c9d28",
+    "notes": "4d865474bbdd246344916b02d21b2b80f85c2b7b49c328b1a5bbc219ff8c9d28",
+    "pedals": "604772ddeec2c1e36efabae4286810b3000064e463c92e7e1c66cf1a7f9720b4"
+  },
+  "grace": {
+    "source": "542f7b71d143f8361de0f5cbca367a10da2747c60801783975a809c4e4fc0ab1",
+    "notes": "542f7b71d143f8361de0f5cbca367a10da2747c60801783975a809c4e4fc0ab1",
+    "pedals": "0a71cd224ec0481a2813d0483668a0f9e5915a7d5145cbf5f2cc54085b4a391e"
+  },
+  "gymnopedie": {
+    "source": "c820b5df272b0bd61fc41cf94b5aaa98feff7ca480aa36e28624f6233c2acb00",
+    "notes": "1909435e38130464f109fa908a868668d92579ef3754c0e15b1bb38080d59eac",
+    "pedals": "7750f1b733f9b6c9b8d80cd846c4c577867ae834b94e4d2bb7dcf4baff3930fd"
+  },
+  "traumerei": {
+    "source": "02c2f5a52a650a3b02b290f59d14d59dad9d5941b7f18a91ffe0eb7ff6a2462d",
+    "notes": "02c2f5a52a650a3b02b290f59d14d59dad9d5941b7f18a91ffe0eb7ff6a2462d",
+    "pedals": "4bdada054d32454c9a329b070b9e898a85eb43b106cbb3c50da62960e6023536"
+  },
+  "liebestraum": {
+    "source": "ed7028312e62b08b85392d096acb10a1b7c301c912f209b5447975cbbeb22d17",
+    "notes": "ed7028312e62b08b85392d096acb10a1b7c301c912f209b5447975cbbeb22d17",
+    "pedals": "87beba5e6abd2a53337f81819c759fec25610c8471ec242ada595870f5e8a3b7"
+  },
+  "cakewalk": {
+    "source": "355b7919c91daf2069d74a6b6ed2e0d479366d25b1686a55705a35d15ab9413a",
+    "notes": "355b7919c91daf2069d74a6b6ed2e0d479366d25b1686a55705a35d15ab9413a",
+    "pedals": "6833d923674fb37474685387944832e0997e2a2680e36178fc8688939b393feb"
+  }
+}

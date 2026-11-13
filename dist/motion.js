@@ -8,8 +8,9 @@ const scale=.038/.0235;
 const keyboard={pitch:.038,whiteWidth:.0372,whiteLength:.148*scale,blackWidth:.014*scale,blackLength:.095*scale,blackHeight:.012*scale,rear:-.36,whiteTop:1.035,travel:.010*scale,keys:[],map:new Map()};
 let white=0;for(let midi=21;midi<=108;midi++){let black=[1,3,6,8,10].includes(midi%12),x=black?(white-26)*keyboard.pitch:(white++-25.5)*keyboard.pitch;let k={midi,black,x};keyboard.keys.push(k);keyboard.map.set(midi,k)}
 // Thumb, index, middle, ring, little. These lengths never vary with pitch.
-const lengths=[[.043,.032,.025],[.058,.034,.024],[.065,.040,.027],[.060,.037,.026],[.048,.028,.022]];
-const rootX=[-.066,-.037,-.011,.016,.048],rootZ=[-.022,.045,.052,.046,.034];
+const handLengths=[[.030,.023,.018],[.0368,.0224,.016],[.0416,.0256,.0176],[.0384,.024,.0168],[.0304,.0192,.0136]];
+const lengths=handLengths.map(d=>d.map(v=>v*scale));
+const rootX=[-.020,-.027,-.009,.009,.027].map(v=>v*scale),rootZ=[-.015,.035,.039,.037,.031].map(v=>v*scale);
 // Lateral MCP range: the full reach used only to press a key, and the narrower
 // range a finger keeps when it is free, so idle fingers never splay.
 const abduction=[1.45,.62,.48,.58,1.0],relaxedAbduction=[1.30,.40,.28,.34,.60];
@@ -19,8 +20,8 @@ const abduction=[1.45,.62,.48,.58,1.0],relaxedAbduction=[1.30,.40,.28,.34,.60];
 const restFlex=[.16,.26,.30,.34,.38],restCurl=[.38,.52,.58,.64,.70];
 function physical(hand,f){return hand?4-f:f}
 // CMC is at the proximal radial edge; the four MCPs form the distal knuckle arc.
-function handPoint(palm,p){let cp=Math.cos(palm.pitch||0),sp=Math.sin(palm.pitch||0),c=Math.cos(palm.yaw||0),s=Math.sin(palm.yaw||0),y=p[1]-.004,z=p[2]+.069,ry=y*cp-z*sp,rz=y*sp+z*cp-.069;return[palm.x+p[0]*c+rz*s,palm.y+.004+ry,palm.z+rz*c-p[0]*s]}
-function root(palm,hand,f){let i=physical(hand,f),sign=hand?-1:1;return handPoint(palm,[rootX[i]*sign,i===0?-.008:0,rootZ[i]])}
+function handPoint(palm,p){let cp=Math.cos(palm.pitch||0),sp=Math.sin(palm.pitch||0),c=Math.cos(palm.yaw||0),s=Math.sin(palm.yaw||0),y=p[1],z=p[2]+.035*scale,ry=y*cp-z*sp,rz=y*sp+z*cp-.035*scale;return[palm.x+p[0]*c+rz*s,palm.y+ry,palm.z+rz*c-p[0]*s]}
+function root(palm,hand,f){let i=physical(hand,f),sign=hand?-1:1;return handPoint(palm,[rootX[i]*sign,i===0?-.010*scale:0,rootZ[i]])}
 function segmentGap(a,b,c,d){let ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-c[0],vy=d[1]-c[1],vz=d[2]-c[2],wx=a[0]-c[0],wy=a[1]-c[1],wz=a[2]-c[2],aa=ux*ux+uy*uy+uz*uz,bb=ux*vx+uy*vy+uz*vz,cc=vx*vx+vy*vy+vz*vz,dd=ux*wx+uy*wy+uz*wz,ee=vx*wx+vy*wy+vz*wz,den=aa*cc-bb*bb,s=den>1e-12?clamp((bb*ee-cc*dd)/den,0,1):0,t=clamp((bb*s+ee)/(cc||1),0,1);s=clamp((bb*t-dd)/(aa||1),0,1);t=clamp((bb*s+ee)/(cc||1),0,1);return Math.hypot(wx+s*ux-t*vx,wy+s*uy-t*vy,wz+s*uz-t*vz)}
 function fingerGap(a,b){let gap=Infinity;for(let i=0;i<3;i++)for(let j=0;j<3;j++)gap=Math.min(gap,segmentGap(a.points[i],a.points[i+1],b.points[j],b.points[j+1]));return gap}
 function lower(arr,t){let a=0,b=arr.length;while(a<b){let m=(a+b)>>1;if(arr[m].t<t)a=m+1;else b=m}return a}
@@ -291,6 +292,8 @@ function pose(song,t){let plan=build(song),hands=[],depressions=new Map();
   let fingers=states.map(state=>{let base=root(palm,hand,state.f),want=state.point||defaultTip(base,hand,state.f,palm.yaw),solved=state.contact?pressFinger(palm,hand,state.f,state.event.pitch,state.press):transitFinger(hp,t,palm,hand,state,spread);if(state.press>0&&state.event&&t>=state.event.t)depressions.set(state.event.pitch,Math.max(depressions.get(state.event.pitch)||0,state.press));return{...state,...solved,floorWeight:state.event&&t>=state.event.t? smooth((t-state.event.end)/.09):1}});
   orderFingers(fingers,hand,palm.yaw,palm.pitch);separateFingers(fingers,hand,palm.yaw,palm.pitch,depressions);hands.push({palm,fingers,gesture,spread});
  }
+ // Keep the established key/audio timings independent of compact-hand rolls.
+ if(plan.keyEvents){depressions.clear();const events=plan.keyEvents;for(let i=lower(events,t+.018)-1;i>=0&&events[i].t>t-plan.maxKeyEventDuration-.055;i--){const n=events[i];let press=0;if(t>=n.t&&t<n.end+.055)press=1-smooth((t-n.end)/.055);else if(t>=n.t-.018&&t<n.t)press=smooth((t-n.t+.018)/.018);if(press>0)depressions.set(n.pitch,Math.max(depressions.get(n.pitch)||0,press));}}
  let k=clamp(t*10,0,plan.envelope.length-1),a=Math.floor(k),b=Math.min(a+1,plan.envelope.length-1),energy=mix(plan.envelope[a].energy,plan.envelope[b].energy,k-a),accent=0;
  // Find recent attacks only, to keep deterministic seeking and bounded work.
  let idx=0,hi=song.notes.length;while(idx<hi){let m=(idx+hi)>>1;if(song.notes[m][0]<=t)idx=m+1;else hi=m}for(let i=idx-1;i>=0&&song.notes[i][0]>t-.4;i--){let age=t-song.notes[i][0];accent=Math.max(accent,(song.notes[i][3]/127)**2*(1-Math.exp(-age/.026))*Math.exp(-age/.15)*1.65);}
@@ -299,7 +302,7 @@ function pose(song,t){let plan=build(song),hands=[],depressions=new Map();
  // with each hand's own gesture, a head that counter-rolls against the torso
  // and rises slightly into high passages, and a torso that follows the hands
  // further than before (which also keeps far reaches inside the arm length).
- let sway=Math.sin(t*.5)*(.006+energy*.010),rollBase=(hands[0].palm.x-hands[1].palm.x-.55)*.05,shoulderLift=g=>clamp((g.impact||0)*.16+(g.force||0)*.008,0,.028),shoulders=[shoulderLift(hands[0].gesture),shoulderLift(hands[1].gesture)],register=nextNote?clamp((nextNote[2]-60)*.0012,-.03,.045):0,body={x:clamp(handCenter*.42,-.24,.24)+sway,y:.79+accent*.018+breath,z:-1.20+energy*.04+accent*.055,lean:.04+energy*.11,pitch:.025+energy*.17+accent*.11+rise*.065,yaw:clamp(handCenter*.26,-.24,.24)+Math.sin(t*.33)*.018*energy,roll:clamp(rollBase,-.065,.065)+sway*.7,headPitch:.08+energy*.14+accent*.25+rise*.07+register,headYaw:clamp(gaze*.30,-.30,.30),headRoll:clamp(-rollBase*.6+sway*.8,-.085,.085),shoulders,breathPhase,energy,accent,rise};
+ let sway=Math.sin(t*.5)*(.006+energy*.010),rollBase=(hands[0].palm.x-hands[1].palm.x-.55)*.05,shoulderLift=g=>clamp((g.impact||0)*.16+(g.force||0)*.008,0,.028),shoulders=[shoulderLift(hands[0].gesture),shoulderLift(hands[1].gesture)],register=nextNote?clamp((nextNote[2]-60)*.0012,-.03,.045):0,body={x:clamp(handCenter*.42,-.24,.24)+sway,y:.79+accent*.018+breath,z:-1.17+energy*.04+accent*.055,lean:.04+energy*.11,pitch:.025+energy*.17+accent*.11+rise*.065,yaw:clamp(handCenter*.26,-.24,.24)+Math.sin(t*.33)*.018*energy,roll:clamp(rollBase,-.065,.065)+sway*.7,headPitch:.08+energy*.14+accent*.25+rise*.07+register,headYaw:clamp(gaze*.30,-.30,.30),headRoll:clamp(-rollBase*.6+sway*.8,-.085,.085),shoulders,breathPhase,energy,accent,rise};
  return{hands,depressions,body};
 }
 // Geometric seed for the established fingering search, never a rendered pose.
@@ -313,5 +316,5 @@ function soften(previous,current,dt,tau=.05){if(!previous||!(dt>0)||dt>.1)return
   for(let j=1;j<4;j++){let want=add(base,sub(F.points[j],base).map((v,i)=>mix(P.points[j][i]-P.points[0][i],v,k))),dir=unit(sub(want,points[j-1]));points.push(add(points[j-1],mul(dir,F.lengths[j-1])));}
   current.hands[h].fingers[f]={...F,points};}
  return current;}
-return{keyboard,lengths,build,pose,soften,solveFinger,root,arm,physical,digit,validatePreparedPositions,chooseFingerings,fingeringHints,wristGesture,handPoint,segmentGap,fingerGap,spreadAt,articulatePalm,pressFinger,fitHangingPalm,prepareHangingPlan};
+return{keyboard,lengths,handLengths,worldScale:1/scale,build,pose,soften,solveFinger,root,arm,physical,digit,validatePreparedPositions,chooseFingerings,fingeringHints,wristGesture,handPoint,segmentGap,fingerGap,spreadAt,articulatePalm,pressFinger,fitHangingPalm,prepareHangingPlan};
 })();

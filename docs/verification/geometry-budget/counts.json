@@ -1,0 +1,46 @@
+{
+  "piano": {
+    "before": {
+      "triangles": 112612,
+      "draws": 454
+    },
+    "after": {
+      "triangles": 41880,
+      "draws": 358
+    },
+    "triangleReductionPercent": 62.8
+  },
+  "guitar": {
+    "before": {
+      "triangles": 146396,
+      "draws": 365
+    },
+    "after": {
+      "triangles": 89636,
+      "draws": 365
+    },
+    "triangleReductionPercent": 38.8
+  },
+  "violin": {
+    "before": {
+      "triangles": 90520,
+      "draws": 260
+    },
+    "after": {
+      "triangles": 36080,
+      "draws": 225
+    },
+    "triangleReductionPercent": 60.1
+  },
+  "cello": {
+    "before": {
+      "triangles": 114148,
+      "draws": 1803
+    },
+    "after": {
+      "triangles": 64964,
+      "draws": 647
+    },
+    "triangleReductionPercent": 43.1
+  }
+}

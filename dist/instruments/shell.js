@@ -200,7 +200,7 @@ function schedule() {
 async function playStr() {
   if (!active || playing) return;
   if (!ctx) {
-    ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100, latencyHint: 'interactive' });
+    ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100, latencyHint: 'playback' });
     for (const a of Object.values(ADAPTERS)) voices[a.id] = null;
   }
   await ctx.resume();
@@ -253,6 +253,7 @@ function enterString(a) {
   if (active) { memory[active.id] = { songId: song.id, position }; pauseStr(); }
   else {
     window.recital.pause();
+    window.recital.setRenderEnabled(false);
     if (!pianoButtons) { pianoButtons = [...$('songs').children]; pianoDOM.edition = document.querySelector('.edition').innerHTML; pianoDOM.count = document.querySelector('.collection-heading>span').textContent; pianoDOM.hint = hintSpan.textContent; pianoDOM.title = document.title; }
     pianoDOM.startHidden = $('start').classList.contains('hidden');
     $('pedalHUD').classList.add('hidden'); $('start').classList.add('hidden');
@@ -277,6 +278,7 @@ function enterPiano() {
   // playStr() resumes it on the next string playback.
   if (ctx && ctx.state === 'running') ctx.suspend();
   active = null; song = null; plan = null;
+  window.recital.setRenderEnabled(true);
   if (pianoButtons) { const wrap = $('songs'); wrap.innerHTML = ''; for (const b of pianoButtons) wrap.append(b); }
   document.querySelector('.edition').innerHTML = pianoDOM.edition;
   document.querySelector('.collection-heading>span').textContent = pianoDOM.count;
@@ -343,8 +345,8 @@ function attachCelloMesh(R) {
 let lastNow = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
+  if (!active || document.hidden || now - lastNow < 1000 / 30) return;
   const dt = Math.min(0.05, (now - lastNow) / 1000); lastNow = now;
-  if (!active) return;
   // Both performers share one WebGL context. Restore the piano's program
   // after our frame, and rebind ours in begin(), including on switch-back.
   const sharedGL = $('scene').getContext('webgl');

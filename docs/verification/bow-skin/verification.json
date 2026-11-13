@@ -1,0 +1,10 @@
+{
+  "poses": 707,
+  "triangles": 960,
+  "closedDigits": 5,
+  "maxSurfaceContactGap": 0.000814264897746274,
+  "frames": 4500,
+  "gpuBuffers": 2,
+  "gpuUploads": 2,
+  "gpuUpdates": 0
+}

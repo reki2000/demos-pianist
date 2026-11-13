@@ -8,6 +8,10 @@ v8-verification.json
 # Test and verification outputs
 verification.json
 audio-verification.json
+string-audio-verification.json
+geometry-verification.json
+bow-hold-verification.json
+violin-left-hand-verification.json
 audio-render-fixture.json
 audio-render-verification.json
 piano-audio-preview-v*.mp3
@@ -18,3 +22,8 @@ render-check/*.png
 # CI site staging
 _site/
 __pycache__/
+
+violin-skin-verification.json
+bow-skin-verification.json
+hand-surface-verification.json
+piano-hand-verification.json

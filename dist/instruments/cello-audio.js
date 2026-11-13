@@ -104,14 +104,14 @@ window.CelloAudio = (() => {
 
       // Two saws a few cents apart: chorus-like string width, no pitch error
       // (detune, not frequency, carries the offset, so frequency stays exact).
-      const sources = [];
+      const sources = [], mixes = [];
       const mkOsc = (detuneCents, level) => {
         const osc = ctx.createOscillator();
         osc.type = 'sawtooth';
         osc.frequency.value = f;
         if (osc.detune) osc.detune.value = detuneCents;
         const mix = ctx.createGain(); mix.gain.value = level;
-        osc.connect(mix); mix.connect(head); sources.push(osc);
+        osc.connect(mix); mix.connect(head); sources.push(osc); mixes.push(mix);
         return osc;
       };
       const oscA = mkOsc(0, 0.85), oscB = mkOsc(5, 0.4);
@@ -141,6 +141,18 @@ window.CelloAudio = (() => {
       if (!byPitch.has(pitch)) byPitch.set(pitch, new Set());
       byPitch.get(pitch).add(note); all.add(note);
 
+      let remaining = sources.length;
+      for (const source of sources) source.onended = () => {
+        source.onended = null;
+        source.disconnect();
+        if (--remaining !== 0) return;
+        all.delete(note);
+        const pitches = byPitch.get(pitch);
+        pitches.delete(note);
+        if (!pitches.size) byPitch.delete(pitch);
+        for (const node of [gain, filter, shaper, lfoDepth, ...mixes]) if (node) node.disconnect();
+      };
+
       for (const src of sources) src.start(t); // exact onset: host schedules ahead on the audio clock
       if (Number.isFinite(duration)) scheduleRelease(note, t + Math.max(0, duration));
       return note;
@@ -164,7 +176,7 @@ window.CelloAudio = (() => {
       else if (master.gain) master.gain.value = vol;
     }
 
-    return { noteOn, noteOff, allNotesOff, setVolume };
+    return { noteOn, noteOff, allNotesOff, setVolume, stats: { get activeVoices() { return all.size; }, get activePitches() { return byPitch.size; } } };
   }
 
   return { createVoice };

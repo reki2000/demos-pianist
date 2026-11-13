@@ -5551,11 +5551,18 @@ window.CelloMotion = (() => {
     };
   })();
 
+  function withBowHand(p) {
+    const axis = sub(p.bow.stickTip, p.bow.stickFrog);
+    const bowHand = window.BowHand.create('cello', p.bow.stickFrog, axis, M.n);
+    return { ...p, bowHand, rightArm: { ...p.rightArm, wrist: bowHand.wrist,
+      elbow: solveElbow(p.rightArm.shoulder, bowHand.wrist, [-0.55, -1, 0.15]) } };
+  }
+
   let HAND_SOLVER = 'natural';
   const setHandSolver = s => { HAND_SOLVER = s === 'legacy' ? 'legacy' : 'natural'; return HAND_SOLVER; };
 
   function pose(song, t) {
-    if (HAND_SOLVER === 'legacy') return poseLegacy(song, t);
+    if (HAND_SOLVER === 'legacy') return withBowHand(poseLegacy(song, t));
     if (!song.cello) plan(song);
     const res = song.cello, tr = res.tracks;
     const { sounding } = activeAt(song, t);
@@ -5576,14 +5583,14 @@ window.CelloMotion = (() => {
       turn: 0.05 * Math.sin(t * 0.23 + 1.2),
       breath: 0.006 * Math.sin(t * 2 * Math.PI * 0.22)
     };
-    return {
+    return withBowHand({
       leftArm: L.leftArm,
       rightArm: { shoulder: SHOULDER_R, elbow: elbowR, wrist: wristR },
       fingers: L.fingers, thumb: L.thumb,
       bow: { frog, tip, contact, string: sFloat, frac: bowF, stickFrog, stickTip },
       hand: L.hand, sway,
       sounding: sounding.map(({ r }) => r.string)
-    };
+    });
   }
 
   // ---- pose cache -------------------------------------------------
@@ -5668,7 +5675,7 @@ window.CelloMotion = (() => {
     const x = clamp(t, 0, entry.duration), q = x / entry.step, i = Math.min(entry.frames - 1, Math.floor(q)), j = Math.min(entry.frames - 1, i + 1), u = Math.min(1, q - i);
     const a0 = i * entry.width, b0 = j * entry.width, n = new Array(entry.width);
     for (let k = 0; k < entry.width; k++) n[k] = Math.fround(data[a0 + k] + (data[b0 + k] - data[a0 + k]) * u);
-    return cachePose(cacheUnflat(entry.schema, n, u < 0.5 ? entry.strings[i] : entry.strings[j], { i: 0 }, { i: 0 }));
+    return withBowHand(cachePose(cacheUnflat(entry.schema, n, u < 0.5 ? entry.strings[i] : entry.strings[j], { i: 0 }, { i: 0 })));
   };
 
   // ---- drawing ----
@@ -5695,7 +5702,8 @@ window.CelloMotion = (() => {
     // the chair back. With it, the 0.38 X-tilt reads as a downward
     // glance toward the fingerboard.
     const headC = [-0.012, 1.315 + p.sway.breath, 0.045], HX = 0.38, HY = Math.PI, HZ = 0.06;
-    R.piece('head', headC, [0.105, 0.125, 0.112], SKIN, HX, HY, HZ);
+    R.setFaceDetail?.(true);
+R.piece('head', headC, [0.105, 0.125, 0.112], SKIN, HX, HY, HZ);
     R.piece('hair', [-0.016, 1.345 + p.sway.breath, 0.062], [0.108, 0.122, 0.115], HAIR, 0.30, Math.PI, 0.06);
     // Face, mirroring the pianist's construction (demos-pianist
     // app.js): the same nose loft piece, two-segment lowered-lid
@@ -5720,6 +5728,7 @@ window.CelloMotion = (() => {
     }
     R.segment(headPoint([-0.0188, -0.0625, 0.0989]), headPoint([0.0188, -0.0625, 0.0989]), 0.0037, LIP1);
     R.segment(headPoint([-0.0113, -0.0701, 0.0963]), headPoint([0.0113, -0.0701, 0.0963]), 0.0031, LIP2);
+R.setFaceDetail?.(false);
     // Arms. Both forearms end at their wrist joints; only the
     // right keeps a wrist ball (the bow hand's mass) -- the left
     // wrist is the palm assembly's proximal end, drawn below.
@@ -5745,7 +5754,6 @@ window.CelloMotion = (() => {
       R.ball(arm.elbow, [0.046, 0.046, 0.046], sleeve);
       R.ball(arm.shoulder, [0.050, 0.050, 0.050], sleeve);
     }
-    R.ball(p.rightArm.wrist, [0.042, 0.046, 0.042], SKIN);
     // Left hand, one assembly (see pose()): carpus at the wrist
     // joint, the palm's shaped masses spanning wrist -> knuckle
     // row, the thenar eminence at the thumb's base, then the
@@ -5841,14 +5849,7 @@ window.CelloMotion = (() => {
     drawBowHand(R, p);
   }
   function drawBowHand(R, p) {
-    // Right hand curled on the bow frog: palm + four short fingers.
-    const bw = p.rightArm.wrist, bd = norm(sub(p.bow.tip, p.bow.frog));
-    R.ball(add(bw, mul(bd, 0.012)), [0.045, 0.038, 0.048], SKIN);
-    for (let f = 0; f < 4; f++) {
-      const b0 = add(bw, add(mul(bd, -0.008 + f * 0.013), mul(M.n, -0.018)));
-      const b1 = add(b0, add(mul(bd, 0.010), mul(M.n, 0.020)));
-      R.segment(b0, b1, 0.010, SKIN, 'joint');
-    }
+    window.BowHand.draw(R, p.bowHand, SKIN, SKIN_L);
   }
 
   // The natural hand's skin: palm masses in the hand frame, thenar on
@@ -5882,7 +5883,7 @@ window.CelloMotion = (() => {
   function draw(R, song, t, opts = {}) {
     const p = poseCached(song, t) || pose(song, t);
     M.drawCello(R, { hotString: p.sounding.length ? p.sounding[0] : -1 });
-    M.drawBow(R, clamp(Math.round(p.bow.string), 0, 3), p.bow.frac);
+    M.drawBow(R, clamp(Math.round(p.bow.string), 0, 3), p.bow.frac, p.bow);
     drawFigure(R, p);
     return p;
   }

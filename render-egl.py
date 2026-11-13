@@ -19,7 +19,7 @@ LinkProgram(prog);ok=I();GetProgramiv(prog,0x8B82,C.byref(ok));assert ok.value,'
 GenBuffers=fn('glGenBuffers',None,[I,UP]);BindBuffer=fn('glBindBuffer',None,[U,U]);BufferData=fn('glBufferData',None,[U,C.c_ssize_t,V,U]);buffers=[]
 for mesh in j['meshes']:
  b=U();GenBuffers(1,C.byref(b));BindBuffer(0x8892,b);a=np.array(mesh,dtype=np.float32);BufferData(0x8892,a.nbytes,a.ctypes.data,0x88E4);buffers.append(b)
-GetUniformLocation=fn('glGetUniformLocation',I,[U,C.c_char_p]);GetAttribLocation=fn('glGetAttribLocation',I,[U,C.c_char_p]);locations={k:GetUniformLocation(prog,k.encode()) for k in ['uM','uVP','uN','uC','uEye','uMetal']};attrs=[GetAttribLocation(prog,k.encode()) for k in ['aP','aN']]
+GetUniformLocation=fn('glGetUniformLocation',I,[U,C.c_char_p]);GetAttribLocation=fn('glGetAttribLocation',I,[U,C.c_char_p]);locations={k:GetUniformLocation(prog,k.encode()) for k in ['uM','uVP','uN','uC','uEye','uMetal','uWorldScale']};attrs=[GetAttribLocation(prog,k.encode()) for k in ['aP','aN']]
 M4=fn('glUniformMatrix4fv',None,[I,I,C.c_ubyte,FP]);M3=fn('glUniformMatrix3fv',None,[I,I,C.c_ubyte,FP]);V3=fn('glUniform3fv',None,[I,I,FP]);V1=fn('glUniform1f',None,[I,F]);EnableAttrib=fn('glEnableVertexAttribArray',None,[U]);Attrib=fn('glVertexAttribPointer',None,[U,I,U,C.c_ubyte,I,V]);Draw=fn('glDrawArrays',None,[U,I,I]);Viewport=fn('glViewport',None,[I,I,I,I]);Enable=fn('glEnable',None,[U]);ClearColor=fn('glClearColor',None,[F,F,F,F]);Clear=fn('glClear',None,[U]);Viewport(0,0,w,h);Enable(0x0B71);ClearColor(.028,.032,.04,1);Clear(0x4000|0x0100)
 for draw in j['draws']:
  BindBuffer(0x8892,buffers[draw['mesh']]);
@@ -28,5 +28,5 @@ for draw in j['draws']:
   data=(F*len(draw[k]))(*draw[k]);func=M3 if k=='uN' else M4 if k in ['uM','uVP'] else V3
   if func in [M3,M4]:func(locations[k],1,0,data)
   else:func(locations[k],1,data)
- V1(locations['uMetal'],draw['uMetal']);Draw(4,0,draw['count'])
+ V1(locations['uMetal'],draw['uMetal']);V1(locations['uWorldScale'],draw.get('uWorldScale',1));Draw(4,0,draw['count'])
 Finish=fn('glFinish',None,[]);Finish();Read=fn('glReadPixels',None,[I,I,I,I,U,U,V]);pixels=np.empty((h,w,4),dtype=np.uint8);Read(0,0,w,h,0x1908,0x1401,pixels.ctypes.data);err=fn('glGetError',U,[])();assert err==0,hex(err);out=sys.argv[2];Image.fromarray(pixels[::-1]).save(out);print('Rendered',len(j['draws']),'WebGL draw calls to',out)

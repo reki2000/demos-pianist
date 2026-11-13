@@ -2,7 +2,8 @@
 /* Integration test for the multi-instrument shell.
  *
  * Part 0: the module files under dist/instruments/ must be byte-
- * identical to their source repos (so each module's own test-suite
+ * identical to their source repos, except documented renderer and pinned
+ * audio lifecycle fixes (so each module's own test-suite
  * results carry over to the integrated copies).
  * Parts G/V/C: the modules' DRAWN-frame handedness audits, replicated
  * formulation-for-formulation (world frame via the renderer's own
@@ -29,6 +30,7 @@ const dot = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const unit = a => { const l = Math.hypot(...a) || 1; return a.map(v => v / l); };
 function freshCtx(files) {
+  files = [DI('bow-hand.js'), DI('hand-surface.js'), DI('violin-skin.js'), ...files];
   const c = { window: null, console }; c.window = c; vm.createContext(c);
   for (const f of files) vm.runInContext(fs.readFileSync(f, 'utf8'), c, { filename: path.basename(f) });
   return c;
@@ -62,9 +64,24 @@ const PAIRS = [
   ['cello-songs.js', H + '/workspace/demos-cellist/dist/cello-songs.js'],
   ['cello-instrument.js', H + '/workspace/demos-cellist/dist/cello-instrument.js'],
 ];
+const geometryPatches = JSON.parse(fs.readFileSync('geometry-patches.json', 'utf8'));
+const audioLifecyclePatches = JSON.parse(fs.readFileSync('audio-lifecycle-patches.json', 'utf8'));
 for (const [name, src] of PAIRS) {
+  const audioPatch = audioLifecyclePatches[name];
+  if (audioPatch) {
+    // Documented host fixes: source retirement and bounded debug history.
+    assert.equal(sha(src), audioPatch.upstream, 'audio upstream changed: review lifecycle patch for ' + name);
+    assert.equal(sha(DI(name)), audioPatch.integrated, 'audio lifecycle patch changed: review and update hashes for ' + name);
+    continue;
+  }
+  const geometryPatch = geometryPatches[name];
+  if (geometryPatch) {
+    assert.equal(sha(src), geometryPatch.upstream, 'geometry upstream changed: review patch for ' + name);
+    assert.equal(sha(DI(name)), geometryPatch.integrated, 'geometry patch changed: review and update hashes for ' + name);
+    continue;
+  }
   if (name === 'violin-gl.js') {
-    // Deliberate, documented divergence (the ONLY one): the integrated
+    // Deliberate, documented renderer divergence: the integrated
     // copy's begin() re-binds its shader program every frame
     // (gl.useProgram) because in the integrated app two RecitalGL
     // instances share one canvas and the program binding is
@@ -141,7 +158,7 @@ let gReport;
 // ---- Part V: violin drawn handedness (clearance-test (d)) ----------
 let vReport;
 {
-  const c = freshCtx(['dist/gl.js', DI('violin-fingering.js'), DI('violin-songs.js'), DI('violin-model.js'), DI('violin-motion.js'), DI('violin-audio.js'), DI('violin-instrument.js')]);
+  const c = freshCtx(['dist/gl.js', DI('violin-fingering.js'), DI('violin-songs.js'), DI('violin-skin.js'), DI('violin-model.js'), DI('violin-hand.js'), DI('violin-hand-frames.js'), DI('violin-motion.js'), DI('violin-audio.js'), DI('violin-instrument.js')]);
   const RG = c.RecitalGL, I = c.VIOLIN_INSTRUMENT;
   const hp = (Hh, p) => {
     const cr = Math.cos(Hh.roll), sr = Math.sin(Hh.roll), px = p[0] * cr - p[1] * sr, py = p[0] * sr + p[1] * cr;
@@ -217,7 +234,7 @@ let cReport;
 
 // ---- Part D: the shell itself, full bundle in a stubbed browser ----
 let uid = 0; const draws = [];
-const glStub = { VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632, COMPILE_STATUS: 35713, LINK_STATUS: 35714, ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, FLOAT: 5126, TRIANGLES: 4, COLOR_BUFFER_BIT: 16384, DEPTH_BUFFER_BIT: 256, DEPTH_TEST: 2929, createShader: kind => ({ kind }), shaderSource() {}, compileShader() {}, getShaderParameter: () => true, createProgram: () => ({}), attachShader() {}, linkProgram() {}, getProgramParameter: () => true, useProgram() {}, getAttribLocation: (p, n) => n === 'aP' ? 0 : 1, getUniformLocation: (p, n) => n, createBuffer: () => ({ id: uid++ }), bindBuffer() {}, bufferData() {}, enableVertexAttribArray() {}, vertexAttribPointer() {}, uniformMatrix4fv() {}, uniformMatrix3fv() {}, uniform3fv() {}, uniform1f() {}, drawArrays: (m, s, count) => draws.push(count), viewport() {}, clearColor() {}, clear() {}, enable() {} };
+const glStub = { VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632, COMPILE_STATUS: 35713, LINK_STATUS: 35714, ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, DYNAMIC_DRAW: 35048, FLOAT: 5126, TRIANGLES: 4, COLOR_BUFFER_BIT: 16384, DEPTH_BUFFER_BIT: 256, DEPTH_TEST: 2929, createShader: kind => ({ kind }), shaderSource() {}, compileShader() {}, getShaderParameter: () => true, createProgram: () => ({}), attachShader() {}, linkProgram() {}, getProgramParameter: () => true, useProgram() {}, getAttribLocation: (p, n) => n === 'aP' ? 0 : 1, getUniformLocation: (p, n) => n, createBuffer: () => ({ id: uid++ }), bindBuffer() {}, bufferData() {}, bufferSubData() {}, enableVertexAttribArray() {}, vertexAttribPointer() {}, uniformMatrix4fv() {}, uniformMatrix3fv() {}, uniform3fv() {}, uniform1f() {}, drawArrays: (m, s, count) => draws.push(count), viewport() {}, clearColor() {}, clear() {}, enable() {} };
 const ctx2d = () => new Proxy({}, { get: (t, p) => p in t ? t[p] : (() => {}), set: (t, p, v) => { t[p] = v; return true; } });
 function element(id = '', dataset = {}) {
   const kids = [];
@@ -252,9 +269,9 @@ const documentStub = {
 let rafQ = [];
 const c = { window: null, document: documentStub, performance: { now: () => 0 }, requestAnimationFrame: f => { rafQ.push(f); }, devicePixelRatio: 1, innerWidth: 1440, matchMedia: () => ({ matches: false }), addEventListener() {}, console, setInterval: () => 1, clearInterval() {}, AudioContext: undefined };
 c.window = c; vm.createContext(c);
-const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'app.js',
+const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'piano-skin.js', 'app.js',
   'instruments/guitar-songs.js', 'instruments/guitar-fingering.js', 'instruments/guitar-motion.js', 'instruments/guitar-model.js', 'instruments/guitar-audio.js', 'instruments/guitar-score.js', 'instruments/guitar-instrument.js', 'instruments/guitar-plans.js',
-  'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/violin-model.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
+  'instruments/bow-hand.js', 'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'instruments/violin-model.js', 'instruments/violin-hand.js', 'instruments/violin-hand-frames.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
   'instruments/cello-fingering.js', 'instruments/cello-model.js', 'instruments/cello-motion.js', 'instruments/cello-audio.js', 'instruments/cello-songs.js', 'instruments/cello-instrument.js',
   'instruments/staff-score.js', 'instruments/shell.js'];
 for (const f of SCRIPTS) vm.runInContext(fs.readFileSync(path.join('dist', f), 'utf8'), c, { filename: f });
@@ -301,4 +318,4 @@ c.multiShell.chooseInstrument('piano');
 assert.equal(c.multiShell.getState().instrument, 'piano');
 assert.equal(getEl('songs').children.length, 18, 'piano song list restored');
 tick(5);
-console.log(JSON.stringify({ ok: true, copiesIdentical: PAIRS.length, guitar: gReport, violin: vReport, cello: cReport, shell: shellReport }, null, 1));
+console.log(JSON.stringify({ ok: true, modulesVerified: PAIRS.length, audioLifecyclePatches: Object.keys(audioLifecyclePatches).length, geometryPatches: Object.keys(geometryPatches).length, guitar: gReport, violin: vReport, cello: cReport, shell: shellReport }, null, 1));
