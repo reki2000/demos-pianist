@@ -1,5 +1,11 @@
 # Continuous violin finger skin
 
+The current hand also joins all digits to the palm and wrist in one surface.
+See [shared hand surface verification](../hand-joins/README.md) for current
+counts, topology and resource checks. The notes below describe the earlier
+finger-only stage; the images show the current hand.
+
+
 The four left fingers use closed continuous surfaces around the existing FK
 skeleton. Each finger has twelve eight-sided rings with shared vertices and
 area-weighted normals. Ring tangents blend around the PIP/DIP joints, so bends

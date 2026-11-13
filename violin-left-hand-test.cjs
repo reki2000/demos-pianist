@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');global.window=globalThis;
-for(const n of ['bow-hand','violin-fingering','violin-songs','violin-skin','violin-model','violin-hand','violin-hand-frames','violin-motion'])vm.runInThisContext(fs.readFileSync(`dist/instruments/${n}.js`,'utf8'),{filename:n});
+for(const n of ['bow-hand','violin-fingering','violin-songs','hand-surface','violin-skin','violin-model','violin-hand','violin-hand-frames','violin-motion'])vm.runInThisContext(fs.readFileSync(`dist/instruments/${n}.js`,'utf8'),{filename:n});
 const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={fingerLengthScale:.8,fingerLengthsMm:ViolinMotion.FINGER_LENGTHS.map(f=>f.reduce((a,b)=>a+b,0)*1000),thumbLengthsMm:N.THUMB_LEN.map(v=>v*1000),samples:0,maxContactError:0,maxBoneError:0,maxRootError:0,maxWristAngle:0};
 // The selected B proportion is a persistent product requirement.
 for(const [f,total] of [.0752,.0848,.0792,.0632].entries())assert(Math.abs(ViolinMotion.FINGER_LENGTHS[f].reduce((a,b)=>a+b,0)-total)<1e-10,'Selected 20% shortening changed');

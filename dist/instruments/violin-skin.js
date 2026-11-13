@@ -9,25 +9,30 @@ window.ViolinFingerSkin = (() => {
   const circle=new Float64Array(SIDES*2);
   for(let j=0;j<SIDES;j++){const a=(j+.5)*2*Math.PI/SIDES;circle[j*2]=Math.cos(a);circle[j*2+1]=Math.sin(a);}
   const bowSections=[[0,-.12],[0,0],[0,.45],[0,.88],[0,1],[1,.18],[1,.62],[1,.88],[1,1],[2,.45],[2,1],[2,1]];
-  function create(bow=false){
-    const count=bow?5:4,vertices=count*PER_FINGER;
-    const indices=new Uint16Array(count*((RINGS-1)*SIDES*6+SIDES*6));let at=0;
-    const triangle=(a,b,c)=>{indices[at++]=a;indices[at++]=b;indices[at++]=c;};
+  function create(bow=false,joined=false){
+    const count=bow||joined?5:4,surface=joined?window.HandSurface.create(bow,count*PER_FINGER):null,vertices=count*PER_FINGER+(surface?surface.vertices:0);
+    const topology=[];
+    const triangle=(a,b,c)=>{topology.push(a,b,c);};
     for(let f=0;f<count;f++){
       const base=f*PER_FINGER;
       for(let r=0;r<RINGS-1;r++)for(let j=0;j<SIDES;j++){
         const k=(j+1)%SIDES,a=base+r*SIDES+j,b=a+SIDES,c=base+(r+1)*SIDES+k,d=base+r*SIDES+k;
         triangle(a,b,c);triangle(a,c,d);
       }
-      for(let j=0;j<SIDES;j++){const k=(j+1)%SIDES;triangle(base+RINGS*SIDES,base+j,base+k);triangle(base+RINGS*SIDES+1,base+(RINGS-1)*SIDES+k,base+(RINGS-1)*SIDES+j);}
+      for(let j=0;j<SIDES;j++){const k=(j+1)%SIDES;if(!joined)triangle(base+RINGS*SIDES,base+j,base+k);triangle(base+RINGS*SIDES+1,base+(RINGS-1)*SIDES+k,base+(RINGS-1)*SIDES+j);}
     }
-    return {bow,count,positions:new Float64Array(vertices*3),normals:new Float64Array(vertices*3),indices,data:new Float32Array(indices.length*6),directions:new Float64Array(9),lengths:new Float64Array(3)};
+    if(surface)topology.push(...surface.indices);
+    const bridgeTriangles=surface?surface.sockets.reduce((n,r)=>n+r.length+8,0)+surface.wrist.length+96:0;
+    const indices=new Uint16Array(topology.length+bridgeTriangles*3);indices.set(topology);
+    return {bow,count,surface,topology,thumb:{points:null,radii:[.009,.007,.007]},positions:new Float64Array(vertices*3),normals:new Float64Array(vertices*3),indices,data:new Float32Array(indices.length*6),directions:new Float64Array(9),lengths:new Float64Array(3)};
   }
   function update(state,hand,board){
     const p=state.positions,n=state.normals,dirs=state.directions,lengths=state.lengths;
-    const bow=state.bow,profile=bow?bowSections:sections;
+    const bow=state.bow;
+    if(state.surface&&!bow)state.thumb.points=hand.thumb;
     for(let f=0;f<state.count;f++){
-      const digit=bow?(f===0?hand.thumb:hand.fingers[f-1]):hand.fingers[f],points=digit.points,base=f*PER_FINGER;
+      const rounded=bow||f===4,profile=rounded?bowSections:sections;
+      const digit=bow?(f===0?hand.thumb:hand.fingers[f-1]):f===4?state.thumb:hand.fingers[f],points=digit.points,base=f*PER_FINGER;
       for(let s=0;s<3;s++){
         const a=points[s],b=points[s+1],x=b[0]-a[0],y=b[1]-a[1],z=b[2]-a[2],length=Math.hypot(x,y,z)||1;
         lengths[s]=length;dirs[s*3]=x/length;dirs[s*3+1]=y/length;dirs[s*3+2]=z/length;
@@ -41,7 +46,7 @@ window.ViolinFingerSkin = (() => {
       xx*=sign/length;xy*=sign/length;xz*=sign/length;
       for(let r=0;r<RINGS;r++){
         const s=profile[r][0];let t=profile[r][1];
-        if(r===RINGS-1)t=bow?1+digit.radii[2]*Math.SQRT1_2/lengths[2]:1-Math.min(.0018,lengths[2]*.12)/lengths[2];
+        if(r===RINGS-1)t=rounded?1+digit.radii[2]*Math.SQRT1_2/lengths[2]:1-Math.min(.0018,lengths[2]*.12)/lengths[2];
         const a=points[s],dx=dirs[s*3],dy=dirs[s*3+1],dz=dirs[s*3+2];
         let cx=a[0]+dx*lengths[s]*t,cy=a[1]+dy*lengths[s]*t,cz=a[2]+dz*lengths[s]*t;
         let tx=dx,ty=dy,tz=dz;
@@ -54,19 +59,19 @@ window.ViolinFingerSkin = (() => {
         }
         length=Math.hypot(tx,ty,tz)||1;tx/=length;ty/=length;tz/=length;
         let rx=xx,ry=xy,rz=xz;
-        if(bow){const along=rx*tx+ry*ty+rz*tz;rx-=along*tx;ry-=along*ty;rz-=along*tz;const scale=1/(Math.hypot(rx,ry,rz)||1);rx*=scale;ry*=scale;rz*=scale;}
+        if(rounded){const along=rx*tx+ry*ty+rz*tz;rx-=along*tx;ry-=along*ty;rz-=along*tz;const scale=1/(Math.hypot(rx,ry,rz)||1);rx*=scale;ry*=scale;rz*=scale;}
         const zx=ry*tz-rz*ty,zy=rz*tx-rx*tz,zz=rx*ty-ry*tx;
         let centreW=0;
         if(board)centreW=(cx-board.O[0])*board.W[0]+(cy-board.O[1])*board.W[1]+(cz-board.O[2])*board.W[2];
         // Bow contact centres stay inside rounded end pads. Their radius
         // matches the original grip; the left hand keeps its flat string pads.
-        const radius=bow?(s<2?digit.radii[s]+(digit.radii[s+1]-digit.radii[s])*Math.max(0,t):digit.radii[2])*(r===RINGS-1?Math.SQRT1_2:1):0;
+        const radius=rounded?(s<2?digit.radii[s]+(digit.radii[s+1]-digit.radii[s])*Math.max(0,t):digit.radii[2])*(r===RINGS-1?Math.SQRT1_2:1):0;
         for(let j=0;j<SIDES;j++){
-          const c=circle[j*2]*(bow?radius:widths[r]),d=circle[j*2+1]*(bow?radius:depths[r]),k=(base+r*SIDES+j)*3;
+          const c=circle[j*2]*(rounded?radius:widths[r]),d=circle[j*2+1]*(rounded?radius:depths[r]),k=(base+r*SIDES+j)*3;
           let vx=cx+rx*c+zx*d,vy=cy+ry*c+zy*d,vz=cz+rz*c+zz*d;
           // Soft fingertip tissue conforms to the board. The skeleton and
           // its sounding contact point are never moved by the skin update.
-          if(board&&r>=9){
+          if(board&&!rounded&&r>=9){
             const ox=vx-board.O[0],oy=vy-board.O[1],oz=vz-board.O[2],u=ox*board.U[0]+oy*board.U[1]+oz*board.U[2],v=ox*board.V[0]+oy*board.V[1]+oz*board.V[2];
             if(u>=.058&&u<=.328&&Math.abs(v)<(u<.210?.0225:.0165)&&centreW>=board.top(u)-.0001){
               const w=ox*board.W[0]+oy*board.W[1]+oz*board.W[2],lift=Math.max(0,board.top(u)+.0002-w);
@@ -76,7 +81,13 @@ window.ViolinFingerSkin = (() => {
           p[k]=vx;p[k+1]=vy;p[k+2]=vz;
         }
       }
-      for(let k=0;k<3;k++){p[(base+RINGS*SIDES)*3+k]=points[0][k]-dirs[k]*lengths[0]*.12;p[(base+RINGS*SIDES+1)*3+k]=points[3][k]+(bow?dirs[6+k]*digit.radii[2]:0);}
+      for(let k=0;k<3;k++){p[(base+RINGS*SIDES)*3+k]=points[0][k]-dirs[k]*lengths[0]*.12;p[(base+RINGS*SIDES+1)*3+k]=points[3][k]+(rounded?dirs[6+k]*digit.radii[2]:0);}
+    }
+    if(state.surface){
+      window.HandSurface.update(state.surface,p,hand);
+      if(!state.surface.initialized){window.HandSurface.connect(state.surface,state.topology,p);state.indices.set(state.topology);state.surface.initialized=true;}
+      window.HandSurface.blendSockets(state.surface,p);
+      window.HandSurface.conform(state.surface,p,board);
     }
     n.fill(0);
     const indices=state.indices;

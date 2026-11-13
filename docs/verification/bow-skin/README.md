@@ -1,5 +1,11 @@
 # Continuous bow-hand skin
 
+The current hand also joins all digits to the palm and wrist in one surface.
+See [shared hand surface verification](../hand-joins/README.md) for current
+counts, topology and resource checks. The notes below describe the earlier
+finger-only stage; the images show the current hand.
+
+
 Violin and cello right hands now use the same continuous ring-surface method as
 the violin left fingers. All five digits, including the thumb, are closed
 surfaces with shared vertices and area-weighted normals across their joints.

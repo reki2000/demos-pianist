@@ -77,24 +77,31 @@ window.BowHand = (() => {
   const localBasis=[[1,0,0],[0,1,0],[0,0,1]];
   function draw(R,H,skin,light){
     const round=(p,r,color)=>oriented(R,'rod',p,[r,r,r],color,H.basis);
-    oriented(R,'palm',H.palmPos,H.palmScale,skin,H.basis);
-    oriented(R,'joint',H.wrist,[.022,.020,.019],skin,H.basis);
-    oriented(R,'joint',H.thenar,[.017,.022,.014],skin,H.basis);
     if(R.mesh&&window.ViolinFingerSkin){
+      if(!window.HandSurface){
+        oriented(R,'palm',H.palmPos,H.palmScale,skin,H.basis);
+        oriented(R,'joint',H.wrist,[.022,.020,.019],skin,H.basis);
+        oriented(R,'joint',H.thenar,[.017,.022,.014],skin,H.basis);
+      }
       let mesh=skinMeshes[H.type];
       if(!mesh){
-        const g=grips[H.type],state=window.ViolinFingerSkin.create(true);
-        mesh=window.ViolinFingerSkin.update(state,{basis:localBasis,thumb:g.digits[0],fingers:g.digits.slice(1)});
+        const g=grips[H.type],state=window.ViolinFingerSkin.create(true,!!window.HandSurface);
+        mesh=window.ViolinFingerSkin.update(state,{basis:localBasis,thumb:g.digits[0],fingers:g.digits.slice(1),palmPos:g.palmPos,palmScale:g.palmScale,wrist:g.wrist});
         skinMeshes[H.type]=mesh;
       }
       R.mesh(mesh,skin,{U:H.basis[0],V:H.basis[1],W:H.basis[2],O:H.origin});
-    }else for(const d of [H.thumb,...H.fingers]){
+    }else {
+      oriented(R,'palm',H.palmPos,H.palmScale,skin,H.basis);
+      oriented(R,'joint',H.wrist,[.022,.020,.019],skin,H.basis);
+      oriented(R,'joint',H.thenar,[.017,.022,.014],skin,H.basis);
+      for(const d of [H.thumb,...H.fingers]){
       for(let j=0;j<3;j++){
         const a=d.points[j],b=d.points[j+1],axis=unit(sub(b,a)),overlap=distForOverlap(a,b);
         R.segment(sub(a,mul(axis,overlap)),j===2?b:add(b,mul(axis,overlap)),d.radii[j],j===2?light:skin,'bodyLimb');
         if(j>0){const r=d.radii[j];round(d.points[j],r,skin);}
       }
       const r=d.radii[2];round(d.points[3],r,light);
+      }
     }
   }
   return {create,draw,frog,drawFrog,source:()=>JSON.stringify({spec,grips})+frame.toString()};

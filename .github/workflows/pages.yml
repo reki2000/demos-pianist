@@ -33,6 +33,7 @@ jobs:
           node geometry-test.cjs > geometry-verification.json
           node bow-hold-test.cjs > bow-hold-verification.json
           node bow-skin-test.cjs > bow-skin-verification.json
+          node hand-surface-test.cjs > hand-surface-verification.json
           node violin-skin-test.cjs > violin-skin-verification.json
           node violin-left-hand-test.cjs > violin-left-hand-verification.json
           node score-test.cjs > score-verification.json
