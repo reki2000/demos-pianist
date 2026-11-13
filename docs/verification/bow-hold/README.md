@@ -38,3 +38,5 @@ wide views show the wrist/arm connection. WebGL and page-error checks were clean
 |---|---|---|
 | Grip | ![Violin grip](bow-scene-violin-grip.png) | ![Cello grip](bow-scene-cello-grip.png) |
 | Performer | ![Violin performer](bow-scene-violin-wide.png) | ![Cello performer](bow-scene-cello-wide.png) |
+
+The five right-hand digits now use continuous skin over the same grip skeleton. Updated images and resource checks: [bow skin verification](../bow-skin/README.md).

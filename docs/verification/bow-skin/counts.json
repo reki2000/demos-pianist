@@ -1,0 +1,22 @@
+{
+  "wholeHand": {
+    "before": {
+      "draws": 33,
+      "triangles": 4900
+    },
+    "after": {
+      "draws": 4,
+      "triangles": 1540
+    }
+  },
+  "fingers": {
+    "before": {
+      "draws": 30,
+      "triangles": 4320
+    },
+    "after": {
+      "draws": 1,
+      "triangles": 960
+    }
+  }
+}

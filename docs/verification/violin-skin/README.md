@@ -5,7 +5,8 @@ skeleton. Each finger has twelve eight-sided rings with shared vertices and
 area-weighted normals. Ring tangents blend around the PIP/DIP joints, so bends
 have connected skin instead of separate capped rods. The base extends into the
 palm; the distal surface flattens against the fingerboard while the exact
-sounding target stays fixed. The thumb, right hand and face are unchanged.
+sounding target stays fixed. The left thumb and face are unchanged. Bow-hand skin is covered in
+[the right-hand verification](../bow-skin/README.md).
 The selected B proportions (20% shorter four fingers) remain unchanged.
 
 The four surfaces share one draw call: 768 triangles, replacing 4,224 triangles

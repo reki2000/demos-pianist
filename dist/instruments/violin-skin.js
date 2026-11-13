@@ -1,6 +1,6 @@
 'use strict';
-// A closed, shared-normal surface for each of the four FK fingers. Topology,
-// scratch storage and upload storage are allocated once per renderer.
+// Closed shared-normal finger surfaces for the FK left hand and both bow grips. Topology,
+// scratch storage and upload storage are reused between updates.
 window.ViolinFingerSkin = (() => {
   const SIDES=8,RINGS=12,PER_FINGER=RINGS*SIDES+2,VERTICES=4*PER_FINGER;
   const sections=[[0,-.12],[0,0],[0,.45],[0,.88],[0,1],[1,.18],[1,.62],[1,.88],[1,1],[2,.25],[2,.72],[2,1]];
@@ -8,10 +8,12 @@ window.ViolinFingerSkin = (() => {
   const depths=[.0028,.0045,.0060,.0058,.0055,.0052,.0049,.0045,.0043,.0038,.0026,.0015];
   const circle=new Float64Array(SIDES*2);
   for(let j=0;j<SIDES;j++){const a=(j+.5)*2*Math.PI/SIDES;circle[j*2]=Math.cos(a);circle[j*2+1]=Math.sin(a);}
-  function create(){
-    const indices=new Uint16Array(4*((RINGS-1)*SIDES*6+SIDES*6));let at=0;
+  const bowSections=[[0,-.12],[0,0],[0,.45],[0,.88],[0,1],[1,.18],[1,.62],[1,.88],[1,1],[2,.45],[2,1],[2,1]];
+  function create(bow=false){
+    const count=bow?5:4,vertices=count*PER_FINGER;
+    const indices=new Uint16Array(count*((RINGS-1)*SIDES*6+SIDES*6));let at=0;
     const triangle=(a,b,c)=>{indices[at++]=a;indices[at++]=b;indices[at++]=c;};
-    for(let f=0;f<4;f++){
+    for(let f=0;f<count;f++){
       const base=f*PER_FINGER;
       for(let r=0;r<RINGS-1;r++)for(let j=0;j<SIDES;j++){
         const k=(j+1)%SIDES,a=base+r*SIDES+j,b=a+SIDES,c=base+(r+1)*SIDES+k,d=base+r*SIDES+k;
@@ -19,17 +21,18 @@ window.ViolinFingerSkin = (() => {
       }
       for(let j=0;j<SIDES;j++){const k=(j+1)%SIDES;triangle(base+RINGS*SIDES,base+j,base+k);triangle(base+RINGS*SIDES+1,base+(RINGS-1)*SIDES+k,base+(RINGS-1)*SIDES+j);}
     }
-    return {positions:new Float64Array(VERTICES*3),normals:new Float64Array(VERTICES*3),indices,data:new Float32Array(indices.length*6),directions:new Float64Array(9),lengths:new Float64Array(3)};
+    return {bow,count,positions:new Float64Array(vertices*3),normals:new Float64Array(vertices*3),indices,data:new Float32Array(indices.length*6),directions:new Float64Array(9),lengths:new Float64Array(3)};
   }
   function update(state,hand,board){
     const p=state.positions,n=state.normals,dirs=state.directions,lengths=state.lengths;
-    for(let f=0;f<4;f++){
-      const points=hand.fingers[f].points,base=f*PER_FINGER;
+    const bow=state.bow,profile=bow?bowSections:sections;
+    for(let f=0;f<state.count;f++){
+      const digit=bow?(f===0?hand.thumb:hand.fingers[f-1]):hand.fingers[f],points=digit.points,base=f*PER_FINGER;
       for(let s=0;s<3;s++){
         const a=points[s],b=points[s+1],x=b[0]-a[0],y=b[1]-a[1],z=b[2]-a[2],length=Math.hypot(x,y,z)||1;
         lengths[s]=length;dirs[s*3]=x/length;dirs[s*3+1]=y/length;dirs[s*3+2]=z/length;
       }
-      // FK flexion stays in one plane. Its normal gives every ring a common
+      // Left-hand FK flexion stays in one plane. Its normal gives every ring a common
       // lateral axis, avoiding a twisting seam at the knuckles.
       let xx=dirs[1]*dirs[5]-dirs[2]*dirs[4],xy=dirs[2]*dirs[3]-dirs[0]*dirs[5],xz=dirs[0]*dirs[4]-dirs[1]*dirs[3];
       let length=Math.hypot(xx,xy,xz);
@@ -37,8 +40,8 @@ window.ViolinFingerSkin = (() => {
       const sign=xx*hand.basis[0][0]+xy*hand.basis[0][1]+xz*hand.basis[0][2]<0?-1:1;
       xx*=sign/length;xy*=sign/length;xz*=sign/length;
       for(let r=0;r<RINGS;r++){
-        const s=sections[r][0];let t=sections[r][1];
-        if(r===RINGS-1)t=1-Math.min(.0018,lengths[2]*.12)/lengths[2];
+        const s=profile[r][0];let t=profile[r][1];
+        if(r===RINGS-1)t=bow?1+digit.radii[2]*Math.SQRT1_2/lengths[2]:1-Math.min(.0018,lengths[2]*.12)/lengths[2];
         const a=points[s],dx=dirs[s*3],dy=dirs[s*3+1],dz=dirs[s*3+2];
         let cx=a[0]+dx*lengths[s]*t,cy=a[1]+dy*lengths[s]*t,cz=a[2]+dz*lengths[s]*t;
         let tx=dx,ty=dy,tz=dz;
@@ -50,12 +53,17 @@ window.ViolinFingerSkin = (() => {
           tx=dx*(1-weight)+dirs[(s-1)*3]*weight;ty=dy*(1-weight)+dirs[(s-1)*3+1]*weight;tz=dz*(1-weight)+dirs[(s-1)*3+2]*weight;
         }
         length=Math.hypot(tx,ty,tz)||1;tx/=length;ty/=length;tz/=length;
-        const zx=xy*tz-xz*ty,zy=xz*tx-xx*tz,zz=xx*ty-xy*tx;
+        let rx=xx,ry=xy,rz=xz;
+        if(bow){const along=rx*tx+ry*ty+rz*tz;rx-=along*tx;ry-=along*ty;rz-=along*tz;const scale=1/(Math.hypot(rx,ry,rz)||1);rx*=scale;ry*=scale;rz*=scale;}
+        const zx=ry*tz-rz*ty,zy=rz*tx-rx*tz,zz=rx*ty-ry*tx;
         let centreW=0;
         if(board)centreW=(cx-board.O[0])*board.W[0]+(cy-board.O[1])*board.W[1]+(cz-board.O[2])*board.W[2];
+        // Bow contact centres stay inside rounded end pads. Their radius
+        // matches the original grip; the left hand keeps its flat string pads.
+        const radius=bow?(s<2?digit.radii[s]+(digit.radii[s+1]-digit.radii[s])*Math.max(0,t):digit.radii[2])*(r===RINGS-1?Math.SQRT1_2:1):0;
         for(let j=0;j<SIDES;j++){
-          const c=circle[j*2]*widths[r],d=circle[j*2+1]*depths[r],k=(base+r*SIDES+j)*3;
-          let vx=cx+xx*c+zx*d,vy=cy+xy*c+zy*d,vz=cz+xz*c+zz*d;
+          const c=circle[j*2]*(bow?radius:widths[r]),d=circle[j*2+1]*(bow?radius:depths[r]),k=(base+r*SIDES+j)*3;
+          let vx=cx+rx*c+zx*d,vy=cy+ry*c+zy*d,vz=cz+rz*c+zz*d;
           // Soft fingertip tissue conforms to the board. The skeleton and
           // its sounding contact point are never moved by the skin update.
           if(board&&r>=9){
@@ -68,7 +76,7 @@ window.ViolinFingerSkin = (() => {
           p[k]=vx;p[k+1]=vy;p[k+2]=vz;
         }
       }
-      for(let k=0;k<3;k++){p[(base+RINGS*SIDES)*3+k]=points[0][k]-dirs[k]*lengths[0]*.12;p[(base+RINGS*SIDES+1)*3+k]=points[3][k];}
+      for(let k=0;k<3;k++){p[(base+RINGS*SIDES)*3+k]=points[0][k]-dirs[k]*lengths[0]*.12;p[(base+RINGS*SIDES+1)*3+k]=points[3][k]+(bow?dirs[6+k]*digit.radii[2]:0);}
     }
     n.fill(0);
     const indices=state.indices;

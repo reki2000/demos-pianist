@@ -26,7 +26,7 @@ html.write_text(page)
 
 reports={name:json.loads((root/file).read_text()) for name,file in [
  ('integration','verification.json'),('sampleEngine','audio-verification.json'),
- ('violinLeftHand','violin-left-hand-verification.json'),('violinSkin','violin-skin-verification.json'),
+ ('violinLeftHand','violin-left-hand-verification.json'),('violinSkin','violin-skin-verification.json'),('bowSkin','bow-skin-verification.json'),
  ('nativeListeningPreview','audio-render-verification.json')] if (root/file).is_file()}
 reports.update(version=8,recordedInstrument=manifest['name'],recordedVelocityLayers=4,
  audioAssets=len(encoded),audioBytes=sum(a['bytes'] for a in manifest['assets'].values()),
@@ -38,14 +38,14 @@ reports['standaloneValidation']=json.loads(subprocess.check_output(['node','vali
 files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  root/'v8-verification.json',root/'audio-manifest.json',
  root/'audio-verification.json',root/'audio-render-verification.json',root/'verification.json',
- root/'violin-left-hand-verification.json',root/'violin-skin-verification.json',root/'audio-lifecycle-patches.json',root/'geometry-patches.json',root/'geometry-baseline.json',
+ root/'violin-left-hand-verification.json',root/'violin-skin-verification.json',root/'bow-skin-verification.json',root/'audio-lifecycle-patches.json',root/'geometry-patches.json',root/'geometry-baseline.json',
  root/'precompute-violin-hand.cjs',root/'pack-v8.py',root/'prepare-audio.py',root/'render-audio-preview.py',
  root/'piano-audio-preview-v8.mp3',root/'verify.cjs',root/'validate-v8.cjs',root/'v6-note-hashes.json',
  root/'convert.py',root/'replan.cjs',root/'hanging-replan.cjs',*root.glob('raw-*.b64'),
  root/'add-songs.cjs',root/'arrangements.cjs',root/'midi.cjs',*root.glob('mutopia-sources/*.ly'),
  root/'capture-scene.cjs',root/'render-egl.py',root/'render-preview.py',
  root/'render-check/hands.json',root/'render-check/hands-motion.gif',root/'render-check/portrait-motion.gif',
- *root.glob('*test.cjs'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
+ *root.glob('*test.cjs'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'docs/verification/bow-skin').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
  root/'audio-source/downloads.json',root/'audio-source/layers.json',root/'THIRD-PARTY-NOTICES.md']
 archive=root/'piano-recital-v8.zip'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:

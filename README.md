@@ -29,7 +29,7 @@ Guitar fingering takes seconds per piece, so plans ship precomputed in `dist/ins
 
 Violin left-hand trajectories ship in `dist/instruments/violin-hand-frames.js`: one wrist-rooted skeleton, four left fingers shortened by 20% with fixed bone lengths, articulated thumb, and analytic fingertip contacts. Regenerate offline with `node precompute-violin-hand.cjs`; playback never runs the nonlinear fitter. `node violin-left-hand-test.cjs` checks all three pieces and the rendered hand geometry. See [references and verification](docs/verification/violin-left-hand/README.md). The four left fingers use continuous shared-normal skin, batched into one reusable dynamic buffer; [skin verification](docs/verification/violin-skin/README.md) covers closed topology and buffer lifetime.
 
-Violin and cello right hands use five articulated digits anchored to the frog, with instrument-specific little-finger placement. References and close-up validation images: [bow-hold verification](docs/verification/bow-hold/README.md).
+Violin and cello right hands use five articulated digits anchored to the frog, with instrument-specific little-finger placement. All five digits use continuous skin in one static mesh per grip; [skin verification](docs/verification/bow-skin/README.md) includes before/after images and buffer checks. References and original grip validation: [bow-hold verification](docs/verification/bow-hold/README.md).
 
 ## Program
 

@@ -71,12 +71,24 @@ window.BowHand = (() => {
     oriented(R,'box',f.ferrule,f.ferruleScale.map(v=>v*2),metal,f.basis);
   }
   const distForOverlap=(a,b)=>Math.hypot(...sub(b,a))*.12;
+  // Each grip only moves rigidly with the bow. Build its continuous local
+  // skin once and let the renderer reuse the same static GPU buffer.
+  const skinMeshes={};
+  const localBasis=[[1,0,0],[0,1,0],[0,0,1]];
   function draw(R,H,skin,light){
     const round=(p,r,color)=>oriented(R,'rod',p,[r,r,r],color,H.basis);
     oriented(R,'palm',H.palmPos,H.palmScale,skin,H.basis);
     oriented(R,'joint',H.wrist,[.022,.020,.019],skin,H.basis);
     oriented(R,'joint',H.thenar,[.017,.022,.014],skin,H.basis);
-    for(const d of [H.thumb,...H.fingers]){
+    if(R.mesh&&window.ViolinFingerSkin){
+      let mesh=skinMeshes[H.type];
+      if(!mesh){
+        const g=grips[H.type],state=window.ViolinFingerSkin.create(true);
+        mesh=window.ViolinFingerSkin.update(state,{basis:localBasis,thumb:g.digits[0],fingers:g.digits.slice(1)});
+        skinMeshes[H.type]=mesh;
+      }
+      R.mesh(mesh,skin,{U:H.basis[0],V:H.basis[1],W:H.basis[2],O:H.origin});
+    }else for(const d of [H.thumb,...H.fingers]){
       for(let j=0;j<3;j++){
         const a=d.points[j],b=d.points[j+1],axis=unit(sub(b,a)),overlap=distForOverlap(a,b);
         R.segment(sub(a,mul(axis,overlap)),j===2?b:add(b,mul(axis,overlap)),d.radii[j],j===2?light:skin,'bodyLimb');
