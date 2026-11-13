@@ -249,12 +249,16 @@ R.setFaceDetail?.(false);
 }
 
 // Shared by the scene renderer and the actual-triangle clearance audit.
+const fingerSkins=new WeakMap(),fingerBoard={O:O0,U,V,W,top:wFB};
 function drawLeftHand(R,H) {
   const natural=H.model==='natural';
   if(natural&&H.wrist)R.oriented('joint',H.wrist,[.022,.018,.016],skin,0,...H.basis);
   if(H.basis)R.oriented('palm',H.palmPos,[.038,.035,.013],skin,0,...H.basis);
   else R.piece('palm',H.palmPos,[.042,.013,.038],skin,H.pitch,H.yaw,H.roll);
-  for(const f of H.fingers){
+  if(natural&&window.ViolinFingerSkin&&R.dynamicMesh){
+    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create();fingerSkins.set(R,state);}
+    R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skinLight);
+  }else for(const f of H.fingers){
     for(let j=0;j<3;j++){
       R.segment(f.points[j],f.points[j+1],(natural?(j===2?.004:.65*(.0105-j*.0016)):(.0105-j*.0016)),skinLight,natural?(j===2?'fingertip':'bodyLimb'):'limb');
       if(natural)R.oriented('rod',f.points[j],j?[.0065,.00585,.0065]:[.008,.008,.0045],skinLight,0,...H.basis);

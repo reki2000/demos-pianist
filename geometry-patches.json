@@ -1,7 +1,7 @@
 {
   "violin-gl.js": {
     "upstream": "ce2ac51a132a8c5e42f254f50e1f070b77530a1a69182c057180add5f7d2282d",
-    "integrated": "66dea0070be89f7f13de816c206044cce7f89394d294fcccd9110f5491f22f9e"
+    "integrated": "b39d9e236538f774e52445399dd0de5249e8d28614794eb12020a3be8c1398f2"
   },
   "guitar-model.js": {
     "upstream": "980c261eac805797a9b4299dd66ea6c16aa2bffc3d26644574499b9bc17f682e",
@@ -9,7 +9,7 @@
   },
   "violin-model.js": {
     "upstream": "9bc9750b38592f52501c820decbcf8086ee698937f8a51baed9128ad85d31ad4",
-    "integrated": "3322f0939a3e269d757d1c846f6790f62785eafabb598bbc50d4b75a4d7458d3"
+    "integrated": "a7291a7ae3e609b830cef1850fbb82d321c9351bc08f488ec3ab9ce9de7e84bf"
   },
   "cello-model.js": {
     "upstream": "5e1e58bedf79e7ba01d563c040b85e347e7dff561d42a6af1bca4127b19b1cb4",

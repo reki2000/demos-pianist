@@ -22,3 +22,5 @@ render-check/*.png
 # CI site staging
 _site/
 __pycache__/
+
+violin-skin-verification.json

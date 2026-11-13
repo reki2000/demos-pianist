@@ -61,6 +61,20 @@ function bone(a,b,r,c){let d=sub(b,a),l=Math.hypot(...d),y=norm(d),x=norm(cross(
 function oriented(shape,p,s,c,metal,X,Y,Z){let m=new Float32Array([X[0]*s[0],X[1]*s[0],X[2]*s[0],0,Y[0]*s[1],Y[1]*s[1],Y[2]*s[1],0,Z[0]*s[2],Z[1]*s[2],Z[2]*s[2],0,...p,1]);draw(shape,m,c,metal)}
 const meshBuffers=new WeakMap();
 function drawMesh(data,color,F){let key=meshBuffers.get(data);if(!key){key='custom'+Object.keys(shapes).length;shapes[key]=mesh(data);meshBuffers.set(data,key)}const {U,V,W,O}=F||{U:[1,0,0],V:[0,1,0],W:[0,0,1],O:[0,0,0]};draw(key,new Float32Array([...U,0,...V,0,...W,0,...O,1]),color)}
+const dynamicBuffers=new Map(),identity=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+let dynamicUploads=0,dynamicBytes=0;
+function dynamicMesh(key,data,color){
+  let entry=dynamicBuffers.get(key);
+  if(!entry){
+    const b=gl.createBuffer();entry={b,count:data.length/6,bytes:data.byteLength,shape:'dynamic:'+key};dynamicBuffers.set(key,entry);shapes[entry.shape]=entry;
+    gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
+  }else{
+    if(entry.bytes!==data.byteLength)throw Error('Dynamic mesh topology changed: '+key);
+    gl.bindBuffer(gl.ARRAY_BUFFER,entry.b);gl.bufferSubData(gl.ARRAY_BUFFER,0,data);
+  }
+  dynamicUploads++;dynamicBytes+=data.byteLength;draw(entry.shape,identity,color);
+}
+function dynamicStats(){return {buffers:dynamicBuffers.size,uploads:dynamicUploads,bytes:dynamicBytes};}
 let vp;function project(p){p=toWorld(p);if(!vp)return null;let q=[...p,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let k=0;k<4;k++)v[i]+=vp[k*4+i]*q[k];return{x:(v[0]/v[3]+1)/2,y:(1-v[1]/v[3])/2,visible:v[3]>0&&Math.abs(v[0]/v[3])<.95&&Math.abs(v[1]/v[3])<.95}}
 function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up);
 // INTEGRATION DIVERGENCE from demos-violinist/dist/gl.js (program binding;
@@ -72,5 +86,5 @@ function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up)
 // uploads fail with INVALID_OPERATION (black stage). The host renderer's
 // begin() (dist/gl.js) carries the same fix.
 gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
-return{box,ball,bone,piece,segment,setFaceDetail,oriented,mesh:drawMesh,begin,project,gl};}
+return{box,ball,bone,piece,segment,setFaceDetail,oriented,mesh:drawMesh,dynamicMesh,dynamicStats,begin,project,gl};}
 return{create,toWorld,look,perspective,multiply};})();

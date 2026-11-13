@@ -158,7 +158,7 @@ let gReport;
 // ---- Part V: violin drawn handedness (clearance-test (d)) ----------
 let vReport;
 {
-  const c = freshCtx(['dist/gl.js', DI('violin-fingering.js'), DI('violin-songs.js'), DI('violin-model.js'), DI('violin-hand.js'), DI('violin-hand-frames.js'), DI('violin-motion.js'), DI('violin-audio.js'), DI('violin-instrument.js')]);
+  const c = freshCtx(['dist/gl.js', DI('violin-fingering.js'), DI('violin-songs.js'), DI('violin-skin.js'), DI('violin-model.js'), DI('violin-hand.js'), DI('violin-hand-frames.js'), DI('violin-motion.js'), DI('violin-audio.js'), DI('violin-instrument.js')]);
   const RG = c.RecitalGL, I = c.VIOLIN_INSTRUMENT;
   const hp = (Hh, p) => {
     const cr = Math.cos(Hh.roll), sr = Math.sin(Hh.roll), px = p[0] * cr - p[1] * sr, py = p[0] * sr + p[1] * cr;
@@ -234,7 +234,7 @@ let cReport;
 
 // ---- Part D: the shell itself, full bundle in a stubbed browser ----
 let uid = 0; const draws = [];
-const glStub = { VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632, COMPILE_STATUS: 35713, LINK_STATUS: 35714, ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, FLOAT: 5126, TRIANGLES: 4, COLOR_BUFFER_BIT: 16384, DEPTH_BUFFER_BIT: 256, DEPTH_TEST: 2929, createShader: kind => ({ kind }), shaderSource() {}, compileShader() {}, getShaderParameter: () => true, createProgram: () => ({}), attachShader() {}, linkProgram() {}, getProgramParameter: () => true, useProgram() {}, getAttribLocation: (p, n) => n === 'aP' ? 0 : 1, getUniformLocation: (p, n) => n, createBuffer: () => ({ id: uid++ }), bindBuffer() {}, bufferData() {}, enableVertexAttribArray() {}, vertexAttribPointer() {}, uniformMatrix4fv() {}, uniformMatrix3fv() {}, uniform3fv() {}, uniform1f() {}, drawArrays: (m, s, count) => draws.push(count), viewport() {}, clearColor() {}, clear() {}, enable() {} };
+const glStub = { VERTEX_SHADER: 35633, FRAGMENT_SHADER: 35632, COMPILE_STATUS: 35713, LINK_STATUS: 35714, ARRAY_BUFFER: 34962, STATIC_DRAW: 35044, DYNAMIC_DRAW: 35048, FLOAT: 5126, TRIANGLES: 4, COLOR_BUFFER_BIT: 16384, DEPTH_BUFFER_BIT: 256, DEPTH_TEST: 2929, createShader: kind => ({ kind }), shaderSource() {}, compileShader() {}, getShaderParameter: () => true, createProgram: () => ({}), attachShader() {}, linkProgram() {}, getProgramParameter: () => true, useProgram() {}, getAttribLocation: (p, n) => n === 'aP' ? 0 : 1, getUniformLocation: (p, n) => n, createBuffer: () => ({ id: uid++ }), bindBuffer() {}, bufferData() {}, bufferSubData() {}, enableVertexAttribArray() {}, vertexAttribPointer() {}, uniformMatrix4fv() {}, uniformMatrix3fv() {}, uniform3fv() {}, uniform1f() {}, drawArrays: (m, s, count) => draws.push(count), viewport() {}, clearColor() {}, clear() {}, enable() {} };
 const ctx2d = () => new Proxy({}, { get: (t, p) => p in t ? t[p] : (() => {}), set: (t, p, v) => { t[p] = v; return true; } });
 function element(id = '', dataset = {}) {
   const kids = [];
@@ -271,7 +271,7 @@ const c = { window: null, document: documentStub, performance: { now: () => 0 },
 c.window = c; vm.createContext(c);
 const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'app.js',
   'instruments/guitar-songs.js', 'instruments/guitar-fingering.js', 'instruments/guitar-motion.js', 'instruments/guitar-model.js', 'instruments/guitar-audio.js', 'instruments/guitar-score.js', 'instruments/guitar-instrument.js', 'instruments/guitar-plans.js',
-  'instruments/bow-hand.js', 'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/violin-model.js', 'instruments/violin-hand.js', 'instruments/violin-hand-frames.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
+  'instruments/bow-hand.js', 'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/violin-skin.js', 'instruments/violin-model.js', 'instruments/violin-hand.js', 'instruments/violin-hand-frames.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
   'instruments/cello-fingering.js', 'instruments/cello-model.js', 'instruments/cello-motion.js', 'instruments/cello-audio.js', 'instruments/cello-songs.js', 'instruments/cello-instrument.js',
   'instruments/staff-score.js', 'instruments/shell.js'];
 for (const f of SCRIPTS) vm.runInContext(fs.readFileSync(path.join('dist', f), 'utf8'), c, { filename: f });
