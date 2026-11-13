@@ -43,7 +43,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
   }
   function thumbData(q){
     const u=q.u??q.w[0]+.025,h=smooth((.235-u)/.05),lowU=clamp(u+.006,.225,.315);
-    const low=[lowU,.0205,G.wFB(lowU)-.015],high=[.205,-.0243,-.006];
+    const low=[lowU,.0205,G.wFB(lowU)-.0152],high=[.205,-.0243,-.006];
     const target=low.map((v,i)=>v+(high[i]-v)*h);target[2]-=.055*Math.sin(Math.PI*h);
     const root=H2N(q,THUMB_BASE),delta=sub(target,root),distance=Math.hypot(...delta),X=unit(delta);
     const d=clamp(distance,Math.abs(THUMB_LEN[0]-THUMB_LEN[1])+.0001,THUMB_LEN[0]+THUMB_LEN[1]-.0001);
@@ -125,7 +125,9 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
   const hinge=(v,lo,hi,s)=>v<lo?(lo-v)/s:v>hi?(v-hi)/s:0;
   function fingerResidual(q,f,a,target,reference){
     const r=[],pts=fk(f,a).map(p=>H2N(q,p)),e=sub(pts[3],target.p);
-    r.push(...mul(e,target.weight>0?1/(target.weight>.999?.000015:.004+(1-target.weight)*.010):0));
+    // Sounding contacts are exact; a resting finger may relax instead of
+    // chasing an unreachable upcoming note through the fingerboard.
+    r.push(...mul(e,target.contact?1/.000015:target.weight>0?1/(.004+(1-target.weight)*.010):0));
     r.push((a[0]-.55)/.7,a[1]/.65,(a[2]-1.05)/.5,...a.map((v,j)=>hinge(v,...LIMIT[j],.012)));
     if(reference)r.push(...sub(a,reference).map(v=>v/.35));
     if(target.contact)r.push(Math.max(0,Math.hypot(...sub(inverse(q.R,sub(target.p,q.w)),ROOT[f]))-(FINGER_LENGTHS[f].reduce((s,v)=>s+v,0)-.004))/.0002);
@@ -239,7 +241,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
   }
   // Offline validation of the interpolated joint track. Failed intervals gain
   // an optimized FK knot; there is no collision/translation repair at playback.
-  function safety(q,contacts,shoulder){
+  function safety(q,contacts,shoulder,includeArm=true){
     let score=0,reason='';const mark=(value,name)=>{if(value>score){score=value;reason=name;}};
     for(let f=0;f<4;f++){
       const pts=fk(f,q.a[f]).map(p=>H2N(q,p)),c=contacts[f];
@@ -259,44 +261,60 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     if(thumbData(q).contact)mark(.025-Math.abs(th[3][1]),'thumb side');
     if(thumbData(q).contact)mark(surface(th[2])-.0117,'thumb seat');
     for(let j=0;j<3;j++)for(const s of [0,.25,.5,.75,1])mark(TR[j]+.00015-surface(add(th[j],mul(sub(th[j+1],th[j]),s))),'thumb wood');
-    const arm=armOf(q,shoulder);for(let j=0;j<=80;j++){const s=j/80,p=local(add(arm.wrist,mul(sub(arm.elbow,arm.wrist),s)));mark(.025+.017*s+.0005-armSurface(p),'forearm');}
+    if(includeArm){const arm=armOf(q,shoulder);for(let j=0;j<=80;j++){const s=j/80,p=local(add(arm.wrist,mul(sub(arm.elbow,arm.wrist),s)));mark(.025+.017*s+.0005-armSurface(p),'forearm');}}
     return {score,reason};
   }
   // The hand skin and instrument meshes are faceted; 0.2 mm is the
   // acceptance resolution for the smooth collision guide used by planning.
   const SOLVE_TOL=.0002;
+  // Keep a carriage correction consistent across near-coincident MIDI/render
+  // knots. An isolated replacement can otherwise create a microsecond pulse.
+  function nearbyGoals(P,t){
+    const goals=[];for(const dt of [-.001,0,.001]){const spec=track(P,clamp(t+dt,0,P.song.duration));for(let f=0;f<4;f++)if(spec.targets[f].contact)goals.push({f,p:spec.targets[f].p});}return goals;
+  }
+  function correctCarriage(P,keys,t,desired){
+    const spec=track(P,t),old=jointsAt(P,t,keys,spec.targets.map(v=>({contact:v.contact,target:world(v.p)})));
+    const delta=desired.x.slice(0,6).map((v,i)=>v-old.x[i]),du=desired.u-old.u;
+    let i=lowerBound(keys,t,q=>q.t);if(!keys[i]||Math.abs(keys[i].t-t)>1e-7)keys.splice(i,0,{...old,t});
+    let lo=i,hi=i;while(lo>0&&keys[lo].t-keys[lo-1].t<.001)lo--;while(hi+1<keys.length&&keys[hi+1].t-keys[hi].t<.001)hi++;
+    // Expand only as far as needed for a continuous boundary, rather than
+    // shifting an entire fast passage and breaking its other contacts.
+    const speed=(a,b,sign)=>Math.hypot(...a.x.slice(0,3).map((v,k)=>v+sign*delta[k]-b.x[k]))/Math.max(1e-7,Math.abs(a.t-b.t));
+    while(true){if(lo>0&&speed(keys[lo],keys[lo-1],1)>10){lo--;continue;}if(hi+1<keys.length&&speed(keys[hi],keys[hi+1],1)>10){hi++;continue;}break;}
+    for(let j=lo;j<=hi;j++){
+      const time=keys[j].t,q=blend(keys[j],keys[j],0);for(let k=0;k<6;k++)q.x[k]+=delta[k];
+      q.w=q.x.slice(0,3);q.R=rotation(q.x.slice(3,6));q.u+=du;keys[j]=fitJointKey(P,time,q,null);
+    }
+  }
   function refine(P,keys){
     const times=new Set([0,P.song.duration-.01]);
     for(const n of P.notes){times.add(n.t0);times.add(n.t0+n.dur/2);times.add(Math.max(0,n.t0-.09));times.add(n.t1);}
-    const regular=[];
-    for(let t=0;t<P.song.duration;t+=1/60){times.add(t);regular.push(t);}
+    for(let t=0;t<P.song.duration;t+=1/60)times.add(t);
     const samples=[...times].sort((a,b)=>a-b).map(t=>{const S=atLegacy(P,t);return {t,contacts:S.debug.contacts,shoulder:S.armL.shoulder};});
-    for(let pass=0;pass<8;pass++){
+    let bestKeys=keys.slice(),bestScore=Infinity,bestTotal=Infinity;
+    for(let pass=0;pass<=8;pass++){
       const bad=new Map();
-      for(const sample of samples){const q=jointsAt(P,sample.t,keys,sample.contacts),v=safety(q,sample.contacts,sample.shoulder);
+      for(const sample of samples){const q=jointsAt(P,sample.t,keys,sample.contacts),v=safety(q,sample.contacts,sample.shoulder,false);
         if(v.score>SOLVE_TOL&&(!bad.has(q.key)||bad.get(q.key).score<v.score))bad.set(q.key,{...sample,...v,q});
       }
-      let previous=null;
-      // Velocity is measured on the regular rendering clock, as in the
-      // continuity suite, not on microsecond-separated MIDI event samples.
-      for(const t of regular){const sample=samples[lowerBound(samples,t,s=>s.t)],q=jointsAt(P,t,keys,sample.contacts);
-        if(previous)for(let f=0;f<4;f++){
-          const a=H2N(q,fk(f,q.a[f])[3]),b=H2N(previous.q,fk(f,previous.q.a[f])[3]),step=Math.hypot(...sub(a,b));
-          const value=step-.047;if(value>0&&(!bad.has(q.key)||bad.get(q.key).score<value))bad.set(q.key,{...sample,q,score:value,reason:'continuity'});
-        }previous={q};
-      }
       const batch=[...bad.values()].sort((a,b)=>b.score-a.score);
+      const score=Math.max(0,...batch.map(v=>v.score));
+      const total=batch.reduce((sum,v)=>sum+v.score*v.score,0);
+      if(score<bestScore-1e-7||(score<=bestScore+1e-7&&total<bestTotal)){bestScore=score;bestTotal=total;bestKeys=keys.slice();}
+      if(pass===8)break;
       let globalSolves=0,changed=0;
       if(typeof process!=='undefined'&&process.env.NH_VERBOSE)console.error(P.song.id,'refine',pass,'bad intervals',bad.size,'max',Math.max(0,...batch.map(v=>v.score)),batch.slice().sort((a,b)=>b.score-a.score)[0]?.reason);
       if(!batch.length)break;
       for(const b of batch){
-        let q=fitJointKey(P,b.t,blend(b.q,b.q,0),null),v=safety(q,b.contacts,b.shoulder);
-        if(v.score>SOLVE_TOL&&globalSolves<24){globalSolves++;const i0=lowerBound(keys,b.t,k=>k.t),prevKey=i0>0?keys[i0-1]:null;const candidate=solveKey(P,b.t,prevKey||{x:q.x,u:q.u}),candidateSafety=safety(candidate,b.contacts,b.shoulder);if(candidateSafety.score<v.score){q=candidate;v=candidateSafety;}}
+        let q=fitJointKey(P,b.t,jointsAt(P,b.t,keys,b.contacts),null),v=safety(q,b.contacts,b.shoulder,false);
+        if(v.score>SOLVE_TOL&&globalSolves<24){globalSolves++;const i0=lowerBound(keys,b.t,k=>k.t),prevKey=i0>0?keys[i0-1]:null;const candidate=solveKey(P,b.t,prevKey||{x:q.x,u:q.u},nearbyGoals(P,b.t)),candidateSafety=safety(candidate,b.contacts,b.shoulder,false);if(candidateSafety.score<v.score&&candidateSafety.score<b.score-1e-6){correctCarriage(P,keys,b.t,candidate);changed++;continue;}}
         if(v.score>SOLVE_TOL&&v.score>=b.score-1e-6)continue;
         const i=lowerBound(keys,b.t,k=>k.t);if(keys[i]&&Math.abs(keys[i].t-b.t)<1e-6)keys[i]=q;else keys.splice(i,0,q);changed++;
       }
       if(!changed)break;
     }
+    // Repairs replace keys rather than mutate them; restore the best whole track.
+    keys.splice(0,keys.length,...bestKeys);
   }
   function stamp(){
     const source=window.ViolinHand.toString()+[atLegacy,solveArm,lowerBound,smooth,handDistAt,M.frame].map(f=>f.toString()).join('\n')+(window.BowHand?.source()||'').replace(/-?\d+\.\d+(?:e[+-]?\d+)?/g,n=>Number(n).toFixed(9))+JSON.stringify(FINGER_LENGTHS)+M.bodyWidth.toString()+M.bodyTop.toString()+JSON.stringify(G,(k,v)=>typeof v==='function'?v.toString():v);
@@ -354,5 +372,5 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     const basis=q.R.map(direction),thumb=thumbData(q).points.map(world);
     return {hand:{model:'natural',wrist:world(q.w),palmPos:world(H2N(q,[0,.035,0])),basis,pitch:0,yaw:0,roll:0,fingers,thumb,thumbAngles:q.th,thumbPadRadius:thumbData(q).padRadius,frameKey:'fk6:'+q.key,carriage:q.x.slice(0,6),swivel:q.x[11]},wrist:world(q.w),contacts:out,q};
   }
-  return {at,prepare,available,stamp,SOLVE_TOL,planAngles,fitJointKey,refine,jointsAt,safety,solveKey,residual,track,decode,blend,armOf,ROOT,THUMB_BASE,THUMB_LEN,FR,TR,LIMIT,fk,ik,thumbFK,thumbData,rotation,local,world,H2N,surface,neck,board,body,palmSamples,stats:()=>({solves:solveCount}),source:()=>window.ViolinHand.toString()};
+  return {at,prepare,available,stamp,SOLVE_TOL,planAngles,fitJointKey,refine,correctCarriage,nearbyGoals,jointsAt,safety,solveKey,residual,track,decode,blend,armOf,ROOT,THUMB_BASE,THUMB_LEN,FR,TR,LIMIT,fk,ik,thumbFK,thumbData,rotation,local,world,H2N,surface,neck,board,body,palmSamples,stats:()=>({solves:solveCount}),source:()=>window.ViolinHand.toString()};
 };

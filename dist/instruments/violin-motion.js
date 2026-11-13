@@ -34,7 +34,9 @@ const rotAxis = (v, axis, ang) => { // Rodrigues
 };
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 
-const FINGER_LENGTHS = [[.046, .028, .020], [.052, .032, .022], [.048, .030, .021], [.038, .024, .017]]; // fingers 1-4
+// Selected proportion B: shorten the four left fingers by 20%; palm/thumb stay unchanged.
+const FINGER_LENGTH_SCALE = .8;
+const FINGER_LENGTHS = [[.046, .028, .020], [.052, .032, .022], [.048, .030, .021], [.038, .024, .017]].map(finger=>finger.map(length=>length*FINGER_LENGTH_SCALE));
 const NOMINAL = [0, 2, 4, 5.5];               // hover semitone offset of fingers 1-4 inside a position
 const SHIFT_LEAD = 0.18;                      // hand starts shifting this long before the target note
 const VIB = { minDur: 0.55, delay: 0.22, ramp: 0.35, rate: 5.6, extentMm: 1.5 };

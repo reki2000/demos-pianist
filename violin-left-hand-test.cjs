@@ -1,7 +1,10 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');global.window=globalThis;
 for(const n of ['bow-hand','violin-fingering','violin-songs','violin-model','violin-hand','violin-hand-frames','violin-motion'])vm.runInThisContext(fs.readFileSync(`dist/instruments/${n}.js`,'utf8'),{filename:n});
-const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={samples:0,maxContactError:0,maxBoneError:0,maxRootError:0,maxWristAngle:0};
+const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={fingerLengthScale:.8,fingerLengthsMm:ViolinMotion.FINGER_LENGTHS.map(f=>f.reduce((a,b)=>a+b,0)*1000),thumbLengthsMm:N.THUMB_LEN.map(v=>v*1000),samples:0,maxContactError:0,maxBoneError:0,maxRootError:0,maxWristAngle:0};
+// The selected B proportion is a persistent product requirement.
+for(const [f,total] of [.0752,.0848,.0792,.0632].entries())assert(Math.abs(ViolinMotion.FINGER_LENGTHS[f].reduce((a,b)=>a+b,0)-total)<1e-10,'Selected 20% shortening changed');
+assert.deepEqual(N.THUMB_LEN,[.042,.032,.026],'Thumb length changed');
 for(const song of VIOLIN_SONGS){
  const P=ViolinMotion.plan(song);assert(N.available(P),'Missing compiled left hand: '+song.id);
  const times=new Set([0,song.duration]);for(let t=0;t<song.duration;t+=.1)times.add(t);for(const n of P.notes)for(const dt of [-.001,0,.001])times.add(Math.max(0,Math.min(song.duration,n.t0+dt)));
@@ -52,6 +55,6 @@ function meshAudit(){
  return result;
 }
 report.renderedSkinPenetration=meshAudit();
-for(const [part,depth] of Object.entries(report.renderedSkinPenetration))assert(depth<.001,part+': rendered skin intersects wood by over 1 mm');
+for(const [part,depth] of Object.entries(report.renderedSkinPenetration))assert(depth<.001,part+': rendered skin intersects wood by '+(depth*1000).toFixed(3)+' mm (limit 1 mm)');
 window.VIOLIN_HAND_FRAMES={stamp:'stale',songs:{}};const P=ViolinMotion.plan(VIOLIN_SONGS[0]);assert.notEqual(ViolinMotion.at(P,0).handL.model,'natural');assert.equal(N.stats().solves,0,'Stale cache triggered planning');
 console.log(JSON.stringify(report,null,2));
