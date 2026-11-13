@@ -33,6 +33,8 @@ Violin and cello right hands use five articulated digits anchored to the frog, w
 
 Piano hands share the B proportions for the four fingers and palm, with a shorter articulated thumb and connected skin. The piano stage is normalized to a 23.5 mm white-key pitch. Unreachable chords are rolled with synchronized sound/keys and short pedal bridges, following small-hand performance techniques. All source pitches and fingerings remain; [piano hand verification](docs/verification/piano-hands/README.md) documents dimensions, timing adaptations and resource checks. Regenerate the trajectories offline with `node precompute-piano-hands.cjs`.
 
+Guitar hands now use the same B skeleton and connected palm/wrist skin on both sides, with offline trajectories and fixed bone lengths. The classical guitar is normalized to a 650 mm scale and a 490 × 370 × 99 mm body; its neck, fingerboard and soundhole are aligned to those dimensions. See [guitar hand references, screenshots and verification](docs/verification/guitar-hands/README.md).
+
 ## Program
 
 Chopin: Heroic Polonaise Op. 53, Raindrop Prelude Op. 28/15, Revolutionary Étude Op. 10/12, Fantaisie-Impromptu Op. 66, Prelude Op. 28/4 · Beethoven: Für Elise, Moonlight Sonata 1st mvt · Debussy: Clair de Lune, Golliwogg's Cakewalk · Mozart: Rondo alla Turca · Bach: WTC Prelude BWV 846 · Satie: Gymnopédie No. 1 · Schumann: Träumerei · Liszt: Liebestraum No. 3 · Joplin: The Entertainer, Maple Leaf Rag · Traditional: When the Saints, Amazing Grace (project arrangements).

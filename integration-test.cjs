@@ -126,7 +126,7 @@ for (const f of ['dist/gl.js', DI('violin-gl.js')]) {
 // ---- Part G: guitar drawn handedness (posture-test formulation) ----
 let gReport;
 {
-  const c = freshCtx(['dist/gl.js', DI('guitar-songs.js'), DI('guitar-fingering.js'), DI('guitar-motion.js'), DI('guitar-model.js'), DI('guitar-plans.js')]);
+  const c = freshCtx(['dist/gl.js', DI('guitar-songs.js'), DI('guitar-fingering.js'), DI('guitar-motion.js'), DI('guitar-hands.js'), DI('guitar-hand-frames.js'), DI('guitar-skin.js'), DI('guitar-model.js'), DI('guitar-plans.js')]);
   const RG = c.RecitalGL, GM = c.GuitarMotion, GMod = c.GuitarModel, W = RG.toWorld;
   const projFront = projector(RG, [0, 1.25, -3.4], [0, 0.95, -0.15]);
   let frames = 0, worstL = -1e9, worstR = 1e9, projFrames = 0, minScreenGap = 1e9;
@@ -149,7 +149,10 @@ let gReport;
     }
   }
   assert(frames > 4000, 'guitar: too few frames ' + frames);
-  assert(worstL < -0.025, 'guitar fretting wrist not on anatomical left: ' + worstL.toFixed(4));
+  // The compact hand wraps around the heel at the highest frets; its
+  // wrist approaches the midline while remaining on the anatomical left.
+  // The guitar hand audit separately pins the mirrored MCP/CMC frame.
+  assert(worstL < -0.010, 'guitar fretting wrist not on anatomical left: ' + worstL.toFixed(4));
   assert(worstR > 0.035, 'guitar plucking wrist not on anatomical right: ' + worstR.toFixed(4));
   assert(minScreenGap > 0.03, 'guitar front-view hand order wrong: gap ' + minScreenGap.toFixed(3));
   gReport = { frames, worstFrettingSide: +worstL.toFixed(4), worstPluckingSide: +worstR.toFixed(4), minScreenGap: +minScreenGap.toFixed(3), projFrames };
@@ -270,7 +273,7 @@ let rafQ = [];
 const c = { window: null, document: documentStub, performance: { now: () => 0 }, requestAnimationFrame: f => { rafQ.push(f); }, devicePixelRatio: 1, innerWidth: 1440, matchMedia: () => ({ matches: false }), addEventListener() {}, console, setInterval: () => 1, clearInterval() {}, AudioContext: undefined };
 c.window = c; vm.createContext(c);
 const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'piano-skin.js', 'app.js',
-  'instruments/guitar-songs.js', 'instruments/guitar-fingering.js', 'instruments/guitar-motion.js', 'instruments/guitar-model.js', 'instruments/guitar-audio.js', 'instruments/guitar-score.js', 'instruments/guitar-instrument.js', 'instruments/guitar-plans.js',
+  'instruments/guitar-songs.js', 'instruments/guitar-fingering.js', 'instruments/guitar-motion.js', 'instruments/guitar-hands.js', 'instruments/guitar-hand-frames.js', 'instruments/guitar-skin.js', 'instruments/guitar-model.js', 'instruments/guitar-audio.js', 'instruments/guitar-score.js', 'instruments/guitar-instrument.js', 'instruments/guitar-plans.js',
   'instruments/bow-hand.js', 'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'instruments/violin-model.js', 'instruments/violin-hand.js', 'instruments/violin-hand-frames.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
   'instruments/cello-fingering.js', 'instruments/cello-model.js', 'instruments/cello-motion.js', 'instruments/cello-audio.js', 'instruments/cello-songs.js', 'instruments/cello-instrument.js',
   'instruments/staff-score.js', 'instruments/shell.js'];

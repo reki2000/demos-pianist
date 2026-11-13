@@ -1,0 +1,20 @@
+{
+  "fretCount": 20,
+  "scaleLengthMm": 650,
+  "neckDepthAtNutMm": 20.999988183689176,
+  "neckDepthAt12thMm": 22.999989028541666,
+  "renderedBodyMm": {
+    "length": 490.000064120912,
+    "width": 370.00000577813574,
+    "depth": 99.00003602359577
+  },
+  "renderedFingerboardMm": {
+    "length": 452.0000458567557,
+    "nutWidth": 51.99999988835997,
+    "endWidth": 63.99999854039784,
+    "depth": 6.000023534461269
+  },
+  "bodyDraws": 3,
+  "boardDraws": 1,
+  "faceFingerprint": "66b7db8b6f6c3f22240ac3bd15d7bdc9d20732b235d19cd94913ab2e8f70f9ab"
+}

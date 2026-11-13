@@ -1,0 +1,17 @@
+{
+  "scaleLengthMm": 650,
+  "renderedBodyMm": {
+    "length": 534.6409108061407,
+    "width": 360.5749969010452,
+    "depth": 76.28963530329452
+  },
+  "renderedFingerboardMm": {
+    "length": 496.9999963801002,
+    "nutWidth": 43.00000099970435,
+    "endWidth": 58.921476087190364,
+    "depth": 8.249006677732373
+  },
+  "bodyDraws": 74,
+  "boardDraws": 2,
+  "faceFingerprint": "66b7db8b6f6c3f22240ac3bd15d7bdc9d20732b235d19cd94913ab2e8f70f9ab"
+}
