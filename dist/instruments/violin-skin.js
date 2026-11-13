@@ -9,8 +9,8 @@ window.ViolinFingerSkin = (() => {
   const circle=new Float64Array(SIDES*2);
   for(let j=0;j<SIDES;j++){const a=(j+.5)*2*Math.PI/SIDES;circle[j*2]=Math.cos(a);circle[j*2+1]=Math.sin(a);}
   const bowSections=[[0,-.12],[0,0],[0,.45],[0,.88],[0,1],[1,.18],[1,.62],[1,.88],[1,1],[2,.45],[2,1],[2,1]];
-  function create(bow=false,joined=false){
-    const count=bow||joined?5:4,surface=joined?window.HandSurface.create(bow,count*PER_FINGER):null,vertices=count*PER_FINGER+(surface?surface.vertices:0);
+  function create(bow=false,joined=false,mirrored=false){
+    const count=bow||joined?5:4,surface=joined?window.HandSurface.create(bow,count*PER_FINGER,mirrored):null,vertices=count*PER_FINGER+(surface?surface.vertices:0);
     const topology=[];
     const triangle=(a,b,c)=>{topology.push(a,b,c);};
     for(let f=0;f<count;f++){
@@ -47,6 +47,7 @@ window.ViolinFingerSkin = (() => {
       for(let r=0;r<RINGS;r++){
         const s=profile[r][0];let t=profile[r][1];
         if(r===RINGS-1)t=rounded?1+digit.radii[2]*Math.SQRT1_2/lengths[2]:1-Math.min(.0018,lengths[2]*.12)/lengths[2];
+        if(s===0&&digit.skinBaseT!==undefined)t=digit.skinBaseT+(1-digit.skinBaseT)*t;
         const a=points[s],dx=dirs[s*3],dy=dirs[s*3+1],dz=dirs[s*3+2];
         let cx=a[0]+dx*lengths[s]*t,cy=a[1]+dy*lengths[s]*t,cz=a[2]+dz*lengths[s]*t;
         let tx=dx,ty=dy,tz=dz;

@@ -32,7 +32,7 @@ function keyGlyphs(fifths,bass=false){
  return Array.from({length:Math.min(7,Math.abs(fifths||0))},(_,i)=>({symbol:fifths<0?'♭':'♯',halfSteps:offsets[i]}));
 }
 function flagCount(duration){return duration<.21?3:duration<.42?2:duration<.85?1:0}
-function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,beat:beatAt(s,n[0]),duration:Math.max(.125,beatAt(s,n[0]+n[1])-beatAt(s,n[0]))})),lanes=Array.from({length:4},()=>[]),beams=[],clusters=[];
+function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,beat:beatAt(s,n[6]??n[0]),duration:Math.max(.125,beatAt(s,(n[6]??n[0])+(n[7]??n[1]))-beatAt(s,n[6]??n[0]))})).sort((a,b)=>a.beat-b.beat||a.n[2]-b.n[2]),lanes=Array.from({length:4},()=>[]),beams=[],clusters=[];
  for(const e of m){let lane=(e.n[2]<60?0:2)+e.n[4],arr=lanes[lane],last=arr.at(-1);if(last&&Math.abs(e.beat-last.beat)<.045)last.notes.push(e);else{last={beat:e.beat,notes:[e],lane};arr.push(last);clusters.push(last)}e.cluster=last;}
  // A chord whose tones straddle the middle-C lane split is still one chord:
  // fold the smaller same-hand cluster at the same beat into its partner so
@@ -128,6 +128,7 @@ function model(s){if(cache.has(s))return cache.get(s);let m=s.notes.map(n=>({n,b
   for(const sp of spans){const last=merged.at(-1);if(last&&sp[0]<=last[1]+.02)last[1]=Math.max(last[1],sp[1]);else merged.push([...sp])}
   return merged;
  });
+ for(const cl of clusters)cl.performedRoll=cl.notes.some(e=>e.n[6]!==undefined);
  m.beams=beams;m.clusters=clusters;cache.set(s,m);return m}
 // Horizontal scale that follows the music's density. Real engraving
 // gives crowded bars more width; a scrolling score can do the same with
@@ -301,7 +302,7 @@ for(const grp of groups){let cl=grp.cl,subs=new Map();for(const e of grp.items){
    minY=Math.min(...items.map(e=>G.get(e).y)),maxY=Math.max(...items.map(e=>G.get(e).y));
   // A spread chord carries the arpeggio wave in front of it: a
   // vertical wavy line spanning the chord, left of any accidentals.
-  if(cl.spread){let wx=Math.min(...items.map(e=>{let g=G.get(e);return g.accX!==undefined?g.accX:g.hx-4.8}))-6.5;
+  if(cl.spread||cl.performedRoll){let wx=Math.min(...items.map(e=>{let g=G.get(e);return g.accX!==undefined?g.accX:g.hx-4.8}))-6.5;
    c.strokeStyle=color;c.lineWidth=1.2;c.beginPath();
    for(let y=minY-4;y<=maxY+4;y+=1.75){let wxx=wx+2*Math.sin((y-minY+4)/7*Math.PI*2);if(y<=minY-3.9)c.moveTo(wxx,y);else c.lineTo(wxx,y)}
    c.stroke()}

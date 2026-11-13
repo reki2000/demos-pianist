@@ -269,7 +269,7 @@ const documentStub = {
 let rafQ = [];
 const c = { window: null, document: documentStub, performance: { now: () => 0 }, requestAnimationFrame: f => { rafQ.push(f); }, devicePixelRatio: 1, innerWidth: 1440, matchMedia: () => ({ matches: false }), addEventListener() {}, console, setInterval: () => 1, clearInterval() {}, AudioContext: undefined };
 c.window = c; vm.createContext(c);
-const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'app.js',
+const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'piano-skin.js', 'app.js',
   'instruments/guitar-songs.js', 'instruments/guitar-fingering.js', 'instruments/guitar-motion.js', 'instruments/guitar-model.js', 'instruments/guitar-audio.js', 'instruments/guitar-score.js', 'instruments/guitar-instrument.js', 'instruments/guitar-plans.js',
   'instruments/bow-hand.js', 'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'instruments/violin-model.js', 'instruments/violin-hand.js', 'instruments/violin-hand-frames.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
   'instruments/cello-fingering.js', 'instruments/cello-model.js', 'instruments/cello-motion.js', 'instruments/cello-audio.js', 'instruments/cello-songs.js', 'instruments/cello-instrument.js',

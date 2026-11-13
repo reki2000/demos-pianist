@@ -1,0 +1,16 @@
+{
+  "songs": 18,
+  "handPoses": 2566,
+  "trianglesPerHand": 1688,
+  "keyboardPitchMm": 23.5,
+  "thumbBoneTotalMm": 71,
+  "maxContactError": 0.00250444229840138,
+  "maxBoneError": 7.632783294297951e-17,
+  "maxRootError": 1.7040947646040916e-16,
+  "pitchesAndFingeringsPreserved": true,
+  "frames": 4500,
+  "newGpuBuffers": 2,
+  "gpuAllocations": 2,
+  "gpuUpdates": 8998,
+  "physicalScaleAndNoDoubleScaling": true
+}

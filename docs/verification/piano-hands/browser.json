@@ -1,0 +1,313 @@
+{
+  "realTimeSeconds": 75,
+  "observations": [
+    {
+      "song": "hero",
+      "time": 0,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 48,
+        "bytes": 5833728
+      },
+      "gl": 0,
+      "voices": 4,
+      "samples": 92,
+      "attacks": 4
+    },
+    {
+      "song": "hero",
+      "time": 4.647282867108711,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 72,
+        "bytes": 8750592
+      },
+      "gl": 0,
+      "voices": 14,
+      "samples": 92,
+      "attacks": 53
+    },
+    {
+      "song": "hero",
+      "time": 9.603260581239436,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 98,
+        "bytes": 11910528
+      },
+      "gl": 0,
+      "voices": 11,
+      "samples": 92,
+      "attacks": 116
+    },
+    {
+      "song": "hero",
+      "time": 14.656713013980502,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 122,
+        "bytes": 14827392
+      },
+      "gl": 0,
+      "voices": 20,
+      "samples": 92,
+      "attacks": 177
+    },
+    {
+      "song": "hero",
+      "time": 19.44748229748204,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 146,
+        "bytes": 17744256
+      },
+      "gl": 0,
+      "voices": 9,
+      "samples": 92,
+      "attacks": 232
+    },
+    {
+      "song": "hero",
+      "time": 24.077776981419586,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 172,
+        "bytes": 20904192
+      },
+      "gl": 0,
+      "voices": 22,
+      "samples": 92,
+      "attacks": 302
+    },
+    {
+      "song": "hero",
+      "time": 28.811897437159377,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 200,
+        "bytes": 24307200
+      },
+      "gl": 0,
+      "voices": 16,
+      "samples": 92,
+      "attacks": 369
+    },
+    {
+      "song": "hero",
+      "time": 33.57642380586332,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 230,
+        "bytes": 27953280
+      },
+      "gl": 0,
+      "voices": 47,
+      "samples": 92,
+      "attacks": 448
+    },
+    {
+      "song": "hero",
+      "time": 38.26491774214168,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 254,
+        "bytes": 30870144
+      },
+      "gl": 0,
+      "voices": 23,
+      "samples": 92,
+      "attacks": 503
+    },
+    {
+      "song": "hero",
+      "time": 42.895176082626435,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 278,
+        "bytes": 33787008
+      },
+      "gl": 0,
+      "voices": 27,
+      "samples": 92,
+      "attacks": 512
+    },
+    {
+      "song": "hero",
+      "time": 47.545315048485215,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 304,
+        "bytes": 36946944
+      },
+      "gl": 0,
+      "voices": 13,
+      "samples": 92,
+      "attacks": 512
+    },
+    {
+      "song": "hero",
+      "time": 52.39175533975354,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 328,
+        "bytes": 39863808
+      },
+      "gl": 0,
+      "voices": 46,
+      "samples": 92,
+      "attacks": 512
+    },
+    {
+      "song": "hero",
+      "time": 57.42266480351053,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 352,
+        "bytes": 42780672
+      },
+      "gl": 0,
+      "voices": 17,
+      "samples": 92,
+      "attacks": 512
+    },
+    {
+      "song": "hero",
+      "time": 62.33917972144483,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 374,
+        "bytes": 45454464
+      },
+      "gl": 0,
+      "voices": 33,
+      "samples": 92,
+      "attacks": 512
+    },
+    {
+      "song": "hero",
+      "time": 66.69183801707449,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 394,
+        "bytes": 47885184
+      },
+      "gl": 0,
+      "voices": 35,
+      "samples": 92,
+      "attacks": 512
+    },
+    {
+      "song": "hero",
+      "time": 71.11914705424523,
+      "playing": true,
+      "loading": false,
+      "speed": 1,
+      "duration": 354.013,
+      "gpuBuffers": 17,
+      "skin": {
+        "buffers": 2,
+        "uploads": 412,
+        "bytes": 50072832
+      },
+      "gl": 0,
+      "voices": 33,
+      "samples": 92,
+      "attacks": 512
+    }
+  ],
+  "afterSwitches": {
+    "song": "hero",
+    "time": 17,
+    "playing": false,
+    "loading": false,
+    "speed": 1,
+    "duration": 354.013,
+    "gpuBuffers": 39,
+    "skin": {
+      "buffers": 2,
+      "uploads": 430,
+      "bytes": 52260480
+    },
+    "gl": 0,
+    "voices": 0,
+    "samples": 92,
+    "attacks": 512
+  },
+  "pageErrors": [],
+  "auditoryCheck": false
+}

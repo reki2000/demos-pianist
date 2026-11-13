@@ -101,19 +101,16 @@ R.setFaceDetail?.(false);
 R.segment([B.x-.13,B.y-.01,B.z+.01],[-.20,.46,-.83],.092,suit);R.segment([B.x+.13,B.y-.01,B.z+.01],[.20,.46,-.83],.092,suit);R.piece('joint',[-.20,.46,-.83],[.075,.075,.075],suit);R.piece('joint',[.20,.46,-.83],[.075,.075,.075],suit);R.segment([-.20,.46,-.83],[-.20,.10,-.73],.06,suit);R.segment([.20,.46,-.83],[.12,.10,-.60],.06,suit);R.piece('shoe',[-.20,.065,-.65],[.06,.04,.145],ebony);let footAngle=-Math.asin((.055-.019*pedalPosition)/.255);R.piece('shoe',[.12,.06-.145*Math.sin(footAngle),-.65+.145*Math.cos(footAngle)],[.060,.040,.145],ebony,footAngle);
 const armDebug=[];
 for(let hand=0;hand<2;hand++){
- const H=pose.hands[hand],P=H.palm,palm=PianoMotion.handPoint(P,[0,0,0]),wrist=PianoMotion.handPoint(P,[0,.004,-.069]),shoulder=bodyPoint([hand?-.30:.30,.64+(B.shoulders?.[hand]||0),-.015]),arm=PianoMotion.arm(shoulder,wrist,hand,H.gesture.force);armDebug.push(arm);
- R.piece('joint',shoulder.map((v,i)=>i===1?v-.01:v),[.066,.07,.066],suit);R.segment(shoulder,arm.elbow,.064,suit);R.segment(arm.elbow,arm.wrist,.05,suit);R.piece('joint',arm.elbow,[.054,.054,.054],suit);let forearmLength=Math.hypot(...arm.elbow.map((v,i)=>v-arm.wrist[i])),cuff=arm.wrist.map((v,i)=>v+(arm.elbow[i]-v)*.045/forearmLength);R.segment(arm.wrist,cuff,.036,shirt);R.ball(cuff.map((v,i)=>i===1?v+.03:v),[.006,.006,.006],gold,.9);R.segment(wrist,PianoMotion.handPoint(P,[0,-.006,-.045]),.029,skin);R.piece('palm',palm,[.066,.018,.062],skin,P.pitch,P.yaw);R.segment(PianoMotion.handPoint(P,[(hand?1:-1)*.041,-.009,-.045]),PianoMotion.handPoint(P,[(hand?1:-1)*.053,-.008,.006]),.023,skin);R.piece('joint',wrist,[.038,.025,.028],skin,P.pitch,P.yaw);
- for(let f=0;f<5;f++){let F=H.fingers[f],pts=F.points,thumb=PianoMotion.physical(hand,f)===0;
-  for(let j=0;j<3;j++){let radius=(thumb?.014:.0115)-j*.0018;R.segment(pts[j],pts[j+1],radius,skinLight);if(j>0){R.piece('joint',pts[j],[radius*1.07,radius*.90,radius],skinLight);R.segment([pts[j][0]-radius*.8,pts[j][1]+radius*.7,pts[j][2]],[pts[j][0]+radius*.8,pts[j][1]+radius*.7,pts[j][2]],.0012,[.38,.23,.16],'joint')}}
-  let tipDir=pts[3].map((v,k)=>v-pts[2][k]),tipLength=Math.hypot(...tipDir),tipYaw=Math.atan2(tipDir[0],tipDir[2]),tipPitch=-Math.atan2(tipDir[1],Math.hypot(tipDir[0],tipDir[2])),nailNormal=[Math.sin(tipYaw)*Math.sin(tipPitch),Math.cos(tipPitch),Math.cos(tipYaw)*Math.sin(tipPitch)];R.piece('joint',pts[3],[.008,.008,.011],skinLight,tipPitch,tipYaw);R.piece('palm',pts[3].map((v,k)=>v-tipDir[k]/tipLength*.006+nailNormal[k]*.006),[.006,.0012,.007],[.80,.64,.51],tipPitch,tipYaw);
- }
+ const H=pose.hands[hand],P=H.palm,palm=PianoMotion.handPoint(P,[0,0,0]),wrist=PianoMotion.handPoint(P,[0,0,-.035/PianoMotion.worldScale]),shoulder=bodyPoint([hand?-.30:.30,.64+(B.shoulders?.[hand]||0),-.015]),arm=PianoMotion.arm(shoulder,wrist,hand,H.gesture.force);armDebug.push(arm);
+ R.piece('joint',shoulder.map((v,i)=>i===1?v-.01:v),[.066,.07,.066],suit);R.segment(shoulder,arm.elbow,.064,suit);R.segment(arm.elbow,arm.wrist,.05,suit);R.piece('joint',arm.elbow,[.054,.054,.054],suit);let forearmLength=Math.hypot(...arm.elbow.map((v,i)=>v-arm.wrist[i])),cuff=arm.wrist.map((v,i)=>v+(arm.elbow[i]-v)*.045/forearmLength);R.segment(arm.wrist,cuff,.036,shirt);R.ball(cuff.map((v,i)=>i===1?v+.03:v),[.006,.006,.006],gold,.9);PianoHandSkin.draw(R,H,hand,skinLight);
+
 }
 if(playing){let pitches=[...active.keys()].sort((a,b)=>a-b);$('notes').textContent=pitches.length?pitches.map(noteName).join(' · '):'Rest'}else $('notes').textContent=position>0?'Pause':'Waiting to play';
 window.recitalDebug={time:t,activeNotes:[...active.keys()],pedal,pedalPosition,pedalDown:pedalState.down,sustainedNotes:[...voices].filter(v=>t>=v.profile.keyEnd&&PianoPedal.levelAt(v.profile,t)>1e-4).map(v=>v.n[2]),camera:cameraMode,song:song.id,playing,hands:pose.hands,arms:armDebug,body:B,characterMesh:'smooth-tailcoat',keyDepressions:[...pose.depressions.entries()]};
 }
 function showError(e){$('start').classList.remove('hidden');$('status').textContent=e.message||String(e);console.error(e)}
 prepare();
-try{renderer=RecitalGL.create($('scene'));ready=true;$('startButton').disabled=false;$('play').disabled=false;$('status').textContent='Press play to start the recital';let last=performance.now();function frame(now){requestAnimationFrame(frame);
+try{renderer=RecitalGL.create($('scene'));renderer.setWorldScale?.(PianoMotion.worldScale);ready=true;$('startButton').disabled=false;$('play').disabled=false;$('status').textContent='Press play to start the recital';let last=performance.now();function frame(now){requestAnimationFrame(frame);
 // Leave CPU/GPU time for audio, including on high-refresh-rate displays.
 if(!renderEnabled||document.hidden)return;
 if(!frameDirty&&now-last<1000/30)return;

@@ -12,10 +12,7 @@ for(const [id,a] of Object.entries(manifest.assets)){
  const buffer=Buffer.from(data[id],'base64');assert.equal(buffer.length,a.bytes);
  assert.equal(crypto.createHash('sha256').update(buffer).digest('hex'),a.sha256);bytes+=buffer.length;
 }
-const hashes=JSON.parse(fs.readFileSync('v6-note-hashes.json'));
-for(const song of c.SONGS){assert.equal(crypto.createHash('sha256').update(JSON.stringify(song.notes)).digest('hex'),hashes[song.id]);for(const n of song.notes)for(const p of c.PianoAudio.notePlan(n))assert(data[p.id]);}
-if(fs.existsSync('piano-recital-v7.html')){
- const previous=[...fs.readFileSync('piano-recital-v7.html','utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
- for(let i=0;i<5;i++)assert.equal(scripts[i],previous[i],'Motion/score/GL source changed');
-}
-console.log(JSON.stringify({inlineScriptSyntaxChecks:scripts.length,embeddedAssetsVerified:Object.keys(data).length,embeddedAudioBytes:bytes,songs:c.SONGS.length,noteAndFingeringHashesPreserved:true,allNotesHaveEmbeddedSamples:true,externalScriptOrStylesheetDependencies:0}));
+const hashes=JSON.parse(fs.readFileSync('piano-performance-hashes.json'));
+for(const song of c.SONGS){assert.equal(crypto.createHash('sha256').update(JSON.stringify(song.notes)).digest('hex'),hashes[song.id].notes);for(const n of song.notes)for(const p of c.PianoAudio.notePlan(n))assert(data[p.id]);}
+
+console.log(JSON.stringify({inlineScriptSyntaxChecks:scripts.length,embeddedAssetsVerified:Object.keys(data).length,embeddedAudioBytes:bytes,songs:c.SONGS.length,performedNoteHashesVerified:true,allNotesHaveEmbeddedSamples:true,externalScriptOrStylesheetDependencies:0}));

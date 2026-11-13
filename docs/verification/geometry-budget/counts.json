@@ -5,10 +5,10 @@
       "draws": 454
     },
     "after": {
-      "triangles": 56536,
-      "draws": 454
+      "triangles": 41880,
+      "draws": 358
     },
-    "triangleReductionPercent": 49.8
+    "triangleReductionPercent": 62.8
   },
   "guitar": {
     "before": {

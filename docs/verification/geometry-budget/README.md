@@ -18,12 +18,12 @@ the default piece for each instrument, Wide camera, paused:
 
 | Instrument | Before triangles | After triangles | Reduction | Before draws | After draws |
 |---|---:|---:|---:|---:|---:|
-| Piano | 112,612 | 56,536 | 49.8% | 454 | 454 |
+| Piano | 112,612 | 41,880 | 62.8% | 454 | 358 |
 | Guitar | 146,396 | 89,636 | 38.8% | 365 | 365 |
 | Violin | 90,520 | 36,080 | 60.1% | 260 | 225 |
 | Cello | 114,148 | 64,964 | 43.1% | 1,803 | 647 |
 
-After counts include the five-finger bow-grip, violin left-hand and continuous hand skin joining fingers, palms and wrists.
+After counts include the five-finger bow-grip, violin left-hand and continuous hand skin joining fingers, palms and wrists, including both piano hands.
 These counts include the stage; they are not FPS or audio-underrun measurements.
 Wide and portrait views of all four performers were inspected in Chromium.
 `counts.json` records the measurements.

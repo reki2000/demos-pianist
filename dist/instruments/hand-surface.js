@@ -3,7 +3,7 @@
 // deformation only fills the existing position array before shared normals.
 window.HandSurface=(()=>{
   const N=48,ROWS=8,LEFT_SCALE=[.038,.035,.013];
-  function create(bow,offset){
+  function create(bow,offset,mirrored=false){
     const points=[[0,0,1]],id=(r,j)=>r===0?0:r===ROWS?1+(ROWS-1)*N:1+(r-1)*N+(j+N)%N;
     for(let r=1;r<ROWS;r++)for(let j=0;j<N;j++){const a=j*2*Math.PI/N,b=r*Math.PI/ROWS;const x=Math.cos(a),y=Math.sin(a);points.push([Math.sin(b)*Math.sign(x)*Math.abs(x)**(2/2.6),Math.sin(b)*Math.sign(y)*Math.abs(y)**(2/2.6),Math.cos(b)]);}
     points.push([0,0,-1]);
@@ -15,6 +15,7 @@ window.HandSurface=(()=>{
       const a=id(r,j),b=id(r+1,j),c=id(r+1,j+1),d=id(r,j+1);
       if(r!==ROWS-1)add(r,j,a,b,c);if(r!==0)add(r,j,a,c,d);
     }
+    if(mirrored)for(const face of faces){const b=face[1];face[1]=face[2];face[2]=b;}
     const edges=new Map();for(const f of faces)for(let k=0;k<3;k++){const a=f[k],b=f[(k+1)%3],key=Math.min(a,b)+':'+Math.max(a,b);if(edges.has(key))edges.delete(key);else edges.set(key,[a,b]);}
     const next=new Map([...edges.values()]),loops=[];
     while(next.size){const start=next.keys().next().value,loop=[];let p=start;do{loop.push(p);const q=next.get(p);if(q===undefined)throw Error('Palm boundary branches');next.delete(p);p=q;}while(p!==start);loops.push(loop);}
@@ -25,7 +26,7 @@ window.HandSurface=(()=>{
       if(best<0)throw Error('Missing palm socket');sockets.push(loops.splice(best,1)[0].map(v=>mapping.get(v)));
     }
     if(loops.length!==1)throw Error('Missing wrist socket');
-    return {bow,offset,points:new Float64Array(used.flatMap(v=>points[v])),indices,sockets,wrist:loops[0].map(v=>mapping.get(v)),wristOffset:offset+used.length,vertices:used.length+49,seams:[],initialized:false};
+    return {bow,offset,mirrored,points:new Float64Array(used.flatMap(v=>points[v])),indices,sockets,wrist:loops[0].map(v=>mapping.get(v)),wristOffset:offset+used.length,vertices:used.length+49,seams:[],initialized:false};
   }
   function stitch(indices,a,b){
     let i=0,j=0;while(i<a.length||j<b.length){const ai=a[i%a.length],bj=b[j%b.length];if(j===b.length||(i<a.length&&(i+1)/a.length<=(j+1)/b.length)){indices.push(ai,bj,a[(i+1)%a.length]);i++;}else{indices.push(ai,bj,b[(j+1)%b.length]);j++;}}
@@ -48,9 +49,9 @@ window.HandSurface=(()=>{
     // The bow frame is reflected. Keep every palm's exterior winding aligned
     // with its finger tubes by reflecting the local parameterization in Z.
     const parity=(B[0][1]*B[1][2]-B[0][2]*B[1][1])*B[2][0]+(B[0][2]*B[1][0]-B[0][0]*B[1][2])*B[2][1]+(B[0][0]*B[1][1]-B[0][1]*B[1][0])*B[2][2];
-    if(parity<0)for(let i=0;i<surface.points.length;i+=3)for(let k=0;k<3;k++)p[surface.offset*3+i+k]-=2*B[2][k]*surface.points[i+2]*S[2];
+    if(parity<0&&!surface.mirrored)for(let i=0;i<surface.points.length;i+=3)for(let k=0;k<3;k++)p[surface.offset*3+i+k]-=2*B[2][k]*surface.points[i+2]*S[2];
     const direction=bow?1:-1;
-    for(let j=0;j<8;j++){const a=(j+.5)*2*Math.PI/8;for(let k=0;k<3;k++)p[(surface.wristOffset+j)*3+k]=hand.wrist[k]+B[1][k]*direction*.009+B[0][k]*Math.cos(a)*.021+B[2][k]*Math.sin(a)*.014*(bow?1:-1);}
+    for(let j=0;j<8;j++){const a=(j+.5)*2*Math.PI/8;for(let k=0;k<3;k++)p[(surface.wristOffset+j)*3+k]=hand.wrist[k]+B[1][k]*direction*.009+B[0][k]*Math.cos(a)*.021+B[2][k]*Math.sin(a)*.014*(bow?1:-1)*(surface.mirrored?-1:1);}
     for(let k=0;k<3;k++)p[(surface.wristOffset+8)*3+k]=hand.wrist[k]+B[1][k]*direction*.009;
   }
   function blendSockets(surface,p){
