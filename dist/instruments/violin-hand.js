@@ -15,7 +15,9 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
   const inverse=(R,p)=>R.map(a=>dot(a,p));
   function rotation(a){
     const [x,y,z]=a,c=Math.cos(x),s=Math.sin(x),d=Math.cos(y),t=Math.sin(y),e=Math.cos(z),f=Math.sin(z);
-    return [[e*d,f*d,-t],[e*t*s-f*c,f*t*s+e*c,d*s],[e*t*c+f*s,f*t*c-e*s,d*c]];
+    // The renderer reflects planning X. Reflect across the neck here so
+    // this radial/distal/dorsal frame draws a LEFT hand, not a right hand.
+    return [[e*d,-f*d,-t],[e*t*s-f*c,-f*t*s-e*c,d*s],[e*t*c+f*s,-f*t*c+e*s,d*c]];
   }
   const ROOT=[[.027,.070,0],[.009,.074,0],[-.009,.072,0],[-.027,.066,0]];
   const THUMB_BASE=[.032,.035,-.012],THUMB_LEN=[.042,.032,.026],FR=[.006825,.005785,.004745],TR=[.009,.008,.007];
@@ -43,14 +45,14 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
   }
   function thumbData(q){
     const u=q.u??q.w[0]+.025,h=smooth((.235-u)/.05),lowU=clamp(u+.006,.225,.315);
-    const low=[lowU,.0205,G.wFB(lowU)-.0152],high=[.205,-.0243,-.006];
+    const low=[lowU,-.0205,G.wFB(lowU)-.0152],high=[.205,.0243,-.006];
     const target=low.map((v,i)=>v+(high[i]-v)*h);target[2]-=.055*Math.sin(Math.PI*h);
     const root=H2N(q,THUMB_BASE),delta=sub(target,root),distance=Math.hypot(...delta),X=unit(delta);
     const d=clamp(distance,Math.abs(THUMB_LEN[0]-THUMB_LEN[1])+.0001,THUMB_LEN[0]+THUMB_LEN[1]-.0001);
-    const seat=add(root,mul(X,d)),hint=[0,-h,-1+1.2*h],Y=unit(sub(hint,mul(X,dot(hint,X))));
+    const seat=add(root,mul(X,d)),hint=[0,h,-1+1.2*h],Y=unit(sub(hint,mul(X,dot(hint,X))));
     const along=(THUMB_LEN[0]**2-THUMB_LEN[1]**2+d*d)/(2*d),height=Math.sqrt(Math.max(0,THUMB_LEN[0]**2-along*along));
     const joint=add(root,add(mul(X,along),mul(Y,height)));
-    const distal=unit([0,.016*(1-h)-.016*h,.020494]);
+    const distal=unit([0,-.016*(1-h)+.016*h,.020494]);
     return {points:[root,joint,seat,add(seat,mul(distal,THUMB_LEN[2]))],target,padRadius:.009-h*.001,contact:h<.05||h>.95};
   }
   function linear(A,b){
@@ -105,8 +107,13 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
   function heel(p){const d=[(p[0]-.195)/.018,p[1]/.018,(p[2]+.018)/.024];return (Math.hypot(...d)-1)*.018;}
   const surface=p=>Math.min(neck(p,true),board(p),body(p),heel(p));
   function armOf(q,shoulder=[.205,1.452,-.03]){
-    const wrist=world(q.x.slice(0,3)),axis=unit(sub(wrist,shoulder)),base=direction([0,-1,-.5]);
-    const pole=add(add(mul(base,Math.cos(q.x[11])),mul(cross(axis,base),Math.sin(q.x[11]))),mul(axis,dot(axis,base)*(1-Math.cos(q.x[11]))));
+    const wrist=world(q.x.slice(0,3)),axis=unit(sub(wrist,shoulder));
+    // Choose the analytic elbow-circle point nearest a straight wrist. On
+    // the corrected E side this keeps the forearm below/outside the body.
+    const distal=direction(q.R[1]),projection=dot(distal,axis);
+    let pole=sub(mul(axis,projection),distal);
+    if(Math.hypot(...pole)<1e-6)pole=direction([0,1,-.5]);
+    const angle=q.x[11],along=dot(axis,pole);pole=add(add(mul(pole,Math.cos(angle)),mul(cross(axis,pole),Math.sin(angle))),mul(axis,along*(1-Math.cos(angle))));
     return solveArm(shoulder,wrist,.36,.34,pole);
   }
   function decode(x,targets,u){
@@ -164,7 +171,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     const outside=axial<.035?Math.max(.065,rim+Math.sqrt(.035*.035-axial*axial)):.065;
     const high=smooth((.225-spec.u)/.10),wristTop=G.wFB(q.w[0])-.012+high*.065;
     const over=smooth((q.w[2]-.012)/.025),sideLimit=outside*(1-over)+Math.min(outside,.060)*over;
-    r.push(Math.max(0,q.w[1]+sideLimit)/.0003,Math.max(0,q.w[2]-wristTop)/.0003);
+    r.push(Math.max(0,sideLimit-q.w[1])/.0003,Math.max(0,q.w[2]-wristTop)/.0003);
     const arm=armOf(q,spec.shoulder);
     const fore=unit(sub(arm.wrist,arm.elbow)),distal=direction(q.R[1]);
     r.push(Math.max(0,.94-dot(fore,distal))/.025);
@@ -184,9 +191,9 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
       return {p:local(c.target),weight:Math.max(.18,weight),contact:c.contact};
     });
     const h=smooth((.225-u)/.10),tilt=1.05-.35*h,yaw=.85*h,roll=.30*h,R=rotation([tilt,roll,yaw]);
-    const centre=[u-.025,-.050-h*.007,G.wFB(u)+.025];
+    const centre=[u-.025,.050+h*.007,G.wFB(u)+.025];
     const low=sub(centre,mv(R,[0,.070,0]));
-    const w=low.map((v,i)=>v*(1-h)+[.155,-.075,.025][i]*h);
+    const w=low.map((v,i)=>v*(1-h)+[.155,.075,.025][i]*h);
     return {targets,u,shoulder:S.armL.shoulder,seed:[...w,tilt,roll,yaw,1.85,-.65,-1.60,.45,.25,-.15,...Array.from({length:4},()=>[.35,0,1.05]).flat()]};
   }
   let solveCount=0;
@@ -198,7 +205,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     if(fit.cost>100){
       for(const [tilt,roll,yaw,offset,height] of [[spec.u<.20?.55:.95,.25,-.30,.025,.045],[spec.u<.20?.55:.95,0,-.30,.025,.045],[.55,.20,-.36,.045,.030]]){
         const R=rotation([tilt,roll,yaw]);
-        const centre=[spec.u-offset,-.040,G.wFB(spec.u)+height],w=sub(centre,mv(R,[0,.070,0]));
+        const centre=[spec.u-offset,.040,G.wFB(spec.u)+height],w=sub(centre,mv(R,[0,.070,0]));
         const candidate=[...w,tilt,roll,yaw,1.85,-.65,-1.60,.45,.25,-.15,...Array.from({length:4},()=>[.35,0,1.05]).flat()],other=minimize(fn,candidate,45);
         if(other.cost<fit.cost)fit=other;
       }

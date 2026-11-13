@@ -5,6 +5,13 @@ const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={
 // The selected B proportion is a persistent product requirement.
 for(const [f,total] of [.0752,.0848,.0792,.0632].entries())assert(Math.abs(ViolinMotion.FINGER_LENGTHS[f].reduce((a,b)=>a+b,0)-total)<1e-10,'Selected 20% shortening changed');
 assert.deepEqual(N.THUMB_LEN,[.042,.032,.026],'Thumb length changed');
+// Planning X is reflected by RecitalGL. A left radial/distal/dorsal
+// frame must therefore have negative planning determinant and positive drawn
+// determinant; the former rig incorrectly had the right hand's chirality.
+const dot=(a,b)=>a.reduce((v,x,i)=>v+x*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],drawn=p=>[-p[0],p[1],p[2]];
+const G=ViolinModel.GEOM,F=ViolinModel.frame(),E=F.contactPoint(3,0),Gstring=F.contactPoint(0,0);
+assert(dot(drawn(E.map((v,i)=>v-Gstring[i])),cross(drawn(G.U),drawn(G.W)))>0,'E string must be on the player right of G');
+report.minDrawnLeftDeterminant=1;
 for(const song of VIOLIN_SONGS){
  const P=ViolinMotion.plan(song);assert(N.available(P),'Missing compiled left hand: '+song.id);
  const times=new Set([0,song.duration]);for(let t=0;t<song.duration;t+=.1)times.add(t);for(const n of P.notes)for(const dt of [-.001,0,.001])times.add(Math.max(0,Math.min(song.duration,n.t0+dt)));
@@ -12,6 +19,13 @@ for(const song of VIOLIN_SONGS){
   const S=ViolinMotion.at(P,t),L=S.handL,old=ViolinMotion.atLegacy(P,t);assert.equal(L.model,'natural');assert(L.fingers.flatMap(f=>f.points.flat()).every(Number.isFinite));
   assert.deepEqual(S.handR,old.handR,'Left hand changed bow hold');assert.deepEqual(S.armR,old.armR);assert.deepEqual(S.head,old.head);
   assert(dist(L.wrist,S.armL.wrist)<1e-9,'Wrist disconnected');
+  assert(Math.abs(dist(S.armL.shoulder,S.armL.elbow)-.36)<1e-7&&Math.abs(dist(S.armL.elbow,S.armL.wrist)-.34)<1e-7,'Left arm stretched');
+  const determinant=dot(cross(L.basis[0],L.basis[1]),L.basis[2]);
+  assert(determinant<-.999999,'Left hand has right hand chirality');
+  const B=L.basis.map(drawn),drawnDet=dot(cross(B[0],B[1]),B[2]);
+  report.minDrawnLeftDeterminant=Math.min(report.minDrawnLeftDeterminant,drawnDet);
+  assert(drawnDet>.999999,'Rendered hand is mirrored');
+  assert(dot(L.basis[0],G.U)>0,'Index/thumb side must point toward scroll');
   for(let f=0;f<4;f++){
    const points=L.fingers[f].points,root=L.wrist.map((v,i)=>v+L.basis.reduce((s,axis,j)=>s+axis[i]*N.ROOT[f][j],0));
    const re=dist(points[0],root);report.maxRootError=Math.max(report.maxRootError,re);assert(re<1e-9,'Finger root moved on palm');
@@ -19,7 +33,7 @@ for(const song of VIOLIN_SONGS){
    if(S.debug.contacts[f].contact){const e=dist(points[3],S.debug.contacts[f].target);report.maxContactError=Math.max(report.maxContactError,e);assert(e<.00005,`${song.id} ${t}: fingertip missed string (${e})`);}
   }
   for(let j=0;j<3;j++)assert(Math.abs(dist(L.thumb[j],L.thumb[j+1])-N.THUMB_LEN[j])<1e-9,'Thumb stretched');
-  const fore=S.armL.wrist.map((v,i)=>v-S.armL.elbow[i]),dot=fore.reduce((s,v,i)=>s+v*L.basis[1][i],0)/Math.hypot(...fore);report.maxWristAngle=Math.max(report.maxWristAngle,Math.acos(Math.max(-1,Math.min(1,dot)))*180/Math.PI);
+  const fore=S.armL.wrist.map((v,i)=>v-S.armL.elbow[i]),foreDot=fore.reduce((s,v,i)=>s+v*L.basis[1][i],0)/Math.hypot(...fore);report.maxWristAngle=Math.max(report.maxWristAngle,Math.acos(Math.max(-1,Math.min(1,foreDot)))*180/Math.PI);
   report.samples++;
  }
 }
@@ -29,11 +43,12 @@ for(const song of VIOLIN_SONGS){const P=ViolinMotion.plan(song);let previous=nul
 }
 // Fast musical shifts can cover centimetres in a render frame. Probe both
 // sides of every knot to distinguish continuous motion from a pose jump.
-report.maxKnotWristJump=0;
+report.maxKnotWristJump=0;report.maxKnotElbowJump=0;
 for(const song of VIOLIN_SONGS){const P=ViolinMotion.plan(song),keys=VIOLIN_HAND_FRAMES.songs[song.id].keys;
- for(const key of keys){const t=key.t;if(t<.000001||t>song.duration-.000001)continue;const a=ViolinMotion.at(P,t-.000001),b=ViolinMotion.at(P,t+.000001);report.maxKnotWristJump=Math.max(report.maxKnotWristJump,dist(a.handL.wrist,b.handL.wrist));}
+ for(const key of keys){const t=key.t;if(t<.000001||t>song.duration-.000001)continue;const a=ViolinMotion.at(P,t-.000001),b=ViolinMotion.at(P,t+.000001);report.maxKnotWristJump=Math.max(report.maxKnotWristJump,dist(a.handL.wrist,b.handL.wrist));report.maxKnotElbowJump=Math.max(report.maxKnotElbowJump,dist(a.armL.elbow,b.armL.elbow));}
 }
 assert(report.maxKnotWristJump<.0001,'Wrist pose is discontinuous at a knot');
+assert(report.maxKnotElbowJump<.0001,'Elbow pose is discontinuous at a knot');
 assert.equal(N.stats().solves,0,'Playback ran nonlinear fitting');
 // Inspect the actual low-poly skin vertices against the rendered body triangles.
 function meshAudit(){

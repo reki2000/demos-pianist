@@ -9,7 +9,7 @@
  * Violin local frame: point(u, v, w) = O + U*u + V*v + W*w, where
  *   u = meters along the strings from the bridge toward the scroll
  *       (nut at u = 0.328, body from u = -0.161 to u = +0.195),
- *   v = meters across the strings (G side positive at the bridge),
+ *   v = meters across the strings (E side positive at the bridge),
  *   w = meters out of the top plate (bridge top at w = 0.033).
  * A stopped note at distance d mm from the nut sits at u = 0.328 - d/1000.
  */
@@ -25,11 +25,15 @@ const STRING_LENGTH = 0.328;
 const O0 = [0.105, 1.438, -0.205];                    // top plate under the bridge
 const U = norm([0.616, -0.03, -0.788]);               // bridge -> scroll
 const Wraw = [0.18, 0.95, -0.25];
-const W = norm(sub(Wraw, mul(U, Wraw.reduce((s, v, i) => s + v * U[i], 0)))); // plate normal, orthogonalized
+const Wflat = norm(sub(Wraw, mul(U, Wraw.reduce((s, v, i) => s + v * U[i], 0))));
+const Vflat = cross(Wflat, U), plateRoll = Math.PI / 6;
+// A violin rests with the E-string edge lower, leaving room underneath
+// for the left forearm as the hand moves around the neck heel.
+const W = add(mul(Wflat, Math.cos(plateRoll)), mul(Vflat, Math.sin(plateRoll)));
 const V = cross(W, U);                                // across the strings
-const STRING_V_BRIDGE = [0.0165, 0.0055, -0.0055, -0.0165]; // G D A E
-const STRING_V_NUT = [0.00825, 0.00275, -0.00275, -0.00825];
-const STRING_V_TAIL = [0.012, 0.004, -0.004, -0.012];
+const STRING_V_BRIDGE = [-0.0165, -0.0055, 0.0055, 0.0165]; // G D A E
+const STRING_V_NUT = [-0.00825, -0.00275, 0.00275, 0.00825];
+const STRING_V_TAIL = [-0.012, -0.004, 0.004, 0.012];
 const STRING_R = [0.0012, 0.0010, 0.0009, 0.0008];
 const BRIDGE_W = 0.0333;
 const wFB = u => 0.0235 - 0.0125 * (u / STRING_LENGTH);          // fingerboard top surface
@@ -253,7 +257,7 @@ const fingerSkins=new WeakMap(),fingerBoard={O:O0,U,V,W,top:wFB};
 function drawLeftHand(R,H) {
   const natural=H.model==='natural';
   if(natural&&window.HandSurface&&R.dynamicMesh){
-    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true);fingerSkins.set(R,state);}
+    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true);fingerSkins.set(R,state);}
     R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skin);return;
   }
   if(natural&&H.wrist)R.oriented('joint',H.wrist,[.022,.018,.016],skin,0,...H.basis);
