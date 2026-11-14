@@ -39,13 +39,13 @@ files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  root/'v8-verification.json',root/'audio-manifest.json',
  root/'audio-verification.json',root/'audio-render-verification.json',root/'verification.json',
  root/'violin-left-hand-verification.json',root/'violin-skin-verification.json',root/'bow-skin-verification.json',root/'hand-surface-verification.json',root/'audio-lifecycle-patches.json',root/'geometry-patches.json',root/'geometry-baseline.json',
- root/'precompute-violin-hand.cjs',root/'pack-v8.py',root/'prepare-audio.py',root/'render-audio-preview.py',
+ root/'precompute-violin-hand.cjs',root/'precompute-violin-orientation.cjs',root/'pack-v8.py',root/'prepare-audio.py',root/'render-audio-preview.py',
  root/'piano-audio-preview-v8.mp3',root/'verify.cjs',root/'validate-v8.cjs',root/'v6-note-hashes.json',root/'piano-performance-hashes.json',root/'piano-hand-template.json',root/'precompute-piano-hands.cjs',root/'piano-hand-verification.json',
  root/'convert.py',root/'replan.cjs',root/'hanging-replan.cjs',*root.glob('raw-*.b64'),
  root/'add-songs.cjs',root/'arrangements.cjs',root/'midi.cjs',*root.glob('mutopia-sources/*.ly'),
  root/'capture-scene.cjs',root/'render-egl.py',root/'render-preview.py',
  root/'render-check/hands.json',root/'render-check/hands-motion.gif',root/'render-check/portrait-motion.gif',
- *root.glob('*test.cjs'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'docs/verification/bow-skin').glob('*'),*(root/'docs/verification/hand-joins').glob('*'),*(root/'docs/verification/piano-hands').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
+ *root.glob('*test.cjs'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-left-orientation').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'docs/verification/bow-skin').glob('*'),*(root/'docs/verification/hand-joins').glob('*'),*(root/'docs/verification/piano-hands').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
  root/'audio-source/downloads.json',root/'audio-source/layers.json',root/'THIRD-PARTY-NOTICES.md']
 archive=root/'piano-recital-v8.zip'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
