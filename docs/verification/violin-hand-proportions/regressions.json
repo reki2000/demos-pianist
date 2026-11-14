@@ -1,0 +1,105 @@
+{
+  "violinSkin": {
+    "poses": 303,
+    "frames": 4500,
+    "componentSurface": {
+      "vertices": 392,
+      "triangles": 768,
+      "closedComponents": 4
+    },
+    "wholeHandTriangles": 1688,
+    "uploadBytes": 121536,
+    "newGpuBuffers": 1,
+    "gpuAllocations": 1,
+    "bufferSubData": 4499,
+    "dynamicDraws": 4500,
+    "cpuMilliseconds": 914.1392760000003
+  },
+  "joinedSurface": {
+    "violinLeft": {
+      "vertices": 846,
+      "triangles": 1688,
+      "components": 1,
+      "openEdges": 0,
+      "poses": 303,
+      "uploadBytes": 121536
+    },
+    "violinRight": {
+      "vertices": 846,
+      "triangles": 1688,
+      "components": 1,
+      "openEdges": 0,
+      "poses": 303,
+      "uploadBytes": 121536
+    },
+    "celloRight": {
+      "vertices": 846,
+      "triangles": 1688,
+      "components": 1,
+      "openEdges": 0,
+      "poses": 404,
+      "uploadBytes": 121536
+    }
+  },
+  "pianoHands": {
+    "songs": 18,
+    "handPoses": 2566,
+    "trianglesPerHand": 1688,
+    "keyboardPitchMm": 23.5,
+    "thumbBoneTotalMm": 71,
+    "maxContactError": 0.00250444229840138,
+    "maxBoneError": 7.632783294297951e-17,
+    "maxRootError": 1.7040947646040916e-16,
+    "pitchesAndFingeringsPreserved": true,
+    "frames": 4500,
+    "newGpuBuffers": 2,
+    "gpuAllocations": 2,
+    "gpuUpdates": 8998,
+    "physicalScaleAndNoDoubleScaling": true
+  },
+  "guitarSkin": {
+    "handPoses": 49674,
+    "renderedSkinPenetration": {
+      "body": 0.00082290337023074,
+      "board": 0,
+      "neck": 0.0007907237506558141
+    },
+    "limitMm": 1,
+    "runtimeFits": 0
+  },
+  "bowSkin": {
+    "poses": 707,
+    "componentSurface": {
+      "triangles": 960,
+      "closedDigits": 5
+    },
+    "wholeHandTriangles": 1688,
+    "maxSurfaceContactGap": 0.000814264897746274,
+    "frames": 4500,
+    "gpuBuffers": 2,
+    "gpuUploads": 2,
+    "gpuUpdates": 0
+  },
+  "geometry": {
+    "dist/gl.js": {
+      "faceUnchanged": true,
+      "before": 89272,
+      "after": 29476
+    },
+    "dist/instruments/violin-gl.js": {
+      "faceUnchanged": true,
+      "before": 89272,
+      "after": 29476
+    },
+    "dist/instruments/violin-model.js": {
+      "before": 9396,
+      "after": 2820,
+      "boundsPreservedWithinMm": 2
+    },
+    "dist/instruments/cello-model.js": {
+      "before": 11880,
+      "after": 3720,
+      "boundsPreservedWithinMm": 2
+    }
+  }
+}

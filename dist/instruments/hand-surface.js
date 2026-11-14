@@ -60,12 +60,12 @@ window.HandSurface=(()=>{
       for(let k=0;k<3;k++)p[(surface.wristOffset+9+f*8+j)*3+k]=.45*((1-w)*p[a[i]*3+k]+w*p[a[(i+1)%a.length]*3+k])+.55*p[(f*98+j)*3+k];
     }}
   }
-  // Compress only the soft palm against the actual sloped fingerboard boxes.
+  // Compress soft tissue against the actual sloped fingerboard boxes.
   // Contact targets, finger bones and wrist coordinates stay unchanged.
-  function conform(surface,p,board){
+  function conform(surface,p,board,startVertex=surface.offset){
     if(!board)return;
     const slope=-.0125/.328,den=Math.hypot(1,slope);
-    for(let i=surface.offset*3;i<p.length;i+=3)for(let part=0;part<2;part++){
+    for(let i=startVertex*3;i<p.length;i+=3)for(let part=0;part<2;part++){
       const lo=part?.210:.058,hi=part?.328:.210,width=part?.0165:.0225,mid=(lo+hi)/2;
       const x=p[i]-board.O[0],y=p[i+1]-board.O[1],z=p[i+2]-board.O[2];
       const u=x*board.U[0]+y*board.U[1]+z*board.U[2]-mid,v=x*board.V[0]+y*board.V[1]+z*board.V[2],w=x*board.W[0]+y*board.W[1]+z*board.W[2]-(board.top(mid)-.0032);

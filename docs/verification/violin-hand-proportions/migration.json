@@ -1,0 +1,11 @@
+{
+  "samples": 5856,
+  "maxThumbSeatError": 1.3548623466035525e-17,
+  "carriageAndFingerDataPreserved": true,
+  "dataSHA256": "d1f52646a02ce5a5fb160a2060733146847850e63f51bb266f2da7c173d80acc",
+  "thumbLengthsMm": [
+    42,
+    32,
+    18
+  ]
+}

@@ -4,7 +4,7 @@ for(const n of ['bow-hand','violin-fingering','violin-songs','hand-surface','vio
 const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={fingerLengthScale:.8,fingerLengthsMm:ViolinMotion.FINGER_LENGTHS.map(f=>f.reduce((a,b)=>a+b,0)*1000),thumbLengthsMm:N.THUMB_LEN.map(v=>v*1000),samples:0,maxContactError:0,maxBoneError:0,maxRootError:0,maxWristAngle:0};
 // The selected B proportion is a persistent product requirement.
 for(const [f,total] of [.0752,.0848,.0792,.0632].entries())assert(Math.abs(ViolinMotion.FINGER_LENGTHS[f].reduce((a,b)=>a+b,0)-total)<1e-10,'Selected 20% shortening changed');
-assert.deepEqual(N.THUMB_LEN,[.042,.032,.026],'Thumb length changed');
+assert.deepEqual(N.THUMB_LEN,[.042,.032,.018],'Shorter thumb distal phalanx changed');
 // Planning X is reflected by RecitalGL. A left radial/distal/dorsal
 // frame must therefore have negative planning determinant and positive drawn
 // determinant; the former rig incorrectly had the right hand's chirality.

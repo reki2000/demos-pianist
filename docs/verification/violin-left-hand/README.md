@@ -2,7 +2,7 @@
 
 The four fingers now share fixed knuckles on a wrist-rooted palm, with fixed phalanx lengths and linked PIP/DIP flexion. Sounding fingertips follow the existing fingering and vibrato targets. The thumb supports the side of the neck in lower positions and moves around the heel in higher positions; its three bones also keep constant lengths. The elbow follows the wrist, with a soft preference for a straight wrist.
 
-Selected proportion **B** shortens the four left fingers by **20%**. Their total bone lengths (index/middle/ring/little) are now 75.2 / 84.8 / 79.2 / 63.2 mm. Palm dimensions, thumb lengths, face geometry and the bow-holding right hand keep their existing sizes. Carriage positions and joint angles are refitted so the shorter fingers still meet the sounding targets.
+Selected proportion **B** shortens the four left fingers by **20%**. Their total bone lengths (index/middle/ring/little) are now 75.2 / 84.8 / 79.2 / 63.2 mm. Palm dimensions, face geometry and the bow-holding right hand keep their existing sizes. The thumb now has a shorter 18 mm distal phalanx and a palm-blended metacarpal; see [hand shape comparisons](../violin-hand-proportions/README.md). Carriage positions and joint angles are refitted so the shorter fingers still meet the sounding targets.
 
 References reviewed:
 - [Manukau Youth Orchestra — Left hand](https://www.manukauyouthorchestra.org.nz/violin/left/): thumb joint beside the neck, open space below it, straight wrist and elbow beneath the instrument.
@@ -23,7 +23,7 @@ VIOLIN_HAND_WORK=/tmp/violin-hand-refit node precompute-violin-hand.cjs --retarg
 
 After regenerating, run `node violin-left-hand-test.cjs` before committing. `--resume-angles` can resume an existing angle checkpoint without repeating the smooth collision-guide refinement; the contact repair and independent rendered-vertex checks still apply.
 
-The thumb follows the interpolated palm carriage, rather than the fingering engine's earlier shift anchor. Free fingers can extend at the MCP joint while preparing a note, and the fingertip pads use a flatter section against the fingerboard.
+The thumb follows the interpolated palm carriage, rather than the fingering engine's earlier shift anchor. Free fingers can extend at the MCP joint while preparing a note, and the rounded fingertip pads compress softly against the fingerboard.
 
 | Lower position | Higher position |
 |---|---|
@@ -31,9 +31,9 @@ The thumb follows the interpolated palm carriage, rather than the fingering engi
 
 ![Full figure](wide.png)
 
-Verification: 10,261 poses across the three pieces, plus 30 Hz motion and probes around every stored knot. Contact/root/bone errors stay at numerical precision, and playback performs zero nonlinear fits. Rendered vertices are checked at note starts, midpoints, ends and one-second samples against the actual body triangles and board/neck boxes; sampled skin overlap is below 1 mm (body 0 mm, board 0.868 mm, neck 0.978 mm, forearm 0.617 mm). These clearance results describe the sampled rendered vertices. Bow/right-arm/head states match the existing motion, and the face mesh baseline passes. Full results: [verification.json](verification.json).
+Verification: 10,261 poses across the three pieces, plus 30 Hz motion and probes around every stored knot. Contact/root/bone errors stay at numerical precision, and playback performs zero nonlinear fits. Rendered vertices are checked at note starts, midpoints, ends and one-second samples against the actual body triangles and board/neck boxes; sampled skin overlap is below 1 mm (body 0 mm, board 0 mm, neck 0.978 mm, forearm 0.617 mm). These clearance results describe the sampled rendered vertices. Bow/right-arm/head states match the existing motion, and the face mesh baseline passes. Full results: [verification.json](verification.json).
 
-The four shortened fingers now use continuous shared-normal surfaces across their joints. The thumb, skeleton and offline trajectories remain unchanged. See [skin implementation and before/after views](../violin-skin/README.md).
+The four shortened fingers now use continuous shared-normal surfaces across their joints. The four-finger skeleton and wrist trajectories remain unchanged. The [updated thumb and fuller fingertip profile](../violin-hand-proportions/README.md) keep the same thumb neck seat. See [skin implementation and before/after views](../violin-skin/README.md).
 
 All five digits now share one surface with the palm and wrist. [Shared hand skin verification](../hand-joins/README.md) covers the connected topology and updated rendering.
 

@@ -254,17 +254,23 @@ R.setFaceDetail?.(false);
 
 // Shared by the scene renderer and the actual-triangle clearance audit.
 const fingerSkins=new WeakMap(),fingerBoard={O:O0,U,V,W,top:wFB};
+const LEFT_SKIN_PROFILE=Object.freeze({widthScale:1.18,depthScale:1.20,tipLength:.0045,tipWidth:.0048,tipDepth:.0040});
+function createLeftSkin(joined=true){
+  const s=window.ViolinFingerSkin.create(false,joined,true,LEFT_SKIN_PROFILE);
+  // The metacarpal belongs inside the thenar/palm, as in the piano hand.
+  s.thumb.skinBaseT=.65;return s;
+}
 function drawLeftHand(R,H) {
   const natural=H.model==='natural';
   if(natural&&window.HandSurface&&R.dynamicMesh){
-    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true);fingerSkins.set(R,state);}
+    let state=fingerSkins.get(R);if(!state){state=createLeftSkin();fingerSkins.set(R,state);}
     R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skin);return;
   }
   if(natural&&H.wrist)R.oriented('joint',H.wrist,[.022,.018,.016],skin,0,...H.basis);
   if(H.basis)R.oriented('palm',H.palmPos,[.038,.035,.013],skin,0,...H.basis);
   else R.piece('palm',H.palmPos,[.042,.013,.038],skin,H.pitch,H.yaw,H.roll);
   if(natural&&window.ViolinFingerSkin&&R.dynamicMesh){
-    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create();fingerSkins.set(R,state);}
+    let state=fingerSkins.get(R);if(!state){state=createLeftSkin(false);fingerSkins.set(R,state);}
     R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skinLight);
   }else for(const f of H.fingers){
     for(let j=0;j<3;j++){
@@ -299,7 +305,7 @@ function draw(R, S) {
 
 return {
   GEOM: { STRING_LENGTH, O0, U, V, W, STRING_V_BRIDGE, STRING_V_NUT, STRING_R, BRIDGE_W, BOW_CONTACT_U, wFB, wStr, vStr },
-  frame, draw, drawViolin, drawLeftHand, BODY_SPEC, OUTLINE, BODY_MESH, bodyWidth, bodyTop,
+  frame, draw, drawViolin, drawLeftHand, createLeftSkin, LEFT_SKIN_PROFILE, BODY_SPEC, OUTLINE, BODY_MESH, bodyWidth, bodyTop,
   palette: { skin, skinLight, suit, varnish },
 };
 })();

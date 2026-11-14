@@ -20,7 +20,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     return [[e*d,-f*d,-t],[e*t*s-f*c,-f*t*s-e*c,d*s],[e*t*c+f*s,-f*t*c+e*s,d*c]];
   }
   const ROOT=[[.027,.070,0],[.009,.074,0],[-.009,.072,0],[-.027,.066,0]];
-  const THUMB_BASE=[.032,.035,-.012],THUMB_LEN=[.042,.032,.026],FR=[.006825,.005785,.004745],TR=[.009,.008,.007];
+  const THUMB_BASE=[.032,.035,-.012],THUMB_LEN=[.042,.032,.018],FR=[.006825,.005785,.004745],TR=[.009,.008,.007];
   const LIMIT=[[-.70,1.54],[-.85,.85],[.10,2.18]],DIP=.67;
   function fk(f,a){
     const m=[Math.sin(a[1]),Math.cos(a[1]),0],pts=[ROOT[f]],angles=[a[0],a[0]+a[2],a[0]+(1+DIP)*a[2]];

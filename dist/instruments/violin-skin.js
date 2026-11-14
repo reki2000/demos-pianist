@@ -9,7 +9,7 @@ window.ViolinFingerSkin = (() => {
   const circle=new Float64Array(SIDES*2);
   for(let j=0;j<SIDES;j++){const a=(j+.5)*2*Math.PI/SIDES;circle[j*2]=Math.cos(a);circle[j*2+1]=Math.sin(a);}
   const bowSections=[[0,-.12],[0,0],[0,.45],[0,.88],[0,1],[1,.18],[1,.62],[1,.88],[1,1],[2,.45],[2,1],[2,1]];
-  function create(bow=false,joined=false,mirrored=false){
+  function create(bow=false,joined=false,mirrored=false,profile=null){
     const count=bow||joined?5:4,surface=joined?window.HandSurface.create(bow,count*PER_FINGER,mirrored):null,vertices=count*PER_FINGER+(surface?surface.vertices:0);
     const topology=[];
     const triangle=(a,b,c)=>{topology.push(a,b,c);};
@@ -24,11 +24,11 @@ window.ViolinFingerSkin = (() => {
     if(surface)topology.push(...surface.indices);
     const bridgeTriangles=surface?surface.sockets.reduce((n,r)=>n+r.length+8,0)+surface.wrist.length+96:0;
     const indices=new Uint16Array(topology.length+bridgeTriangles*3);indices.set(topology);
-    return {bow,count,surface,topology,thumb:{points:null,radii:[.009,.007,.007]},positions:new Float64Array(vertices*3),normals:new Float64Array(vertices*3),indices,data:new Float32Array(indices.length*6),directions:new Float64Array(9),lengths:new Float64Array(3)};
+    return {bow,count,surface,topology,profile,thumb:{points:null,radii:[.009,.007,.007]},positions:new Float64Array(vertices*3),normals:new Float64Array(vertices*3),indices,data:new Float32Array(indices.length*6),directions:new Float64Array(9),lengths:new Float64Array(3)};
   }
   function update(state,hand,board,deform){
     const p=state.positions,n=state.normals,dirs=state.directions,lengths=state.lengths;
-    const bow=state.bow;
+    const bow=state.bow,shape=state.profile;
     if(state.surface&&!bow)state.thumb.points=hand.thumb;
     for(let f=0;f<state.count;f++){
       const rounded=bow||f===4,profile=rounded?bowSections:sections;
@@ -47,6 +47,10 @@ window.ViolinFingerSkin = (() => {
       for(let r=0;r<RINGS;r++){
         const s=profile[r][0];let t=profile[r][1];
         if(r===RINGS-1)t=rounded?1+digit.radii[2]*Math.SQRT1_2/lengths[2]:1-Math.min(.0018,lengths[2]*.12)/lengths[2];
+        let width=widths[r]*(shape?.widthScale||1),depth=depths[r]*(shape?.depthScale||1);
+        // Two ellipsoid latitude rings close the fingertip with a rounded
+        // pad. The pole stays at the musical contact, without extending it.
+        if(shape&&!rounded&&r>=RINGS-2){const latitude=r===RINGS-2?0:Math.PI/4;t=1-shape.tipLength*(1-Math.sin(latitude))/lengths[2];width=shape.tipWidth*Math.cos(latitude);depth=shape.tipDepth*Math.cos(latitude);}
         if(s===0&&digit.skinBaseT!==undefined)t=digit.skinBaseT+(1-digit.skinBaseT)*t;
         const a=points[s],dx=dirs[s*3],dy=dirs[s*3+1],dz=dirs[s*3+2];
         let cx=a[0]+dx*lengths[s]*t,cy=a[1]+dy*lengths[s]*t,cz=a[2]+dz*lengths[s]*t;
@@ -68,11 +72,11 @@ window.ViolinFingerSkin = (() => {
         // matches the original grip; the left hand keeps its flat string pads.
         const radius=rounded?(s<2?digit.radii[s]+(digit.radii[s+1]-digit.radii[s])*Math.max(0,t):digit.radii[2])*(r===RINGS-1?Math.SQRT1_2:1):0;
         for(let j=0;j<SIDES;j++){
-          const c=circle[j*2]*(rounded?radius:widths[r]),d=circle[j*2+1]*(rounded?radius:depths[r]),k=(base+r*SIDES+j)*3;
+          const c=circle[j*2]*(rounded?radius:width),d=circle[j*2+1]*(rounded?radius:depth),k=(base+r*SIDES+j)*3;
           let vx=cx+rx*c+zx*d,vy=cy+ry*c+zy*d,vz=cz+rz*c+zz*d;
           // Soft fingertip tissue conforms to the board. The skeleton and
           // its sounding contact point are never moved by the skin update.
-          if(board&&!rounded&&r>=9){
+          if(board&&!rounded&&(r>=9||shape)){
             const ox=vx-board.O[0],oy=vy-board.O[1],oz=vz-board.O[2],u=ox*board.U[0]+oy*board.U[1]+oz*board.U[2],v=ox*board.V[0]+oy*board.V[1]+oz*board.V[2];
             if(u>=.058&&u<=.328&&Math.abs(v)<(u<.210?.0225:.0165)&&centreW>=board.top(u)-.0001){
               const w=ox*board.W[0]+oy*board.W[1]+oz*board.W[2],lift=Math.max(0,board.top(u)+.0002-w);
@@ -88,7 +92,7 @@ window.ViolinFingerSkin = (() => {
       window.HandSurface.update(state.surface,p,hand);
       if(!state.surface.initialized){window.HandSurface.connect(state.surface,state.topology,p);state.indices.set(state.topology);state.surface.initialized=true;}
       window.HandSurface.blendSockets(state.surface,p);
-      window.HandSurface.conform(state.surface,p,board);
+      window.HandSurface.conform(state.surface,p,board,shape?0:state.surface.offset);
     }
     if(deform)deform(p,hand);
     n.fill(0);

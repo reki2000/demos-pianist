@@ -1,0 +1,44 @@
+{
+ "ok": true,
+ "modulesVerified": 0,
+ "audioLifecyclePatches": 3,
+ "geometryPatches": 8,
+ "guitar": {
+  "frames": 5328,
+  "worstFrettingSide": -0.0164,
+  "worstPluckingSide": 0.1028,
+  "minScreenGap": 0.049,
+  "projFrames": 5328
+ },
+ "violin": {
+  "states": 6563,
+  "bowWristSideMinMm": 69.9,
+  "fingeringWristSideMaxMm": 24.8,
+  "soundingTipSideMaxMm": -41,
+  "screenBad": 0,
+  "sndFrames": 6397
+ },
+ "cello": {
+  "handednessFrames": 160,
+  "minBowSideWorldMm": 106.1,
+  "maxFinSideWorldMm": -145.3,
+  "screenFrontFrames": 40
+ },
+ "shell": {
+  "guitar": {
+   "songs": 6,
+   "screenSamples": 78,
+   "screenBad": 0
+  },
+  "violin": {
+   "songs": 3,
+   "screenSamples": 39,
+   "screenBad": 0
+  },
+  "cello": {
+   "songs": 4,
+   "screenSamples": 52,
+   "screenBad": 0
+  }
+ }
+}

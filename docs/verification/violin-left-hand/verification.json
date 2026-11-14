@@ -9,7 +9,7 @@
   "thumbLengthsMm": [
     42,
     32,
-    26
+    18
   ],
   "samples": 10261,
   "maxContactError": 4.382275682737707e-11,
@@ -23,7 +23,7 @@
   "maxKnotElbowJump": 0.00006421676204884197,
   "renderedSkinPenetration": {
     "body": 0,
-    "board": 0.0008675331890368545,
+    "board": 0,
     "neck": 0.0009780211435969355,
     "forearm": 0.0006165113285998905
   }
