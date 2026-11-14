@@ -37,6 +37,8 @@ Piano hands share the B proportions for the four fingers and palm, with a shorte
 
 Guitar hands now use the same B skeleton and connected palm/wrist skin on both sides, with offline trajectories and fixed bone lengths. The classical guitar is normalized to a 650 mm scale and a 490 × 370 × 99 mm body; its neck, fingerboard and soundhole are aligned to those dimensions. See [guitar hand references, screenshots and verification](docs/verification/guitar-hands/README.md) and [finger crossing / barre handoff checks](docs/verification/guitar-finger-clearance/README.md).
 
+On phones, pinch the performance canvas to zoom and drag with two fingers to pan. Both gestures enter Free Camera from the current view. One finger (or the left mouse button) rotates in Free Camera; the mouse wheel zooms. Choose a camera preset to restore automatic framing. See [mobile camera verification](docs/verification/mobile-camera/README.md).
+
 ## Program
 
 Chopin: Heroic Polonaise Op. 53, Raindrop Prelude Op. 28/15, Revolutionary Étude Op. 10/12, Fantaisie-Impromptu Op. 66, Prelude Op. 28/4 · Beethoven: Für Elise, Moonlight Sonata 1st mvt · Debussy: Clair de Lune, Golliwogg's Cakewalk · Mozart: Rondo alla Turca · Bach: WTC Prelude BWV 846 · Satie: Gymnopédie No. 1 · Schumann: Träumerei · Liszt: Liebestraum No. 3 · Joplin: The Entertainer, Maple Leaf Rag · Traditional: When the Saints, Amazing Grace (project arrangements).

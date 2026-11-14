@@ -1,0 +1,10 @@
+{
+  "cameraFrames": 2,
+  "screenParallelPan": true,
+  "anchoredPinch": true,
+  "zoomLimits": true,
+  "noSequentialPointerDrift": true,
+  "pointerTransitions": true,
+  "cancelAndCaptureLoss": true,
+  "inactiveClientIgnored": true
+}
