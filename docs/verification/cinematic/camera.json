@@ -1,0 +1,28 @@
+{
+  "instruments": {
+    "piano": {
+      "shots": 12,
+      "cycleSeconds": 72,
+      "projectedFrames": 144
+    },
+    "guitar": {
+      "shots": 12,
+      "cycleSeconds": 73,
+      "projectedFrames": 144
+    },
+    "violin": {
+      "shots": 12,
+      "cycleSeconds": 73,
+      "projectedFrames": 144
+    },
+    "cello": {
+      "shots": 12,
+      "cycleSeconds": 73,
+      "projectedFrames": 144
+    }
+  },
+  "handTracking": true,
+  "pauseAndSeek": true,
+  "reducedMotion": true,
+  "inputUnchanged": true
+}

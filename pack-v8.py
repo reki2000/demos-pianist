@@ -41,6 +41,8 @@ if camera_report.is_file():reports['cameraGestures']=json.loads(camera_report.re
 reports['standaloneValidation']=json.loads(subprocess.check_output(['node','validate-v8.cjs'],cwd=root,text=True))
 repertoire_report=root/'docs/verification/repertoire/music.json'
 if repertoire_report.is_file():reports['repertoire']=json.loads(repertoire_report.read_text())
+cinematic_report=root/'docs/verification/cinematic/camera.json'
+if cinematic_report.is_file():reports['cinematicCamera']=json.loads(cinematic_report.read_text())
 (root/'v8-verification.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2)+'\n')
 files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  root/'v8-verification.json',root/'audio-manifest.json',
@@ -61,6 +63,7 @@ files.append(root/'build-repertoire.cjs')
 files.append(root/'refine-repertoire-violin.cjs')
 files.append(root/'repertoire-patches.json')
 files.extend((root/'docs/verification/repertoire').glob('*'))
+files.extend((root/'docs/verification/cinematic').glob('*'))
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
  for p in files:
   if p.is_file():z.write(p,p.relative_to(root))

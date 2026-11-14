@@ -12,6 +12,11 @@ reuse of an existing index barre remains possible. Two short visual releases
 let finger 2 take over while the index leaves its barre. The original audio
 and score durations are retained.
 
+The right-hand carriage is also fitted for thumb attacks on strings 2–6;
+Alhambra's high inner voice can use the thumb on string 2. The former
+bass-only thumb fit missed that string by about 7 mm. The updated fit checks
+the thumb and the three plucking fingers without altering finger lengths.
+
 The violin has four pieces, including the complete **Bach Partita No. 3,
 Preludio, BWV 1006**: 1,635 notes, quarter = 120, about 3:27 including the
 tail. The source's meter and key and all note pitches/velocities are retained.

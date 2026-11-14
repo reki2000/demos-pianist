@@ -10,7 +10,7 @@
         16,
         12
       ],
-      "pinchDistanceRatio": 0.7999999999999999,
+      "pinchDistanceRatio": 0.8,
       "oneFingerRotation": true,
       "presetReset": true,
       "glErrors": 0
@@ -32,7 +32,7 @@
         16,
         12
       ],
-      "pinchDistanceRatio": 0.8000000000000002,
+      "pinchDistanceRatio": 0.8,
       "oneFingerRotation": true,
       "presetReset": true,
       "glErrors": 0

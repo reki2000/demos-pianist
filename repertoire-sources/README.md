@@ -55,6 +55,7 @@ node build-repertoire.cjs
 node precompute-guitar-plans.cjs
 node precompute-guitar-hands.cjs recuerdos
 node refine-guitar-clearance.cjs recuerdos
+node precompute-guitar-hands.cjs --right-only
 node precompute-violin-hand.cjs bach-preludio
 node precompute-violin-orientation.cjs bach-preludio
 node refine-repertoire-violin.cjs

@@ -30,6 +30,7 @@ jobs:
           node repertoire-test.cjs > docs/verification/repertoire/music.json
           node piano-hand-test.cjs > piano-hand-verification.json
           node camera-gestures-test.cjs > docs/verification/mobile-camera/gestures.json
+          node cinematic-camera-test.cjs > docs/verification/cinematic/camera.json
           node verify.cjs > verification.json
           node audio-test.cjs > audio-verification.json
           node string-audio-test.cjs > string-audio-verification.json

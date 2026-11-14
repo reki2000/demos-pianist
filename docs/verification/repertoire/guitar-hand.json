@@ -6,7 +6,7 @@
   "maxRootError": 0,
   "maxLeftContactError": 0.0004975466415289088,
   "maxBarreCentrelineDistance": 3.597533769998862e-16,
-  "maxRightContactError": 6.857620484113153e-7,
+  "maxRightContactError": 7.037009678580644e-7,
   "maxArmError": 0,
   "trianglesPerHand": 1688,
   "handSurfaceClosed": true,
@@ -19,6 +19,7 @@
     "andaluza": "41d37489c1c6c1eb6c43ce9ed8be11e1214f5c41354ed996a9e1a1a07ed4372b"
   },
   "runtimeFits": 0,
+  "maxRightThumbContactError": 5.126518820125963e-7,
   "surfaceVertices": 846,
   "frames": 4500,
   "skinBuffers": 2,
