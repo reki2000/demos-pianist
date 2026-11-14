@@ -41,7 +41,7 @@ const NOMINAL = [0, 2, 4, 5.5];               // hover semitone offset of finger
 const SHIFT_LEAD = 0.18;                      // hand starts shifting this long before the target note
 const VIB = { minDur: 0.55, delay: 0.22, ramp: 0.35, rate: 5.6, extentMm: 1.5 };
 const BOW_LEN = 0.745;
-const BOW_TILT = [-0.26, -0.09, 0.09, 0.26];  // bow-plane angle per string G D A E (rad about the string axis)
+const BOW_TILT = [0.26, 0.09, -0.09, -0.26];  // bow-plane angle per string G D A E (rad about the string axis)
 const A0 = unit([0.788, 0, 0.616]);           // bow axis at zero tilt (frog -> tip), perpendicular to U.
 // Planning +X is the performer's anatomical LEFT (RecitalGL reflects X
 // for display), so the frog end of the axis must point toward planning
@@ -324,7 +324,7 @@ function atLegacy(P, t) {
   // height (kb) instead of spearing the forearm through the body.
   const kb = smooth((hd.dist - 90) / 60);
   const wristL = add(palmC, add(mul(G.U, 0.030),
-    add(mul(G.V, mix(0.004, -0.110, kb)), mul(G.W, mix(-0.052, 0.020, kb)))));
+    add(mul(G.V, mix(0.004, 0.110, kb)), mul(G.W, mix(-0.052, 0.020, kb)))));
   // --- bow / right arm ---
   const tilt = mix(BOW_TILT[Math.floor(clamp(bow.stringF, 0, 3))], BOW_TILT[Math.ceil(clamp(bow.stringF, 0, 3))], clamp(bow.stringF, 0, 3) % 1);
   // The axis takes only 60% of the string tilt: the contact point already

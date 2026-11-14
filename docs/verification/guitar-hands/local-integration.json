@@ -12,8 +12,9 @@
  },
  "violin": {
   "states": 6563,
-  "bowWristSideMinMm": 51.3,
-  "fingeringWristSideMaxMm": -148.5,
+  "bowWristSideMinMm": 69.9,
+  "fingeringWristSideMaxMm": 24.8,
+  "soundingTipSideMaxMm": -41,
   "screenBad": 0,
   "sndFrames": 6397
  },

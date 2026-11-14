@@ -39,7 +39,7 @@
     "gpuAllocations": 1,
     "bufferSubData": 4499,
     "dynamicDraws": 4500,
-    "cpuMilliseconds": 796.6025520000001
+    "cpuMilliseconds": 1510.367616
   },
   "geometry": {
     "dist/gl.js": {
@@ -168,18 +168,20 @@
       26
     ],
     "samples": 10261,
-    "maxContactError": 4.3822762934554913e-11,
-    "maxBoneError": 6.036837696399289e-16,
-    "maxRootError": 6.684427777288334e-16,
-    "maxWristAngle": 49.62690798417793,
-    "maxWristStep": 0.09726480066142129,
-    "maxFingertipStep": 0.06001673148889961,
-    "maxKnotWristJump": 1.3885927627274502e-10,
+    "maxContactError": 4.382275682737707e-11,
+    "maxBoneError": 5.342948306008566e-16,
+    "maxRootError": 4.710277376051325e-16,
+    "maxWristAngle": 92.2255532174237,
+    "minDrawnLeftDeterminant": 0.9999999999999998,
+    "maxWristStep": 0.09726480066142125,
+    "maxFingertipStep": 0.06001673148889962,
+    "maxKnotWristJump": 1.38859315995239e-10,
+    "maxKnotElbowJump": 6.421676204884197e-05,
     "renderedSkinPenetration": {
       "body": 0,
-      "board": 0.0008674569708234073,
-      "neck": 0.000978071286953366,
-      "forearm": 0
+      "board": 0.0008675331890368545,
+      "neck": 0.0009780211435969355,
+      "forearm": 0.0006165113285998905
     }
   },
   "piano": {

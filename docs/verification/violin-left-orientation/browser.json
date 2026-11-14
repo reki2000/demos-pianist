@@ -1,0 +1,415 @@
+{
+  "realTimeSeconds": 75,
+  "observations": [
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 0,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 6,
+          "bytes": 729216,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 5.051609977324263,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 36,
+          "bytes": 4375296,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 9.997460317460318,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 66,
+          "bytes": 8021376,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 14.687891156462586,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 97,
+          "bytes": 11788992,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 19.656961451247167,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 127,
+          "bytes": 15435072,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 24.6724716553288,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 151,
+          "bytes": 18351936,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 29.920181405895693,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 171,
+          "bytes": 20782656,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 34.935691609977326,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 194,
+          "bytes": 23577984,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 40.20662131519275,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 217,
+          "bytes": 26373312,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 44.96671201814059,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 240,
+          "bytes": 29168640,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 49.912562358276645,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 268,
+          "bytes": 32571648,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 54.881632653061224,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 298,
+          "bytes": 36217728,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 59.850702947845804,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 331,
+          "bytes": 40228416,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 64.6572335600907,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 364,
+          "bytes": 44239104,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 69.64952380952381,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 389,
+          "bytes": 47277504,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "violin",
+        "song": "meditation",
+        "time": 74.43283446712019,
+        "playing": true
+      },
+      "buffers": 37,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 4,
+          "bytes": 486144,
+          "gl": 0
+        },
+        {
+          "buffers": 1,
+          "uploads": 419,
+          "bytes": 50923584,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    }
+  ],
+  "afterSwitches": {
+    "state": {
+      "instrument": "violin",
+      "song": "air",
+      "time": 20,
+      "playing": false
+    },
+    "buffers": 39,
+    "renderers": [
+      {
+        "buffers": 2,
+        "uploads": 14,
+        "bytes": 1701504,
+        "gl": 0
+      },
+      {
+        "buffers": 1,
+        "uploads": 436,
+        "bytes": 52989696,
+        "gl": 0
+      }
+    ],
+    "solves": 0
+  },
+  "pageErrors": [],
+  "auditoryCheck": false
+}

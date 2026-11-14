@@ -171,7 +171,7 @@ let vReport;
   };
   const NOSE = [0, -0.012, 0.122];
   const projFrontX = projector(RG, [0.55, 1.62, -3.05], [0.05, 1.22, -0.15]);
-  let states = 0, sndFrames = 0, screenBad = 0, minSideB = 1e9, maxSideF = -1e9;
+  let states = 0, sndFrames = 0, screenBad = 0, minSideB = 1e9, maxSideF = -1e9, maxTipSide = -1e9;
   for (const song of I.songs) {
     const plan = I.plan(song);
     const times = new Set([0, song.duration - 0.01]);
@@ -184,13 +184,22 @@ let vReport;
       const midW = RG.toWorld(S.armL.shoulder.map((v, j) => (v + S.armR.shoulder[j]) / 2));
       minSideB = Math.min(minSideB, dot(sub(RG.toWorld(S.armR.wrist), midW), rW));
       maxSideF = Math.max(maxSideF, dot(sub(RG.toWorld(S.armL.wrist), midW), rW));
+      // In high positions the wrist wraps around the E-side heel and can
+      // cross the torso midline. Chirality and the sounding fingertips,
+      // rather than a wrist-side assumption, identify the fingering hand.
+      assert.equal(S.handL.model, 'natural');
+      const B = S.handL.basis.map(RG.toWorld);
+      assert(dot(cross(B[0], B[1]), B[2]) > .999999, 'violin fingering hand is mirrored');
+      assert(dot(sub(RG.toWorld(S.armL.shoulder), midW), rW) < -.1, 'violin fingering arm attaches to right shoulder');
+      for (let f = 0; f < 4; f++) if (S.debug.contacts[f].contact)
+        maxTipSide = Math.max(maxTipSide, dot(sub(RG.toWorld(S.handL.fingers[f].points[3]), midW), rW));
       if (S.sounding.length) { sndFrames++; if (!(projFrontX(S.armR.wrist) < projFrontX(S.armL.wrist))) screenBad++; }
     }
   }
   assert(minSideB > 0.05, 'violin bow wrist not on anatomical right: ' + (minSideB * 1000).toFixed(1) + ' mm');
-  assert(maxSideF < -0.03, 'violin fingering wrist not on anatomical left: ' + (maxSideF * 1000).toFixed(1) + ' mm');
+  assert(maxTipSide < 0, 'violin sounding fingertips not on anatomical left: ' + (maxTipSide * 1000).toFixed(1) + ' mm');
   assert.equal(screenBad, 0, 'violin front-view hand order violations');
-  vReport = { states, bowWristSideMinMm: +(minSideB * 1000).toFixed(1), fingeringWristSideMaxMm: +(maxSideF * 1000).toFixed(1), screenBad, sndFrames };
+  vReport = { states, bowWristSideMinMm: +(minSideB * 1000).toFixed(1), fingeringWristSideMaxMm: +(maxSideF * 1000).toFixed(1), soundingTipSideMaxMm: +(maxTipSide * 1000).toFixed(1), screenBad, sndFrames };
 }
 
 // ---- Part C: cello drawn handedness (geometry-test §7) -------------
