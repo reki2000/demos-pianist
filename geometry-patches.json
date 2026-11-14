@@ -5,7 +5,7 @@
   },
   "guitar-model.js": {
     "upstream": "980c261eac805797a9b4299dd66ea6c16aa2bffc3d26644574499b9bc17f682e",
-    "integrated": "571c590868efbb38b2461abb951879f3ba8678988d45e5a4b720d6083d34e811"
+    "integrated": "f76c647bd8ce73a370f5b2ae3ef5514968b33216e17c40ed47ab25280aa2082b"
   },
   "violin-model.js": {
     "upstream": "9bc9750b38592f52501c820decbcf8086ee698937f8a51baed9128ad85d31ad4",
@@ -22,5 +22,13 @@
   "violin-motion.js": {
     "upstream": "171c7dc5fa30925204389955c3226e2ed931977059327267dcac2fa058e96531",
     "integrated": "859efbd1d8c33fd88c7a82bb4c14887e7303d853e5881f15eb02b5956ca8cf1d"
+  },
+  "guitar-motion.js": {
+    "upstream": "28544a85b0efb99b02f73f5418cf46d8a99b0933758f8306e4bf10209db406b0",
+    "integrated": "77a470cf47c1c47b5f4749a4a08b09b100ba1926dfd8f2083035a58743d58f7f"
+  },
+  "guitar-fingering.js": {
+    "upstream": "3360cfde54b27d63fee96030a37e7060cb7cfdabcc4d8f8a873b87f61d9d3d9b",
+    "integrated": "712206f2bf19721ab73b4f7d65fbf481340ddf2f8060e2d42510635cd9d2a6fa"
   }
 }

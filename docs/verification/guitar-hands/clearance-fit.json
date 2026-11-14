@@ -1,0 +1,32 @@
+[
+  {
+    "song": "asturias",
+    "poses": 12292,
+    "maxPenetration": 0.0008001532420155314
+  },
+  {
+    "song": "recuerdos",
+    "poses": 6985,
+    "maxPenetration": 0.0007473651238172514
+  },
+  {
+    "song": "granada",
+    "poses": 5870,
+    "maxPenetration": 0.0008433426370862227
+  },
+  {
+    "song": "sevilla",
+    "poses": 9412,
+    "maxPenetration": 0.000847552401913176
+  },
+  {
+    "song": "capricho",
+    "poses": 5632,
+    "maxPenetration": 0.0007968183250440294
+  },
+  {
+    "song": "andaluza",
+    "poses": 5751,
+    "maxPenetration": 0.0007747565508695632
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "revision": "d757a41",
+  "sampling": "note event onsets",
+  "pairsWithin2mm": 1275,
+  "minBoneDistanceMm": 0.0002629489246225458
+}

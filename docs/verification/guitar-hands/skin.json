@@ -1,0 +1,10 @@
+{
+  "handPoses": 49674,
+  "renderedSkinPenetration": {
+    "body": 0.00082290337023074,
+    "board": 0,
+    "neck": 0.0007907237506558141
+  },
+  "limitMm": 1,
+  "runtimeFits": 0
+}

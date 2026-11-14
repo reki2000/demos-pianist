@@ -26,7 +26,7 @@ window.ViolinFingerSkin = (() => {
     const indices=new Uint16Array(topology.length+bridgeTriangles*3);indices.set(topology);
     return {bow,count,surface,topology,thumb:{points:null,radii:[.009,.007,.007]},positions:new Float64Array(vertices*3),normals:new Float64Array(vertices*3),indices,data:new Float32Array(indices.length*6),directions:new Float64Array(9),lengths:new Float64Array(3)};
   }
-  function update(state,hand,board){
+  function update(state,hand,board,deform){
     const p=state.positions,n=state.normals,dirs=state.directions,lengths=state.lengths;
     const bow=state.bow;
     if(state.surface&&!bow)state.thumb.points=hand.thumb;
@@ -90,6 +90,7 @@ window.ViolinFingerSkin = (() => {
       window.HandSurface.blendSockets(state.surface,p);
       window.HandSurface.conform(state.surface,p,board);
     }
+    if(deform)deform(p,hand);
     n.fill(0);
     const indices=state.indices;
     for(let i=0;i<indices.length;i+=3){

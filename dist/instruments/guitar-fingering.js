@@ -7,7 +7,7 @@
  *
  * TUNING   strings 1..6 open at E4 B3 G3 D3 A2 E2 = MIDI 64 59 55 50
  *          45 40 (song.tuning overrides — Capricho Árabe is drop D).
- *          Frets 0..19 (650 mm scale geometry lives in the motion
+ *          Frets 0..20 (650 mm scale geometry lives in the motion
  *          module; pitch here is open + fret by construction).
  * EVENTS   Notes are grouped into hand events: exact simultaneities
  *          for engraved sources; performed sources (humanised MIDI)
@@ -45,7 +45,7 @@
  *   repeats, ringing re-frets) are reported for pinning, not hidden.
  */
 const OPEN = [0, 64, 59, 55, 50, 45, 40]; // standard tuning, index = string 1..6
-const MAXFRET = 19;
+const MAXFRET = 20;
 const EPS = 0.005; // exact-simultaneity epsilon, seconds
 
 const fretOf = (pitch, string, open = OPEN) => pitch - open[string];
@@ -142,6 +142,13 @@ function fingersFor(combo, anchorPos) {
       + ([...fingersTrial.values()].some((f, ix) => f === 4 && fretted[ix] && fretted[ix].fret - pos + 1 === 5) ? 8 : 0);
     if (!best || score < best.score) best = { fingers: combo.map(x => x.fret === 0 ? 0 : fingersTrial.get(x)), pos, barre, score };
   }
+  // A compact four-note chord can compress the positional rule (e.g.
+  // frets 2,4,4,5 use fingers 1,2,3,4). Never assign a curved finger
+  // to two strings as the old infeasible-group fallback did.
+  if(!best&&fretted.length<=4){
+    const order=[...fretted].sort((a,b)=>a.fret-b.fret||b.string-a.string),map=new Map(order.map((x,i)=>[x,i+1]));
+    best={fingers:combo.map(x=>x.fret?map.get(x):0),pos:minF,barre:0,score:20};
+  }
   return best;
 }
 
@@ -151,7 +158,7 @@ function comboCost(combo, ff, ctx) {
   const pos = ff ? ff.pos : 0;
   if (fretted.length) c += pos * 0.55 + Math.max(...fretted.map(x => x.fret)) * 0.12;
   c += combo.filter(x => x.fret === 0).length * -0.4;
-  if (!ff) { c += 400; const fs = fretted.map(x => x.fret); if (fs.length) c += (Math.max(...fs) - Math.min(...fs)) * 6; } // infeasible fingers; among infeasible, prefer compact
+  if (!ff) { c += 1000000; const fs = fretted.map(x => x.fret); if (fs.length) c += (Math.max(...fs) - Math.min(...fs)) * 6; } // infeasible fingers; among infeasible, prefer compact
   else {
     const span = fretted.length ? Math.max(...fretted.map(x => x.fret)) - Math.min(...fretted.map(x => x.fret)) : 0;
     if (span > 3) c += (span - 3) * 18;
@@ -161,6 +168,11 @@ function comboCost(combo, ff, ctx) {
     const h = ctx.heldByFinger.get(ff.fingers[k]);
     if (ff.fingers[k] >= 1 && h && h.fret !== combo[k].fret) c += 400; // contradicts a held finger
   }
+  // The compact B hand must serve held notes and the new event together.
+  // Open strings need no fretting finger. Price physical distance, not just
+  // fret count, since the same fret span is wider near the nut.
+  const heldFrets=(ctx.heldNotes||[]).map(x=>x.fret),allFrets=[...fretted.map(x=>x.fret),...heldFrets].filter(f=>f>0);
+  if(allFrets.length){const d=f=>.650*(1-2**(-f/12)),span=d(Math.max(...allFrets))-d(Math.min(...allFrets));c+=Math.max(0,span-.100)*50000;}
   const top = combo[combo.length - 1];
   if (ctx.prevTop && top.pitch !== ctx.prevTop.pitch && top.string === ctx.prevTop.string) c -= 1.6; // melodic string continuity
   for (const x of combo) {
@@ -295,6 +307,34 @@ function assignRH(song, events, A) {
   });
 }
 
+// Reuse an already held index barre for equal-fret treble notes. A note
+// above the barre still needs another finger. Extending the barre must not
+// mute an open/lower-fret string sounding inside its span.
+function reuseBarres(notes,assignments){
+ const ringing=new Map();let index=null,changed=0;
+ for(let i=0;i<notes.length;){
+  let end=i+1;while(end<notes.length&&notes[end][0]===notes[i][0])end++;
+  const t=notes[i][0],current=assignments.slice(i,end),own=current.find(a=>a.lh===1);
+  for(const [s,r]of ringing)if(r.until<=t+1e-8)ringing.delete(s);
+  if(own&&(!index||own.fret!==index.fret))index={fret:own.fret,until:t,notes:[]};
+  if(index&&index.until<t-1e-8)index=null;
+  if(!index&&own)index={fret:own.fret,until:t,notes:[]};
+  if(index){
+   for(let k=i;k<end;k++)if(assignments[k].lh===1){index.until=Math.max(index.until,t+notes[k][1]);index.notes.push(assignments[k]);}
+   for(let k=i;k<end;k++){
+    const a=assignments[k];if(a.lh<=1||a.string!==1||a.fret!==index.fret||current.some(b=>b.lh===1&&b.fret!==a.fret))continue;
+    const span=Math.max(a.string,...index.notes.map(b=>b.string)),nextStrings=new Set(current.map(b=>b.string));
+    const blocked=[...ringing].some(([s,r])=>s<=span&&!nextStrings.has(s)&&r.fret<a.fret)||current.some(b=>b.string<=span&&b.fret<a.fret);
+    if(blocked)continue;
+    a.lh=1;a.barre=1;for(const b of index.notes)b.barre=Math.max(1,b.barre);index.notes.push(a);index.until=Math.max(index.until,t+notes[k][1]);changed++;
+   }
+  }
+  for(let k=i;k<end;k++){const a=assignments[k];ringing.set(a.string,{fret:a.fret,until:t+notes[k][1]});}
+  i=end;
+ }
+ return changed;
+}
+
 function build(song) {
   const open = song.tuning || OPEN;
   const notes = song.notes, win = windowOf(song);
@@ -312,10 +352,13 @@ function build(song) {
       for (const combo0 of usable) {
         const combo = combo0.map((x, k) => ({ ...x, pitch: notes[ev.notes[k]][2] }));
         const ff = fingersFor(combo.map(x => ({ ...x })), st.prevPos);
-        const ctx = { prevPos: st.prevPos, prevTop: st.prevTop, ringing: st.ringing, heldByFinger: held, t: ev.t, prevT: ei > 0 ? events[ei - 1].t : ev.t - 1 };
+        const replaced=new Set(combo.map(x=>x.string));
+        const heldNotes=[...st.ringing.entries()].filter(([s,r])=>!replaced.has(s)&&r.until>ev.t+EPS&&r.fret>0).map(([s,r])=>({...r,string:s}));
+        const effectiveHeld=new Map();for(const r of heldNotes){const old=effectiveHeld.get(r.finger);if(!old||old.until<r.until)effectiveHeld.set(r.finger,r);}
+        const ctx = { heldNotes, prevPos: st.prevPos, prevTop: st.prevTop, ringing: st.ringing, heldByFinger: effectiveHeld, t: ev.t, prevT: ei > 0 ? events[ei - 1].t : ev.t - 1 };
         const c = comboCost(combo, ff, ctx);
         const ringing = new Map(st.ringing);
-        combo.forEach((x, k) => ringing.set(x.string, { pitch: x.pitch, until: ev.t + notes[ev.notes[k]][1] }));
+        combo.forEach((x, k) => ringing.set(x.string, { pitch: x.pitch, fret:x.fret, finger:ff?.fingers[k]||0, until: notes[ev.notes[k]][0] + notes[ev.notes[k]][1] }));
         for (const [s, r] of ringing) if (r.until <= ev.t + EPS) ringing.delete(s);
         const heldByFinger = new Map(held);
         if (ff) combo.forEach((x, k) => { if (ff.fingers[k] >= 1) heldByFinger.set(ff.fingers[k], { fret: x.fret, until: ev.t + notes[ev.notes[k]][1] }); });
@@ -328,6 +371,7 @@ function build(song) {
   });
   const chosen = beam[0].picks;
   const assignments = assignFingers(song, events, chosen);
+  reuseBarres(notes,assignments);
   assignRH(song, events, assignments);
   let barreChords = 0;
   events.forEach(ev => { if (ev.notes.some(ni => assignments[ni].barre)) barreChords++; });
@@ -388,4 +432,4 @@ function validate(song) {
   return v;
 }
 
-window.GuitarFingering = { OPEN, MAXFRET, build, validate, detectTremolo, groupEvents, windowOf };
+window.GuitarFingering = { reuseBarres, OPEN, MAXFRET, build, validate, detectTremolo, groupEvents, windowOf };

@@ -32,6 +32,12 @@ jobs:
           node audio-test.cjs > audio-verification.json
           node string-audio-test.cjs > string-audio-verification.json
           node geometry-test.cjs > geometry-verification.json
+          node guitar-fingering-hand-test.cjs > docs/verification/guitar-finger-clearance/fingering.json
+          node guitar-finger-clearance-test.cjs > docs/verification/guitar-finger-clearance/clearance.json
+          node guitar-hand-test.cjs > docs/verification/guitar-hands/verification.json
+          node guitar-geometry-test.cjs > docs/verification/guitar-hands/geometry.json
+          node guitar-skin-test.cjs > docs/verification/guitar-hands/skin.json
+          node guitar-continuity-test.cjs > docs/verification/guitar-hands/continuity.json
           node bow-hold-test.cjs > bow-hold-verification.json
           node bow-skin-test.cjs > bow-skin-verification.json
           node hand-surface-test.cjs > hand-surface-verification.json

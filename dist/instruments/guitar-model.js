@@ -13,28 +13,54 @@ const spruce = [.72, .55, .32], spruceLight = [.80, .63, .38], mahogany = [.30, 
   fretboardC = [.09, .06, .045], steel = [.75, .76, .78], brass = [.63, .46, .2], boneC = [.88, .85, .78],
   skin = [.74, .55, .43], skinLight = [.80, .62, .50], suit = [.05, .05, .065], shirt = [.84, .83, .80], hair = [.07, .055, .048], lash = [.20, .12, .10];
 
+// A continuous top/back/rib surface replaces overlapping ellipsoid slices.
+// Dimensions follow a 650 mm full-size classical guitar (Yamaha CG reference).
+const BODY_SPEC=GM.BODY_SPEC,OUTLINE=GM.BODY_OUTLINE,bodyWidth=GM.bodyWidth;
+const BODY_MESH=(()=>{
+ const stations=[...new Set([...Array.from({length:57},(_,i)=>.325+.490*i/56),...OUTLINE.map(p=>p[0])])].sort((a,b)=>a-b),edge=stations.map(d=>[d,bodyWidth(d)]).concat(stations.slice(1,-1).reverse().map(d=>[d,-bodyWidth(d)]));
+ const top=[],back=[],ribs=[],P=(v,z)=>add(NUT,add(mul(u,-v[0]),add(mul(w,v[1]),mul(n,z)))),C=P([.56,0],-.006),B=P([.56,0],-.105);
+ const sub=(a,b)=>a.map((v,i)=>v-b[i]),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+ const tri=(out,a,b,c,N)=>{if(dot(cross(sub(b,a),sub(c,a)),N)<0)[b,c]=[c,b];for(const p of [a,b,c])out.push(...p,...N);};
+ const normals=edge.map((a,i)=>{const prev=edge[(i+edge.length-1)%edge.length],next=edge[(i+1)%edge.length],t=sub(P(next,0),P(prev,0));let N=cross(t,n),outside=sub(P(a,0),P([.56,0],0));if(dot(N,outside)<0)N=N.map(v=>-v);return N.map(v=>v/Math.hypot(...N));});
+ for(let i=0;i<edge.length;i++){
+  const j=(i+1)%edge.length,a=P(edge[i],-.006),b=P(edge[j],-.006),c=P(edge[j],-.105),d=P(edge[i],-.105);tri(top,C,a,b,n);tri(back,B,d,c,n.map(v=>-v));
+  let order=[0,1,2,0,2,3],ps=[a,b,c,d];if(dot(cross(sub(b,a),sub(c,a)),normals[i])<0)order=[0,2,1,0,3,2];for(const k of order)ribs.push(...ps[k],...normals[k===0||k===3?i:j]);
+ }return {top:new Float32Array(top),back:new Float32Array(back),ribs:new Float32Array(ribs)};
+})();
+
+// True tapered fingerboard: 52 mm at the nut, 62 mm at fret 12,
+// 64 mm at its body end. The old tail loft narrowed its nut to about 30 mm.
+const FRETBOARD_MESH=(()=>{
+ const data=[],point=(d,s,z)=>add(NUT,add(mul(u,-d),add(mul(w,s*GM.fretboardHalfWidth(d)),mul(n,z)))),centre=point(GM.BOARD_END/2,0,-.003);
+ const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],sub=(a,b)=>a.map((v,i)=>v-b[i]);
+ const face=(a,b,c,d)=>{let N=cross(sub(b,a),sub(c,a));if(N.reduce((s,v,i)=>s+v*(a[i]-centre[i]),0)<0){[b,d]=[d,b];N=N.map(v=>-v);}const l=Math.hypot(...N);N=N.map(v=>v/l);for(const p of [a,b,c,a,c,d])data.push(...p,...N);};
+ const stations=[0,.325,GM.BOARD_END];for(let i=0;i<2;i++){
+  const a=stations[i],b=stations[i+1],p=[point(a,-1,-.006),point(a,1,-.006),point(b,1,-.006),point(b,-1,-.006),point(a,-1,0),point(a,1,0),point(b,1,0),point(b,-1,0)];
+  for(const f of [[4,5,6,7],[0,1,2,3],[0,3,7,4],[1,2,6,5],...(i===0?[[0,1,5,4]]:[]),...(i===1?[[3,2,6,7]]:[])])face(...f.map(j=>p[j]));
+ }return new Float32Array(data);
+})();
+
+// Elliptical shaft: 21 mm total depth at the nut, 23 mm at fret 12,
+// including the 6 mm ebony board. A short heel joins it to the body.
+const NECK_MESH=(()=>{
+ const sections=[-.05,0,.10,.20,.325,GM.NECK_END],sides=16,pts=[],normals=[],data=[],sub=(a,b)=>a.map((v,i)=>v-b[i]),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+ for(const d of sections){const q=GM.neckSection(d);for(let j=0;j<sides;j++){const a=j*Math.PI*2/sides,c=Math.cos(a),s=Math.sin(a);pts.push(add(NUT,add(mul(u,-d),add(mul(w,q.width*c),mul(n,q.centre+q.depth*s)))));let N=add(mul(w,c/q.width),mul(n,s/q.depth));const l=Math.hypot(...N);normals.push(N.map(v=>v/l));}}
+ const tri=(ids,N)=>{const ps=ids.map(i=>pts[i]);if(dot(cross(sub(ps[1],ps[0]),sub(ps[2],ps[0])),N||normals[ids[0]])<0)[ids[1],ids[2]]=[ids[2],ids[1]];for(const i of ids)data.push(...pts[i],...(N||normals[i]));};
+ for(let r=0;r<sections.length-1;r++)for(let j=0;j<sides;j++){const a=r*sides+j,b=a+sides,c=r*sides+(j+1)%sides,d=c+sides;tri([a,b,d]);tri([a,d,c]);}
+ for(const [r,N] of [[0,u],[sections.length-1,mul(u,-1)]]){const d=sections[r],q=GM.neckSection(d),c=pts.length;pts.push(add(NUT,add(mul(u,-d),mul(n,q.centre))));for(let j=0;j<sides;j++)tri([c,r*sides+j,r*sides+(j+1)%sides],N);}
+ return new Float32Array(data);
+})();
+
 function drawGuitar(R, pose, t) {
   const sp = (s, d, lift) => GM.stringPoint(s, d, lift);
-  // Body: oriented ellipsoids (piece() ZYX Euler puts the sphere's
-  // axes on the guitar frame: X->w width, Y->-u along the body,
-  // Z->-n thickness) at stations along the body outline — joint at
-  // the 12th fret (d=0.325), bridge at d=0.650, tail at d=0.81.
-  const RX = Math.atan2(-u[2], -n[2]), RZ = Math.atan2(w[1], w[0]);
-  const profile = [[0.325, 0.092], [0.36, 0.112], [0.42, 0.133], [0.475, 0.1415], [0.53, 0.131],
-    [0.585, 0.1215], [0.64, 0.133], [0.70, 0.163], [0.745, 0.1805], [0.785, 0.172], [0.808, 0.138]];
-  const halfW = d => {
-    for (let i = 1; i < profile.length; i++) if (d <= profile[i][0]) {
-      const [d0, w0] = profile[i - 1], [d1, w1] = profile[i];
-      return w0 + (w1 - w0) * (d - d0) / (d1 - d0);
-    }
-    return profile.at(-1)[1];
-  };
-  for (let d = 0.33; d <= 0.802; d += 0.013) R.piece('sphere', sp(3.5, d, -0.047), [halfW(d), 0.011, 0.049], mahogany, RX, 0, RZ);
-  for (let d = 0.33; d <= 0.802; d += 0.013) R.piece('sphere', sp(3.5, d, -0.0465), [halfW(d) - 0.004, 0.0105, 0.0495], spruce, RX, 0, RZ);
-  // Soundhole + rosette (hole centre ~105 mm into the body; the disc
+  // Physical body frame, joined at fret 12 with the bridge at 650 mm.
+  const RX = Math.atan2(u[2], -n[2]), RZ = Math.atan2(w[1], w[0]);
+  if(R.mesh){R.mesh(BODY_MESH.top,spruce);R.mesh(BODY_MESH.back,mahogany);R.mesh(BODY_MESH.ribs,mahogany);}
+  else for(const [part,color] of [['top',spruce],['back',mahogany],['ribs',mahogany]])R.dynamicMesh('guitar-body-'+part,BODY_MESH[part],color);
+  // Soundhole + rosette (hole above the waist, clear of the 20th-fret extension; the disc
   // sits just above the top plate, below the strings).
-  const SH = sp(3.5, 0.435, 0.0035);
-  R.piece('sphere', SH, [.042, .042, .004], [.02, .015, .012], RX, 0, RZ);
+  const SH = sp(3.5,.495,BODY_SPEC.top+.0005);
+  R.piece('sphere', SH, [.042, .042, .0003], [.02, .015, .012], RX, 0, RZ);
   for (let k = 0; k < 28; k++) {
     const a0 = k / 28 * Math.PI * 2, a1 = (k + 1) / 28 * Math.PI * 2;
     const p0 = add(SH, add(mul(u, Math.cos(a0) * .050), mul(w, Math.sin(a0) * .050)));
@@ -43,10 +69,9 @@ function drawGuitar(R, pose, t) {
   }
   // Fretboard (tail loft = flat strip in the renderer's segment frame,
   // which GuitarMotion's w/n were built to match) + neck behind it.
-  const fbA = add(NUT, mul(n, -0.004)), fbB = sp(3.5, 0.485, -0.004);
-  R.segment(add(fbA, mul(u, 0.012)), sp(3.5, 0.325, -0.004), .0275, fretboardC, 'tail');
-  R.segment(sp(3.5, 0.325, -0.004), fbB, .0305, fretboardC, 'tail');
-  R.segment(add(NUT, add(mul(n, -0.020), mul(u, 0.05))), add(sp(3.5, 0.485, -0.020), mul(u, -0.05)), .017, darkWood, 'limb');
+  if(R.mesh)R.mesh(FRETBOARD_MESH,fretboardC);
+  else R.dynamicMesh('guitar-fretboard',FRETBOARD_MESH,fretboardC);
+  if(R.mesh)R.mesh(NECK_MESH,darkWood);else R.dynamicMesh('guitar-neck',NECK_MESH,darkWood);
   // Headstock + tuners.
   const hsA = add(NUT, add(mul(u, 0.004), mul(n, -0.008))), hsB = add(NUT, add(mul(u, 0.185), mul(n, -0.010)));
   R.segment(hsA, hsB, .031, darkWood, 'tail');
@@ -56,13 +81,13 @@ function drawGuitar(R, pose, t) {
     R.segment(add(c, mul(w, -side * 0.006)), add(c, mul(w, side * 0.004)), .0028, steel, 'limb');
   }
   // Frets, markers, nut.
-  for (let f = 1; f <= 19; f++) {
+  for (let f = 1; f <= GM.FRETS; f++) {
     const d = GM.fretDist(f);
     R.bone(sp(1, d, 0.0012), sp(6, d, 0.0012), .0009, steel, .8);
     if ([5, 7, 9, 15, 17].includes(f)) R.ball(sp(3.5, (GM.fretDist(f) + GM.fretDist(f - 1)) / 2, 0.0012), [.0028, .0028, .0028], boneC);
     if (f === 12) for (const s of [2.5, 4.5]) R.ball(sp(s, (GM.fretDist(f) + GM.fretDist(f - 1)) / 2, 0.0012), [.0028, .0028, .0028], boneC);
   }
-  R.bone(sp(1, 0, 0.002), sp(6, 0, 0.002), .0018, boneC);
+  R.bone(add(NUT,add(mul(w,-.026),mul(n,.002))),add(NUT,add(mul(w,.026),mul(n,.002))),.0018,boneC);
   // Bridge + saddle.
   R.bone(sp(6, GM.SCALE, -0.002), sp(1, GM.SCALE, -0.002), .0055, darkWood);
   R.bone(sp(6, GM.SCALE, 0.004), sp(1, GM.SCALE, 0.004), .0016, boneC);
@@ -165,17 +190,17 @@ R.setFaceDetail?.(false);
   // Arms (exact two-bone chains from the pose).
   for (const arm of pose.arms) {
     R.segment(arm.shoulder, arm.elbow, .047, suit);
-    R.segment(arm.elbow, arm.wrist, .038, suit);
+    const v=arm.elbow.map((v,i)=>v-arm.wrist[i]),l=Math.hypot(...v),cuff=arm.wrist.map((v,i)=>v+0.040* (arm.elbow[i]-v)/l);
+    R.segment(arm.elbow,cuff,.031,suit);R.segment(cuff,arm.wrist,.021,shirt);
     R.ball(arm.elbow, [.042, .042, .042], suit);
   }
-  // Left hand: palm behind the neck, fingers + thumb from the pose.
-  R.ball(pose.palm, [.046, .030, .052], skin);
-  for (const f of pose.lhFingers) fingerDraw(R, f, RADII[f.digit]);
-  fingerDraw(R, pose.lhThumb, RADII[0]);
-  // Right hand over the soundhole.
-  const rhPalm = add(GM.stringPoint(3, GM.PLUCK_D, 0.058), mul(w, 0.002));
-  R.ball(rhPalm, [.044, .028, .050], skin);
-  for (const name of ['p', 'i', 'm', 'a']) fingerDraw(R, pose.rhFingers[name], RADII[pose.rhFingers[name].digit]);
+  if(pose.hands){window.GuitarHandSkin.draw(R,pose.hands,skin);}
+  else {
+    R.ball(pose.palm,[.046,.030,.052],skin);
+    for(const f of pose.lhFingers)fingerDraw(R,f,RADII[f.digit]);fingerDraw(R,pose.lhThumb,RADII[0]);
+    const rhPalm=add(GM.stringPoint(3,GM.PLUCK_D,.058),mul(w,.002));R.ball(rhPalm,[.044,.028,.050],skin);
+    for(const name of ['p','i','m','a'])fingerDraw(R,pose.rhFingers[name],RADII[pose.rhFingers[name].digit]);
+  }
 }
 
 function drawStage(R) {
@@ -187,5 +212,5 @@ function drawStage(R) {
 }
 
 function drawScene(R, pose, t) { drawStage(R); drawGuitar(R, pose, t); drawPerformer(R, pose, t); }
-return { drawGuitar, drawPerformer, drawStage, drawScene, headFrame, POSTURE, colors: { spruce, mahogany, skin, suit } };
+return { NECK_MESH,BODY_SPEC,BODY_MESH,bodyWidth,FRETBOARD_MESH, drawGuitar, drawPerformer, drawStage, drawScene, headFrame, POSTURE, colors: { spruce, mahogany, skin, suit } };
 })();

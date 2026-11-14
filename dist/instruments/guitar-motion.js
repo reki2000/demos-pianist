@@ -48,12 +48,24 @@ function stringPoint(string, d, lift = 0.005) {
   return add(add(NUT, mul(u, -d)), add(mul(w, (3.5 - string) * step), mul(n, lift))); // mirrored frame: string 6 on the -w (chin) edge, string 1 on the +w edge
 }
 const fretPoint = (string, fret, behind = 0.006, lift) => stringPoint(string, Math.max(0, fretDist(fret) - (fret ? behind : 0)), lift);
+const BODY_SPEC={start:.325,end:.815,length:.490,width:.370,depth:.099,top:-.006,back:-.105};
+const BODY_OUTLINE=[[.325,0],[.332,.060],[.350,.103],[.380,.128],[.425,.141],[.460,.136],[.495,.121],[.530,.116],[.560,.125],[.600,.151],[.660,.177],[.715,.185],[.755,.174],[.785,.144],[.806,.090],[.815,0]];
+function bodyWidth(d){
+ let i=0;while(i<BODY_OUTLINE.length-2&&d>BODY_OUTLINE[i+1][0])i++;
+ const sec=j=>(BODY_OUTLINE[j+1][1]-BODY_OUTLINE[j][1])/(BODY_OUTLINE[j+1][0]-BODY_OUTLINE[j][0]),tangent=j=>{if(!j)return sec(0);if(j===BODY_OUTLINE.length-1)return sec(j-1);const a=sec(j-1),b=sec(j);return a*b<=0?0:2*a*b/(a+b);};
+ const [a,x]=BODY_OUTLINE[i],[b,y]=BODY_OUTLINE[i+1],h=b-a,t=Math.max(0,Math.min(1,(d-a)/h));return (2*t**3-3*t*t+1)*x+(t**3-2*t*t+t)*h*tangent(i)+(-2*t**3+3*t*t)*y+(t**3-t*t)*h*tangent(i+1);
+}
+
+const FRETS=20,BOARD_END=.452,NECK_END=.350;
+const fretboardHalfWidth = d => d <= .325 ? .026+.005*Math.max(0,d)/.325 : .031+.001*Math.min(1,(d-.325)/(BOARD_END-.325));
+function neckSection(d){const t=clamp(d/.325,0,1),heel=clamp((d-.325)/.025,0,1),width=.024+.005*t+.001*heel,back=-.021-.002*t-.027*heel;return {width,depth:(-.006-back)/2,centre:(-.006+back)/2};}
+function neckDistance(d,v,z){const a=neckSection(d),y=z-a.centre,k0=Math.hypot(v/a.width,y/a.depth),k1=Math.hypot(v/(a.width*a.width),y/(a.depth*a.depth));const cross=k1>1e-10?k0*(k0-1)/k1:-Math.min(a.width,a.depth);return Math.max(cross,-.05-d,d-NECK_END);}
 const PLUCK_D = SCALE - 0.115; // over the soundhole, 115 mm from the bridge
 const pluckPoint = (string, lift = 0.006) => stringPoint(string, PLUCK_D, lift);
 const bridgePoint = string => stringPoint(string, SCALE, 0.004);
 
 /* Finger segment lengths (anatomical digits: thumb, index..little). */
-const LENGTHS = [[.043, .032, .025], [.058, .034, .024], [.065, .040, .027], [.060, .037, .026], [.048, .028, .022]];
+const LENGTHS = [[.030,.023,.018],[.0368,.0224,.016],[.0416,.0256,.0176],[.0384,.024,.0168],[.0304,.0192,.0136]];
 const REST_CURL = [0.5, 0.62, 0.68, 0.74, 0.8]; // PIP curl of a relaxed finger, thumb..little
 /* Solve a 3-segment finger from base to target. Points are built from
  * angles (pianist's resultant construction), so segment lengths are
@@ -95,12 +107,66 @@ function plan(song) {
   const events = grouped.map(ev => ({ t: ev.t, notes: ev.notes.map(i => { const nn = notes[i], a = A[i];
     return { i, t: nn[0], end: nn[0] + nn[1], pitch: nn[2], vel: nn[3], string: a.string, fret: a.fret, lh: a.lh, barre: a.barre, rh: a.rh, pos: a.pos, sweep: !!a.sweep, brush: !!a.brush }; }) }));
   for (const ev of events) for (const nt of ev.notes) nt.ev = ev;
+  const chronological=events.flatMap(e=>e.notes).sort((a,b)=>a.t-b.t||a.i-b.i);
+  // A string cannot retain its former fret after it is plucked again.
+  // Keep the score/audio source notes intact; this is the fretting hold.
+  const lastOnString=new Map();
+  for(const nt of chronological){const old=lastOnString.get(nt.string);if(old){const handoff=old.lh&&nt.lh&&old.lh!==nt.lh?.045:0;old.end=Math.min(old.end,Math.max(old.t+.004,nt.t-handoff));}lastOnString.set(nt.string,nt);}
+  // Release before a large shift, rather than stretching a held finger
+  // across two positions. Source note timing and pitches remain untouched.
+  const shiftEvents=events.filter(e=>e.notes.some(n=>n.fret>0));
+  for(let i=1;i<shiftEvents.length;i++){
+    const a=shiftEvents[i-1],b=shiftEvents[i],da=fretDist(a.notes[0].pos||1),db=fretDist(b.notes[0].pos||1);
+    if(Math.abs(db-da)<=.060)continue;
+    const travel=clamp(Math.abs(db-da)/1.6,.025,.22),release=Math.max(a.t+.004,b.t-.004-travel-.012);
+    for(const ev of events){if(ev.t>=b.t)break;for(const nt of ev.notes)if(nt.fret>0&&nt.end>release)nt.end=Math.max(nt.t+.004,release);}
+  }
+  // Close a new barre after releasing the previous chord. Keeping its
+  // old little finger pressed until the attack would stretch the compact
+  // hand while the index is already preparing the next barre.
+  let lastIndex=null;
+  for(const b of events){
+    const idx=b.notes.find(nt=>nt.lh===1);
+    if(idx?.barre&&(!lastIndex?.barre||lastIndex.fret!==idx.fret)){
+      const release=b.t-.050;
+      for(const ev of events){if(ev.t>=b.t)break;for(const nt of ev.notes)if(nt.fret>0&&nt.t<release&&nt.end>release&&nt.end<=b.t+.030)nt.end=Math.max(nt.t+.004,release);}
+    }
+    if(idx)lastIndex=idx;
+  }
+  // Finish a former hold before forming the next chord. A hold ending
+  // exactly at its onset must not pin the old wrist for that first frame.
+  for(const b of events)if(b.notes.filter(n=>n.fret>0).length>=2){
+    for(const nt of chronological){if(nt.t>=b.t)break;
+      if(nt.fret&&nt.end>=b.t-.020&&nt.end<=b.t+.015&&!b.notes.some(q=>q.lh===nt.lh&&q.fret===nt.fret&&(q.string===nt.string||q.lh===1&&q.barre)))nt.end=Math.min(nt.end,Math.max(nt.t+.004,b.t-.035));
+    }
+  }
+  // One barre spans a strummed/held chord, even when the MIDI event
+  // window splits the bass and treble attacks into separate blocks.
+  let barreGroup=null;
+  for(const nt of chronological)if(nt.lh===1){
+    if(!barreGroup||nt.fret!==barreGroup.fret||nt.t>barreGroup.end+.025)barreGroup={fret:nt.fret,end:nt.end,notes:[]};
+    barreGroup.notes.push(nt);barreGroup.end=Math.max(barreGroup.end,nt.end);nt.barreGroup=barreGroup;
+    if(nt.barre||barreGroup.notes.some(n=>n.barre)||new Set(barreGroup.notes.map(n=>n.string)).size>1)for(const n of barreGroup.notes)n.barre=Math.max(n.barre,1);
+  }
+  for(const group of new Set(events.flatMap(e=>e.notes.map(n=>n.barreGroup).filter(Boolean)))){
+    group.strings=[...new Set(group.notes.map(n=>n.string))].sort((a,b)=>a-b);
+    group.target=add(fretPoint(group.strings.at(-1),group.fret,.002,.0042),mul(w,-.004));
+    group.points=group.strings.map(s=>fretPoint(s,group.fret,.002,.0042));
+    group.span=Math.hypot(...sub(fretPoint(group.strings.at(-1),group.fret),fretPoint(group.strings[0],group.fret)));
+  }
+  // Lift the former fingertip before a new index barre takes over the
+  // same fret/string, even when that string is not plucked again yet.
+  for(const group of new Set(chronological.filter(n=>n.barre).map(n=>n.barreGroup))){
+    const start=group.notes[0].t,lo=group.strings[0],hi=group.strings.at(-1);
+    for(const nt of chronological){if(nt.t>=start)break;if(nt.lh>1&&nt.fret===group.fret&&nt.string>=lo&&nt.string<=hi)nt.end=Math.min(nt.end,Math.max(nt.t+.004,start-.045));}
+  }
   // Per-LH-finger note lists (digits 1..4) and per-RH-finger lists.
   const lhByFinger = { 1: [], 2: [], 3: [], 4: [] }, rhByFinger = { p: [], i: [], m: [], a: [] };
   for (const ev of events) for (const nt of ev.notes) {
     if (nt.lh >= 1) lhByFinger[nt.lh].push(nt);
     rhByFinger[nt.rh].push(nt);
   }
+  for(const list of [...Object.values(lhByFinger),...Object.values(rhByFinger)])list.sort((a,b)=>a.t-b.t||a.i-b.i);
   // String vibration: last pluck time per string.
   const plucks = []; for (const ev of events) for (const nt of ev.notes) plucks.push({ t: nt.t, string: nt.string, vel: nt.vel });
   // Sounding-pitch segments (sweep line over note starts/ends) so
@@ -165,7 +231,7 @@ function anchorAt(plan, t) {
   return cur.d + (nxt.d - cur.d) * s;
 }
 
-function pose(plan, t) {
+function poseLegacy(plan, t, solve = true) {
   const { song, events } = plan;
   const anchorD = anchorAt(plan, t);
   const palm = add(add(NUT, mul(u, -anchorD)), add(mul(n, -0.034), mul(w, -0.006)));
@@ -176,8 +242,8 @@ function pose(plan, t) {
    * covers in its event (tip past the far string), slightly flattened. */
   const notePoint = (nt, lift) => {
     if (nt.barre && nt.ev) {
-      const far = Math.min(...nt.ev.notes.filter(x => x.lh === nt.lh && x.fret === nt.fret).map(x => x.string));
-      return add(fretPoint(far, nt.fret, 0.002, lift), mul(w, 0.012)); // tip lands past the far string
+      const far = Math.max(...nt.ev.notes.filter(x => x.lh === nt.lh && x.fret === nt.fret).map(x => x.string));
+      return add(fretPoint(far, nt.fret, 0.002, lift), mul(w, -0.004)); // tip reaches past the bass-most covered string
     }
     return fretPoint(nt.string, nt.fret, 0.006, lift);
   };
@@ -222,14 +288,15 @@ function pose(plan, t) {
       extra = holdExtra(A) + (REST_E(digit) - holdExtra(A)) * s; contact = false;
     }
     const edgeHint = sub(stringPoint(6, anchorD, 0.0), root);
-    const f = solveFinger(root, target, digit, edgeHint, extra);
+    const f = solve ? solveFinger(root, target, digit, edgeHint, extra) : {target, error:0};
+    f.requestedContact = contact;f.preparing = !!B && t >= w0;
     f.contact = contact && f.error < 0.006; f.digit = digit; f.barre = barre;
     lhFingers.push(f); lhTargets.push(target);
   }
   // Left thumb behind the neck, opposite the position.
   const thumbTarget = add(add(NUT, mul(u, -anchorD)), mul(n, -0.020));
   const thumbRoot = add(palm, add(mul(w, -0.020), mul(n, -0.010)));
-  const thumb = solveFinger(thumbRoot, thumbTarget, 0, mul(w, 1), 0.3); thumb.digit = 0;
+  const thumb = solve ? solveFinger(thumbRoot, thumbTarget, 0, mul(w, 1), 0.3) : {target:thumbTarget}; thumb.digit = 0;
   // Right hand at the soundhole.
   const rhBase = add(stringPoint(3, PLUCK_D, 0.052), mul(w, 0.004));
   const rhDef = { p: { digit: 0, rootOff: [-0.046, -0.010, -0.014], rest: 5 }, i: { digit: 1, rootOff: [-0.010, 0.004, 0.006], rest: 3 }, m: { digit: 2, rootOff: [0.010, 0.006, 0.008], rest: 2 }, a: { digit: 3, rootOff: [0.028, 0.002, 0.006], rest: 1 } };
@@ -241,20 +308,21 @@ function pose(plan, t) {
     const ni = lowerBound(list, t + 1e-4);
     const cur = ni > 0 ? list[ni - 1] : null, nxt = ni < list.length ? list[ni] : null;
     let string = def.rest, env = 0;
-    if (cur && t - cur.t < 0.10) { string = cur.string; env = Math.sin(Math.PI * clamp((t - cur.t + 0.012) / 0.085, 0, 1)); }
+    if (cur && t - cur.t < 0.10) { string = cur.string; env = Math.cos(Math.PI * clamp((t - cur.t) / 0.085, 0, 1) / 2); }
     else if (cur && t - cur.t < 0.35) string = cur.string;
-    const lift = 0.011 - env * 0.009;
-    let target = add(pluckPoint(string, lift), mul(u, -0.004 * env));
+    const lift = 0.017 - env * 0.012;
+    let target = add(pluckPoint(string, lift), mul(w, (name === 'p' ? 1 : -1) * .003 * Math.sin(Math.PI * (1-env))));
     if (cur && t - cur.t > 0.35 && string !== def.rest) { // fade the string memory out, never snap
       const s = smooth((t - cur.t - 0.35) / 0.2);
       target = target.map((v, k) => v + (pluckPoint(def.rest, 0.011)[k] - v) * s);
     }
-    if (nxt && nxt.string !== string && nxt.t - t < 0.12) { // glide to the next string early
-      const s = smooth((t - (nxt.t - 0.12)) / 0.11);
-      target = target.map((v, k) => v + (pluckPoint(nxt.string, 0.008)[k] - v) * s);
+    if (nxt && nxt.string !== string && nxt.t - t < 0.12) { // prepare after the current attack
+      const end=nxt.t-.002,start=Math.min(end-.002,Math.max(cur?cur.t+.002:-Infinity,nxt.t-.12));
+      const s = smooth((t-start)/(end-start));
+      target = target.map((v, k) => v + (pluckPoint(nxt.string, 0.005)[k] - v) * s);
     }
-    const f = solveFinger(root, target, def.digit, name === 'p' ? add(mul(w, 0.6), mul(n, -0.4)) : add(mul(n, -1), mul(u, -0.35)), name === 'p' ? 0.25 : 0.35 - env * 0.3);
-    f.contact = env > 0.45; f.digit = def.digit; f.string = string; f.env = env;
+    const f = solve ? solveFinger(root, target, def.digit, name === 'p' ? add(mul(w, 0.6), mul(n, -0.4)) : add(mul(n, -1), mul(u, -0.35)), name === 'p' ? 0.25 : 0.35 - env * 0.3) : {target};
+    f.contact = !!cur && Math.abs(t-cur.t)<.006; f.digit = def.digit; f.string = string; f.env = env;
     rhFingers[name] = f;
   }
   // Arms: shoulders fixed to the torso, two-bone IK with exact lengths.
@@ -280,5 +348,7 @@ function pose(plan, t) {
   return { t, palm, anchorD, lhFingers, lhThumb: thumb, rhFingers, arms, vib, activeNotes, torso: { lean, sway, nod: 0 }, wristL, wristR };
 }
 
-return { SCALE, NUT, u, w, n, fretDist, stringPoint, fretPoint, pluckPoint, bridgePoint, PLUCK_D, LENGTHS, solveFinger, plan, pose, lowerBound };
+function pose(plan,t){return window.GuitarHands?.available(plan) ? window.GuitarHands.pose(plan,t,poseLegacy(plan,t,false)) : poseLegacy(plan,t);}
+
+return { poseLegacy, BODY_SPEC,BODY_OUTLINE,bodyWidth,FRETS,BOARD_END,NECK_END,neckSection,neckDistance,fretboardHalfWidth, SCALE, NUT, u, w, n, fretDist, stringPoint, fretPoint, pluckPoint, bridgePoint, PLUCK_D, LENGTHS, solveFinger, plan, pose, lowerBound };
 })();
