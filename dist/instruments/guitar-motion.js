@@ -98,6 +98,52 @@ function solveFinger(base, target, digit, bendHint, extraCurl = 0) {
   return { points, lengths: ls, angles: [ang, q, q * 0.65], error: Math.hypot(...sub(points[3], target)), target, contact: extraCurl === 0 };
 }
 
+// Compile a fretting choreography independently of the pluck clock. Lower
+// stops may stay down beneath higher notes; a higher stop lifts for an open
+// or lower sounding note on the same string. Repeated plucks never reset a grip.
+function gripHolds(song,events){
+ const phrases=song.leftHandPhrases;if(!phrases)return null;
+ const raw=events.flatMap(e=>e.notes).sort((a,b)=>a.t-b.t||a.i-b.i),byFinger={1:[],2:[],3:[],4:[]};
+ const key=n=>[n.string,n.fret,n.barre,n.barreGroup?.strings.join(',')||''].join(':');
+ for(const p of phrases){
+  const ns=raw.filter(n=>n.t>=p.startTime-1e-5&&n.t<p.endTime-1e-5),times=[...new Set([p.startTime,p.endTime,...ns.map(n=>n.t)])].sort((a,b)=>a-b);
+  const requests=[1,2,3,4].map(f=>ns.filter(n=>n.lh===f));
+  for(let j=0;j<times.length-1;j++){
+   const start=times[j],end=times[j+1];if(end-start<1e-7)continue;
+   const allowed=new Map();for(const n of ns){if(n.t>start+1e-6)break;allowed.set(n.string,n.fret);}
+   for(let f=1;f<=4;f++){
+    const list=requests[f-1];if(!list.length)continue;
+    const source=list.findLast(n=>n.t<=start+1e-6)||list[0];let string=source.string,fret=source.fret,barre=0,strings=[string];
+    if(f===1){
+     const declared=p.barre&&fret===p.position;
+     const possible=declared?Array.from({length:p.barre[1]-p.barre[0]+1},(_,i)=>p.barre[0]+i):[...new Set(p.stops.filter(q=>q.finger===1&&q.fret===fret).map(q=>q.string))];
+     const safe=possible.filter(s=>(allowed.get(s)??Infinity)>=fret).sort((a,b)=>a-b);
+     if(!safe.length)continue;
+     // Do not flatten across an open/lower string between two stops.
+     const runs=[];for(const s of safe){let r=runs.at(-1);if(!r||Array.from({length:s-r.at(-1)-1},(_,i)=>r.at(-1)+1+i).some(s=>(allowed.get(s)??Infinity)<fret)){r=[];runs.push(r);}r.push(s);}
+     strings=runs.find(r=>r.includes(source.string))||runs.sort((a,b)=>b.length-a.length)[0];string=strings.at(-1);barre=strings.length>1?1:0;
+    }else if((allowed.get(string)??Infinity)<fret)continue;
+    const nt={...source,t:start,end,grip:true,string,fret,lh:f,barre};delete nt.barreGroup;
+    if(barre){const points=strings.map(s=>fretPoint(s,fret,.002,.0042));nt.barreGroup={fret,end,notes:[nt],strings,points,target:add(fretPoint(string,fret,.002,.0042),mul(w,-.004)),span:Math.hypot(...sub(points.at(-1),points[0]))};}
+    nt.ev={t:start,notes:[nt]};
+    const prev=byFinger[f].at(-1);if(prev&&Math.abs(prev.end-start)<1e-5&&key(prev)===key(nt)){prev.end=end;if(prev.barreGroup)prev.barreGroup.end=end;}
+    else byFinger[f].push(nt);
+   }
+  }
+ }
+ const final=phrases.at(-1).endTime;
+ for(let f=1;f<=4;f++){
+  const list=byFinger[f];
+  for(let i=0;i<list.length;i++){
+   const nt=list[i],next=list[i+1];if(next&&next.t-nt.end<1e-5)continue;
+   const last=raw.filter(n=>n.lh===f&&n.t>=nt.t-1e-5&&n.t<nt.end-1e-5&&n.string===nt.string&&n.fret===nt.fret).at(-1);
+   nt.end=Math.max(nt.t+.012,last?last.t+.014:nt.t+.012,nt.end-.060);if(nt.barreGroup)nt.barreGroup.end=nt.end;
+  }
+  list.push(...raw.filter(n=>n.lh===f&&n.t>=final-1e-5));list.sort((a,b)=>a.t-b.t||a.i-b.i);
+ }
+ return byFinger;
+}
+
 function plan(song) {
   if (!song.fingering) window.GuitarFingering.build(song);
   const A = song.fingering.assignments, notes = song.notes;
@@ -167,6 +213,8 @@ function plan(song) {
     rhByFinger[nt.rh].push(nt);
   }
   for(const list of [...Object.values(lhByFinger),...Object.values(rhByFinger)])list.sort((a,b)=>a.t-b.t||a.i-b.i);
+  const grips=gripHolds(song,events);
+  if(grips)for(let f=1;f<=4;f++)lhByFinger[f]=grips[f];
   // String vibration: last pluck time per string.
   const plucks = []; for (const ev of events) for (const nt of ev.notes) plucks.push({ t: nt.t, string: nt.string, vel: nt.vel });
   // Sounding-pitch segments (sweep line over note starts/ends) so
@@ -179,7 +227,7 @@ function plan(song) {
     while (ei2 < byEnd.length && byEnd[ei2].end <= ct) { const p = byEnd[ei2].pitch, c = (sounding.get(p) || 0) - 1; if (c <= 0) sounding.delete(p); else sounding.set(p, c); ei2++; }
     return { t: ct, pitches: [...sounding.keys()] };
   });
-  return { song, events, lhByFinger, rhByFinger, plucks, segments, duration: song.duration };
+  return { song, events, lhByFinger, rhByFinger, plucks, segments, grips, duration: song.duration };
 }
 
 function lowerBound(arr, t, key = 't') { let a = 0, b = arr.length; while (a < b) { const m = (a + b) >> 1; if (arr[m][key] < t) a = m + 1; else b = m; } return a; }
@@ -206,6 +254,10 @@ function posKeys(plan) {
     if (p <= 0) continue;
     const d = fretDist(p);
     if (!keys.length || Math.abs(d - keys[keys.length - 1].d) > 1e-6) keys.push({ t: ev.t, d });
+  }
+  if(plan.song.leftHandPhrases){
+    const phrases=plan.song.leftHandPhrases,tail=keys.filter(k=>k.t>=phrases.at(-1).endTime-1e-5);
+    keys.splice(0,keys.length,...phrases.map(p=>({t:p.startTime,d:fretDist(p.position)})),...tail);
   }
   plan._posKeys = keys;
   return keys;
@@ -350,5 +402,5 @@ function poseLegacy(plan, t, solve = true) {
 
 function pose(plan,t){return window.GuitarHands?.available(plan) ? window.GuitarHands.pose(plan,t,poseLegacy(plan,t,false)) : poseLegacy(plan,t);}
 
-return { poseLegacy, BODY_SPEC,BODY_OUTLINE,bodyWidth,FRETS,BOARD_END,NECK_END,neckSection,neckDistance,fretboardHalfWidth, SCALE, NUT, u, w, n, fretDist, stringPoint, fretPoint, pluckPoint, bridgePoint, PLUCK_D, LENGTHS, solveFinger, plan, pose, lowerBound };
+return { gripSource:()=>[gripHolds,posKeys].map(f=>f.toString()).join('\n'), poseLegacy, BODY_SPEC,BODY_OUTLINE,bodyWidth,FRETS,BOARD_END,NECK_END,neckSection,neckDistance,fretboardHalfWidth, SCALE, NUT, u, w, n, fretDist, stringPoint, fretPoint, pluckPoint, bridgePoint, PLUCK_D, LENGTHS, solveFinger, plan, pose, lowerBound };
 })();

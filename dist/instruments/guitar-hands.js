@@ -88,7 +88,7 @@ window.makeGuitarHands=()=>{
  function leftTargets(P,t,S){return [1,2,3,4].map((digit,i)=>{
   const list=P.lhByFinger[digit],k=G.lowerBound(list,t+1e-9)-1,A=list[k],B=list[k+1],T={digit,contact:false,barre:0};let source=null,weight=0,shapes=[];
   let phase=0,start=0,end=0;if(B){({start,end}=travel(A,B));phase=smooth((t-start)/(end-start));}
-  const repeat=A&&B&&A.string===B.string&&A.fret===B.fret&&B.t-(A.barreGroup?.end??A.end)<=.025, sameBarre=(A?.barreGroup&&A.barreGroup===B?.barreGroup)||repeat;
+  const repeat=A&&B&&A.string===B.string&&A.fret===B.fret&&B.t-(A.barreGroup?.end??A.end)<=.025&&(!P.grips||!!A.barre===!!B.barre&&Math.abs((A.barreGroup?.span||0)-(B.barreGroup?.span||0))<1e-7), sameBarre=(A?.barreGroup&&A.barreGroup===B?.barreGroup)||repeat;
   if(B&&t>=start&&!sameBarre){
    T.from=A?pressPoint(A):undefined;T.fromRelease=A?smooth((start-(A.barreGroup?.end??A.end))/.12):1;T.to=pressPoint(B);T.phase=phase;T.lift=Math.sin(Math.PI*phase)*.006;
    const ab=A?.barre?1-(T.fromRelease||0):0,bb=B.barre?1:0,wa=ab*(1-phase),wb=bb*Math.min(phase,smooth((t-B.t+.050)/.046));if(wa>0)shapes.push({span:barreSpan(A),weight:wa});if(wb>0)shapes.push({span:barreSpan(B),weight:wb});weight=wa+wb;source=B.barre?B:A?.barre?A:null;
@@ -185,9 +185,9 @@ window.makeGuitarHands=()=>{
    if(i>=0){keys[i]=key;for(let j=keys.length-1;j>i;j--)if(Math.abs(keys[j].t-t)<1e-7)keys.splice(j,1);}else keys.push(key);keys.sort((a,b)=>a.t-b.t);
   }return keys;
  }
- function stamp(){const text=window.makeGuitarHands.toString()+G.poseLegacy.toString()+G.plan.toString()+G.stringPoint.toString()+G.bodyWidth.toString()+JSON.stringify([G.BODY_SPEC,G.BODY_OUTLINE])+G.neckSection.toString()+G.neckDistance.toString()+G.fretboardHalfWidth.toString()+G.fretPoint.toString()+G.pluckPoint.toString()+JSON.stringify([G.SCALE,G.NUT,G.u,G.w,G.n,G.BOARD_END,G.NECK_END,G.FRETS,LENGTHS]);let h=2166136261;for(let i=0;i<text.length;i++)h=Math.imul(h^text.charCodeAt(i),16777619);return (h>>>0).toString(16);}
+ function stamp(){const text=window.makeGuitarHands.toString()+G.poseLegacy.toString()+G.plan.toString()+(G.gripSource?.()||'')+G.stringPoint.toString()+G.bodyWidth.toString()+JSON.stringify([G.BODY_SPEC,G.BODY_OUTLINE])+G.neckSection.toString()+G.neckDistance.toString()+G.fretboardHalfWidth.toString()+G.fretPoint.toString()+G.pluckPoint.toString()+JSON.stringify([G.SCALE,G.NUT,G.u,G.w,G.n,G.BOARD_END,G.NECK_END,G.FRETS,LENGTHS]);let h=2166136261;for(let i=0;i<text.length;i++)h=Math.imul(h^text.charCodeAt(i),16777619);return (h>>>0).toString(16);}
  const validated=new WeakMap();let dataObject,validStamp;
- const signature=P=>JSON.stringify([P.song.notes,P.song.fingering.assignments]);
+ const signature=P=>JSON.stringify([P.song.notes,P.song.fingering.assignments,...(P.song.leftHandPhrases?[P.song.leftHandPhrases]:[])]);
  function available(P){const D=window.GUITAR_HAND_FRAMES,cached=validated.get(P);if(cached?.data===D)return cached.ok;if(D!==dataObject){dataObject=D;validStamp=!!D&&D.stamp===stamp();}const ok=!!(validStamp&&D.songs[P.song.id]?.signature===signature(P));validated.set(P,{data:D,ok});return ok;}
  function carriage(keys,t){let i=G.lowerBound(keys,t+1e-8)-1;i=clamp(i,0,keys.length-1);const a=keys[i],b=keys[Math.min(i+1,keys.length-1)],s=b.t>a.t?smooth((t-a.t)/(b.t-a.t)):0;return a.x.map((v,k)=>v+(b.x[k]-v)*s);}
  function arm(S,W,hint){const v=sub(W,S),distance=Math.hypot(...v),dir=norm(v),d=clamp(distance,.015,.615-1e-6),a=(.315**2-.30**2+d*d)/(2*d),bend=norm(sub(hint,mul(dir,dot(hint,dir)))),E=add(add(S,mul(dir,a)),mul(bend,Math.sqrt(Math.max(0,.315**2-a*a))));return {shoulder:S,elbow:E,wrist:W,lengths:[.315,.30],error:Math.abs(distance-d)};}

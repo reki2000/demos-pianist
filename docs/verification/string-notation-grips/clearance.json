@@ -1,0 +1,18 @@
+{
+  "poses": 129744,
+  "minBoneDistanceMm": 4.506657362913825,
+  "requiredBoneDistanceMm": 4.5,
+  "worst": {
+    "song": "granada",
+    "t": 76.96542,
+    "fingers": [
+      3,
+      4
+    ],
+    "bones": [
+      2,
+      2
+    ]
+  },
+  "runtimeFits": 0
+}

@@ -38,6 +38,9 @@ reports.update(version=8,recordedInstrument=manifest['name'],recordedVelocityLay
  browserUIAndAuditoryCheck=False)
 camera_report=root/'docs/verification/mobile-camera/gestures.json'
 if camera_report.is_file():reports['cameraGestures']=json.loads(camera_report.read_text())
+for name,file in [('stringScoreBeams','beams.json'),('guitarChordGrips','grips.json')]:
+ report=root/'docs/verification/string-notation-grips'/file
+ if report.is_file():reports[name]=json.loads(report.read_text())
 reports['standaloneValidation']=json.loads(subprocess.check_output(['node','validate-v8.cjs'],cwd=root,text=True))
 repertoire_report=root/'docs/verification/repertoire/music.json'
 if repertoire_report.is_file():reports['repertoire']=json.loads(repertoire_report.read_text())
@@ -60,6 +63,9 @@ files.extend((root/'docs/verification/mobile-camera').glob('*'))
 archive=root/'piano-recital-v8.zip'
 files.extend((root/'repertoire-sources').glob('*'))
 files.append(root/'build-repertoire.cjs')
+files.append(root/'alhambra-grips.cjs')
+files.append(root/'precompute-alhambra-grips.cjs')
+files.extend((root/'docs/verification/string-notation-grips').glob('*'))
 files.append(root/'refine-repertoire-violin.cjs')
 files.append(root/'repertoire-patches.json')
 files.extend((root/'docs/verification/repertoire').glob('*'))

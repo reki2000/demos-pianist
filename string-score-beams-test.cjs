@@ -1,0 +1,23 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');global.window=globalThis;
+for(const f of ['score','instruments/staff-score'])vm.runInThisContext(fs.readFileSync('dist/'+f+'.js','utf8'));
+const fixture=(times,durations=.5,signature={numerator:4,denominator:4},clefFor=()=> 'treble')=>{
+ const song={title:'Beam fixture',notes:times.map((t,i)=>[t,Array.isArray(durations)?durations[i]:durations,64+i%4,80])};
+ const cfg={song,t:0,beatAt:t=>t,signature,clefFor};return {song,cfg,model:StringScore.prepare(song,cfg)};
+};
+let a=fixture([0,.5,1,1.5,2,2.5,3,3.5]);assert.equal(a.model.beams.length,4);assert(a.model.beams.every(b=>b.groups.length===2));
+let b=fixture([0,.5,1,1.5,2,2.5],.5,{numerator:6,denominator:8},()=> 'bass');assert.deepEqual(b.model.beams.map(b=>b.groups.length),[3,3]);
+let c=fixture([0,.25,.5],[.25,.25,.5]);assert.equal(c.model.beams.length,1);assert.deepEqual(c.model.beams[0].groups.map(g=>g.flags),[2,2,1]);
+assert.equal(fixture([0,.75],.5).model.beams.length,0,'A rest must break the beam');
+assert.equal(fixture([0,1],1).model.beams.length,0,'Quarter notes must retain separate stems');
+assert.equal(fixture([.75,1],.25).model.beams.length,0,'Beams must stop at beat boundaries');
+assert.equal(fixture([2.75,3],.25,{numerator:3,denominator:4}).model.beams.length,0,'Beams must stop at barlines');
+const changed=fixture([0,.5],.5,undefined,p=>p<65?'bass':'tenor');assert.equal(changed.model.beams.length,0,'A clef change must break the beam');
+let chord=fixture([0,0,.5,.5]);assert.equal(chord.model.groups.length,2);assert.equal(chord.model.beams.length,1);assert(chord.model.beams[0].groups.every(g=>g.items.length===2));
+const signatureChange=fixture([0,.5,1,1.5]);signatureChange.cfg.song={...signatureChange.song};signatureChange.cfg.signatureAt=beat=>({beat:beat<1?0:1,numerator:beat<1?4:6,denominator:beat<1?4:8});
+const changedModel=StringScore.prepare(signatureChange.cfg.song,signatureChange.cfg);assert.equal(changedModel.beams.length,2);
+let flags=0,polygons=0;const context=new Proxy({quadraticCurveTo(){flags++;},fill(){polygons++;}}, {get:(o,k)=>k in o?o[k]:()=>{}});
+const canvas={clientWidth:900,clientHeight:180,width:0,height:0,getContext:()=>context,setAttribute(){}};
+const drawn=StringScore.render(canvas,a.cfg);assert.equal(drawn.beams,4);assert.equal(flags,0,'Beamed notes still draw individual flags');assert(polygons>=4);
+const scrolled=StringScore.render(canvas,{...a.cfg,t:.45});assert.equal(scrolled.beams,4,'Scrolling split a complete beam group');
+console.log(JSON.stringify({simpleMeter:true,compoundMeter:true,mixedSecondaryBeams:true,sharedChordStems:true,restsAndBarlines:true,clefAndMeterChanges:true,noDuplicateFlags:true,scrolling:true},null,2));

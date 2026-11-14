@@ -1,0 +1,490 @@
+{
+  "regions": [
+    {
+      "i": 0,
+      "bars": [
+        1
+      ],
+      "position": 2,
+      "maxConstraintError": 6.087095132972284e-7
+    },
+    {
+      "i": 1,
+      "bars": [
+        2
+      ],
+      "position": 1,
+      "maxConstraintError": 2.9384739298554847e-7
+    },
+    {
+      "i": 2,
+      "bars": [
+        2
+      ],
+      "position": 2,
+      "maxConstraintError": 4.2926098693912475e-7
+    },
+    {
+      "i": 3,
+      "bars": [
+        3,
+        4
+      ],
+      "position": 2,
+      "maxConstraintError": 1.7474586326633847e-7
+    },
+    {
+      "i": 4,
+      "bars": [
+        4
+      ],
+      "position": 5,
+      "maxConstraintError": 2.7564794657142936e-7
+    },
+    {
+      "i": 5,
+      "bars": [
+        5
+      ],
+      "position": 3,
+      "maxConstraintError": 4.093950109639123e-7
+    },
+    {
+      "i": 6,
+      "bars": [
+        5
+      ],
+      "position": 5,
+      "maxConstraintError": 2.7564794657142936e-7
+    },
+    {
+      "i": 7,
+      "bars": [
+        6
+      ],
+      "position": 3,
+      "maxConstraintError": 0.0001874572724413666
+    },
+    {
+      "i": 8,
+      "bars": [
+        6
+      ],
+      "position": 5,
+      "maxConstraintError": 2.7564794657142936e-7
+    },
+    {
+      "i": 9,
+      "bars": [
+        7,
+        8
+      ],
+      "position": 3,
+      "maxConstraintError": 4.093950109639123e-7
+    },
+    {
+      "i": 10,
+      "bars": [
+        9
+      ],
+      "position": 8,
+      "maxConstraintError": 4.942575982023925e-7
+    },
+    {
+      "i": 11,
+      "bars": [
+        9
+      ],
+      "position": 7,
+      "maxConstraintError": 1.7819451594372933e-7
+    },
+    {
+      "i": 12,
+      "bars": [
+        10
+      ],
+      "position": 3,
+      "maxConstraintError": 2.849607621048959e-7
+    },
+    {
+      "i": 13,
+      "bars": [
+        10
+      ],
+      "position": 5,
+      "maxConstraintError": 2.684945471282324e-7
+    },
+    {
+      "i": 14,
+      "bars": [
+        11
+      ],
+      "position": 4,
+      "maxConstraintError": 6.074471497032171e-7
+    },
+    {
+      "i": 15,
+      "bars": [
+        12
+      ],
+      "position": 4,
+      "maxConstraintError": 4.3325263566433474e-7
+    },
+    {
+      "i": 16,
+      "bars": [
+        13
+      ],
+      "position": 5,
+      "maxConstraintError": 5.804130853616711e-7
+    },
+    {
+      "i": 17,
+      "bars": [
+        14
+      ],
+      "position": 2,
+      "maxConstraintError": 5.02313257726963e-8
+    },
+    {
+      "i": 18,
+      "bars": [
+        14
+      ],
+      "position": 5,
+      "maxConstraintError": 2.2264635196458396e-7
+    },
+    {
+      "i": 19,
+      "bars": [
+        15
+      ],
+      "position": 3,
+      "maxConstraintError": 2.277267090094301e-7
+    },
+    {
+      "i": 20,
+      "bars": [
+        15
+      ],
+      "position": 1,
+      "maxConstraintError": 3.3923169014819047e-7
+    },
+    {
+      "i": 21,
+      "bars": [
+        16
+      ],
+      "position": 1,
+      "maxConstraintError": 3.3923169014819047e-7
+    },
+    {
+      "i": 22,
+      "bars": [
+        17
+      ],
+      "position": 2,
+      "maxConstraintError": 0.0000030068509766170512
+    },
+    {
+      "i": 23,
+      "bars": [
+        18
+      ],
+      "position": 1,
+      "maxConstraintError": 6.447337373092284e-9
+    },
+    {
+      "i": 24,
+      "bars": [
+        19
+      ],
+      "position": 1,
+      "maxConstraintError": 5.622867327558282e-7
+    },
+    {
+      "i": 25,
+      "bars": [
+        20
+      ],
+      "position": 1,
+      "maxConstraintError": 5.622867327558282e-7
+    },
+    {
+      "i": 26,
+      "bars": [
+        21
+      ],
+      "position": 2,
+      "maxConstraintError": 1.4301192252157604e-7
+    },
+    {
+      "i": 27,
+      "bars": [
+        22
+      ],
+      "position": 2,
+      "maxConstraintError": 1.4301192252157604e-7
+    },
+    {
+      "i": 28,
+      "bars": [
+        23,
+        24
+      ],
+      "position": 2,
+      "maxConstraintError": 0
+    },
+    {
+      "i": 29,
+      "bars": [
+        25
+      ],
+      "position": 2,
+      "maxConstraintError": 5.038473194897181e-7
+    },
+    {
+      "i": 30,
+      "bars": [
+        26
+      ],
+      "position": 10,
+      "maxConstraintError": 1.539945251544089e-7
+    },
+    {
+      "i": 31,
+      "bars": [
+        26
+      ],
+      "position": 2,
+      "maxConstraintError": 2.4893479190454755e-7
+    },
+    {
+      "i": 32,
+      "bars": [
+        27
+      ],
+      "position": 2,
+      "maxConstraintError": 3.255875074455706e-7
+    },
+    {
+      "i": 33,
+      "bars": [
+        28
+      ],
+      "position": 2,
+      "maxConstraintError": 5.551115123125783e-17
+    },
+    {
+      "i": 34,
+      "bars": [
+        29
+      ],
+      "position": 2,
+      "maxConstraintError": 2.9851786765768857e-7
+    },
+    {
+      "i": 35,
+      "bars": [
+        30
+      ],
+      "position": 4,
+      "maxConstraintError": 7.332273656453415e-7
+    },
+    {
+      "i": 36,
+      "bars": [
+        31
+      ],
+      "position": 4,
+      "maxConstraintError": 2.109222504856597e-7
+    },
+    {
+      "i": 37,
+      "bars": [
+        32
+      ],
+      "position": 4,
+      "maxConstraintError": 1.9535994798629407e-7
+    },
+    {
+      "i": 38,
+      "bars": [
+        33
+      ],
+      "position": 2,
+      "maxConstraintError": 4.4919555368293984e-7
+    },
+    {
+      "i": 39,
+      "bars": [
+        34
+      ],
+      "position": 2,
+      "maxConstraintError": 1.9005986209634912e-7
+    },
+    {
+      "i": 40,
+      "bars": [
+        35
+      ],
+      "position": 2,
+      "maxConstraintError": 0.0004900960904447348
+    },
+    {
+      "i": 41,
+      "bars": [
+        36
+      ],
+      "position": 2,
+      "maxConstraintError": 4.121334479634996e-7
+    },
+    {
+      "i": 42,
+      "bars": [
+        37
+      ],
+      "position": 2,
+      "maxConstraintError": 5.551115123125783e-17
+    },
+    {
+      "i": 43,
+      "bars": [
+        37
+      ],
+      "position": 1,
+      "maxConstraintError": 6.137715318877432e-7
+    },
+    {
+      "i": 44,
+      "bars": [
+        38
+      ],
+      "position": 1,
+      "maxConstraintError": 1.1440984738219006e-7
+    },
+    {
+      "i": 45,
+      "bars": [
+        39
+      ],
+      "position": 1,
+      "maxConstraintError": 5.243868109396754e-8
+    },
+    {
+      "i": 46,
+      "bars": [
+        40
+      ],
+      "position": 1,
+      "maxConstraintError": 4.462954086537456e-7
+    },
+    {
+      "i": 47,
+      "bars": [
+        41,
+        42
+      ],
+      "position": 2,
+      "maxConstraintError": 5.551115123125783e-17
+    },
+    {
+      "i": 48,
+      "bars": [
+        43
+      ],
+      "position": 1,
+      "maxConstraintError": 2.0832904020739363e-7
+    },
+    {
+      "i": 49,
+      "bars": [
+        44
+      ],
+      "position": 2,
+      "maxConstraintError": 1.6548423975478753e-8
+    },
+    {
+      "i": 50,
+      "bars": [
+        44
+      ],
+      "position": 2,
+      "maxConstraintError": 0
+    },
+    {
+      "i": 51,
+      "bars": [
+        45
+      ],
+      "position": 2,
+      "maxConstraintError": 4.622616521067619e-7
+    },
+    {
+      "i": 52,
+      "bars": [
+        46
+      ],
+      "position": 2,
+      "maxConstraintError": 5.551115123125783e-17
+    },
+    {
+      "i": 53,
+      "bars": [
+        47
+      ],
+      "position": 1,
+      "maxConstraintError": 3.329592156888945e-7
+    },
+    {
+      "i": 54,
+      "bars": [
+        48
+      ],
+      "position": 1,
+      "maxConstraintError": 4.12513408603521e-7
+    },
+    {
+      "i": 55,
+      "bars": [
+        49,
+        50
+      ],
+      "position": 2,
+      "maxConstraintError": 5.551115123125783e-17
+    },
+    {
+      "i": 56,
+      "bars": [
+        51
+      ],
+      "position": 2,
+      "maxConstraintError": 4.0787831137900355e-7
+    },
+    {
+      "i": 57,
+      "bars": [
+        52
+      ],
+      "position": 2,
+      "maxConstraintError": 5.023010306502763e-7
+    },
+    {
+      "i": 58,
+      "bars": [
+        53
+      ],
+      "position": 2,
+      "maxConstraintError": 4.184309603324648e-7
+    },
+    {
+      "i": 59,
+      "bars": [
+        54
+      ],
+      "position": 2,
+      "maxConstraintError": 2.397650471422465e-7
+    }
+  ],
+  "keys": 235
+}

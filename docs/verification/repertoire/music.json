@@ -2,10 +2,10 @@
   "guitar": {
     "unchangedSourceNotes": true,
     "unchangedOtherPlans": 5,
-    "sourceHints": 1238,
-    "equivalentBarres": 9,
+    "sourceHints": 1300,
+    "equivalentBarres": 0,
     "melody": 977,
-    "thumb": 324,
+    "thumb": 323,
     "validation": {
       "notes": 1338,
       "events": 1332,
@@ -14,15 +14,15 @@
       "stringConflicts": 0,
       "fingerConflicts": 0,
       "onsetSpanOver4": 0,
-      "fastPositionJumps": 5,
-      "tightFingerMoves": 1,
+      "fastPositionJumps": 1,
+      "tightFingerMoves": 0,
       "rhSameFingerMelody": 0,
       "rhArpSameString": 0,
       "rhThumbOnTreble": 0,
-      "authoredThumbOnTreble": 39,
-      "rhThumbOnString3": 65,
+      "authoredThumbOnTreble": 48,
+      "rhThumbOnString3": 70,
       "barreErrors": 0,
-      "ringingRefrets": 29
+      "ringingRefrets": 3
     }
   },
   "violin": {

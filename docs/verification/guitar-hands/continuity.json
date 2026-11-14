@@ -1,5 +1,5 @@
 {
-  "probes": 39943,
+  "probes": 37155,
   "probeIntervalSeconds": 0.000002,
   "method": "Richardson extrapolation to zero interval",
   "wrist": {
@@ -8,9 +8,9 @@
     "t": 110.26705
   },
   "tip": {
-    "d": 0.0000030134912599798072,
-    "id": "recuerdos",
-    "t": 59.66666667,
+    "d": 0.0000030134756283302786,
+    "id": "andaluza",
+    "t": 16.88333333,
     "f": 1
   },
   "limitMm": 0.1
