@@ -305,6 +305,17 @@ function assignRH(song, events, A) {
     }
     a.rh = alt; alt = alt === 'i' ? 'm' : 'i'; // strict i-m alternation
   });
+  // Authored p-a-m-i texture is rhythmic, rather than a global pitch threshold.
+  // High accompaniment notes must still be played by the thumb.
+  if(song.rightHandTremolo){
+    const {bpm,endBeat}=song.rightHandTremolo;let cycle=0;
+    events.forEach(ev=>{if(ev.notes.length!==1)return;const ni=ev.notes[0],beat=notes[ni][0]*bpm/60;if(beat>=endBeat-1e-4)return;
+
+      const a=A[ni];if(Math.abs(beat*2-Math.round(beat*2))<.001){a.rh='p';a.role='trem-acc';}
+      else{a.rh=['a','m','i'][cycle++%3];a.role='trem-mel';}
+    });
+  }
+
 }
 
 // Reuse an already held index barre for equal-fret treble notes. A note
@@ -342,7 +353,10 @@ function build(song) {
   let beam = [{ cost: 0, picks: [], prevPos: 0, prevTop: null, ringing: new Map(), heldByFinger: new Map() }];
   let unplayable = 0;
   events.forEach((ev, ei) => {
-    const combos = eventCandidates(ev.notes, open, notes);
+    const hints = song.fingeringHints || {};
+    const combos = eventCandidates(ev.notes, open, notes).filter(combo=>combo.every((x,k)=>{
+      const h=hints[ev.notes[k]];return !h||(h.string==null||h.string===x.string)&&(h.lh!==0||x.fret===0)&&(h.lh==null||h.lh===0||x.fret>0);
+    }));
     if (!combos.length) unplayable += ev.notes.length;
     const usable = combos.length ? combos : [ev.notes.map(ni => optionsFor(notes[ni][2], open)[0] || { string: 1, fret: 0 })];
     const next = [];
@@ -351,7 +365,11 @@ function build(song) {
       for (const [f, h] of st.heldByFinger) if (h.until > ev.t + EPS) held.set(f, h);
       for (const combo0 of usable) {
         const combo = combo0.map((x, k) => ({ ...x, pitch: notes[ev.notes[k]][2] }));
-        const ff = fingersFor(combo.map(x => ({ ...x })), st.prevPos);
+        let ff = fingersFor(combo.map(x => ({ ...x })), st.prevPos);
+        if(ff){ff={...ff,fingers:ff.fingers.slice()};combo.forEach((x,k)=>{const h=hints[ev.notes[k]];if(h?.lh!=null)ff.fingers[k]=h.lh;});
+          if(combo.length===1&&combo[0].fret>0&&hints[ev.notes[0]]?.lh)ff.pos=Math.max(1,combo[0].fret-ff.fingers[0]+1);
+          const occupied=new Map();for(let k=0;k<combo.length;k++){const f=ff.fingers[k];if(f&&occupied.has(f)&&(f!==1||occupied.get(f)!==combo[k].fret)){ff=null;break;}if(f)occupied.set(f,combo[k].fret);}
+        }
         const replaced=new Set(combo.map(x=>x.string));
         const heldNotes=[...st.ringing.entries()].filter(([s,r])=>!replaced.has(s)&&r.until>ev.t+EPS&&r.fret>0).map(([s,r])=>({...r,string:s}));
         const effectiveHeld=new Map();for(const r of heldNotes){const old=effectiveHeld.get(r.finger);if(!old||old.until<r.until)effectiveHeld.set(r.finger,r);}
@@ -372,6 +390,10 @@ function build(song) {
   const chosen = beam[0].picks;
   const assignments = assignFingers(song, events, chosen);
   reuseBarres(notes,assignments);
+  for(let i=0;i<assignments.length;i++){
+    const release=song.fingeringHints?.[i]?.releaseAt;
+    if(assignments[i].lh===1&&Number.isFinite(release)&&release>notes[i][0])assignments[i].releaseAt=release;
+  }
   assignRH(song, events, assignments);
   let barreChords = 0;
   events.forEach(ev => { if (ev.notes.some(ni => assignments[ni].barre)) barreChords++; });
@@ -388,7 +410,7 @@ function validate(song) {
   const A = song.fingering.assignments, notes = song.notes, OPENv = song.fingering.open || OPEN;
   const v = { notes: notes.length, events: 0, pitchErrors: 0, unplayable: 0, stringConflicts: 0, fingerConflicts: 0,
     onsetSpanOver4: 0, fastPositionJumps: 0, tightFingerMoves: 0, rhSameFingerMelody: 0, rhArpSameString: 0,
-    rhThumbOnTreble: 0, rhThumbOnString3: 0, barreErrors: 0, ringingRefrets: 0 };
+    rhThumbOnTreble: 0, authoredThumbOnTreble: 0, rhThumbOnString3: 0, barreErrors: 0, ringingRefrets: 0 };
   const events = groupEvents(notes, windowOf(song), OPENv); v.events = events.length;
   A.forEach((a, i) => { if (notes[i][2] !== OPENv[a.string] + a.fret) v.pitchErrors++; if (!optionsFor(notes[i][2], OPENv).length) v.unplayable++; });
   events.forEach(ev => {
@@ -422,8 +444,10 @@ function validate(song) {
   const ring = new Map();
   notes.forEach((n, i) => { const a = A[i]; const r = ring.get(a.string); if (r && r.pitch !== n[2] && r.until > n[0] + 0.02) v.ringingRefrets++; ring.set(a.string, { pitch: n[2], until: n[0] + n[1] }); });
   let lastMel = null, lastTrem = null; const lastArp = new Map();
-  A.forEach(a => {
-    if (a.rh === 'p' && a.string <= 2) v.rhThumbOnTreble++;
+  A.forEach((a,i) => {
+    const beat=song.rightHandTremolo?notes[i][0]*song.rightHandTremolo.bpm/60:Infinity;
+    const authoredThumb=a.role==='trem-acc'&&beat<song.rightHandTremolo?.endBeat&&Math.abs(beat*2-Math.round(beat*2))<.001;
+    if (a.rh === 'p' && a.string <= 2) {if(authoredThumb)v.authoredThumbOnTreble++;else v.rhThumbOnTreble++;}
     if (a.rh === 'p' && a.string === 3) v.rhThumbOnString3++;
     if (a.role === 'mel' && a.rh !== 'p') { if (lastMel && lastMel.rh === a.rh) v.rhSameFingerMelody++; lastMel = a; }
     if (a.role === 'trem-mel') { if (lastTrem && lastTrem.rh === a.rh) v.rhSameFingerMelody++; lastTrem = a; }

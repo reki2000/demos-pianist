@@ -66,7 +66,14 @@ const PAIRS = [
 ];
 const geometryPatches = JSON.parse(fs.readFileSync('geometry-patches.json', 'utf8'));
 const audioLifecyclePatches = JSON.parse(fs.readFileSync('audio-lifecycle-patches.json', 'utf8'));
+const repertoirePatches = JSON.parse(fs.readFileSync('repertoire-patches.json', 'utf8'));
 for (const [name, src] of PAIRS) {
+  const repertoirePatch = repertoirePatches[name];
+  if (repertoirePatch) {
+    assert.equal(sha(src), repertoirePatch.upstream, 'repertoire upstream changed: review adaptation for ' + name);
+    assert.equal(sha(DI(name)), repertoirePatch.integrated, 'repertoire adaptation changed: review and update hashes for ' + name);
+    continue;
+  }
   const audioPatch = audioLifecyclePatches[name];
   if (audioPatch) {
     // Documented host fixes: source retirement and bounded debug history.
@@ -295,7 +302,7 @@ assert.equal(getEl('songs').children.length, 18, 'piano song list intact at load
 let nowMs = 0;
 function tick(n) { for (let i = 0; i < n; i++) { nowMs += 16.7; const q = rafQ; rafQ = []; for (const f of q) f(nowMs); } }
 tick(5);
-const EXPECT = { guitar: 6, violin: 3, cello: 4 };
+const EXPECT = { guitar: 6, violin: 4, cello: 4 };
 const shellReport = {};
 for (const id of ['guitar', 'violin', 'cello']) {
   c.multiShell.chooseInstrument(id);

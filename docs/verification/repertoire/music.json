@@ -1,0 +1,51 @@
+{
+  "guitar": {
+    "unchangedSourceNotes": true,
+    "unchangedOtherPlans": 5,
+    "sourceHints": 1238,
+    "equivalentBarres": 9,
+    "melody": 977,
+    "thumb": 324,
+    "validation": {
+      "notes": 1338,
+      "events": 1332,
+      "pitchErrors": 0,
+      "unplayable": 0,
+      "stringConflicts": 0,
+      "fingerConflicts": 0,
+      "onsetSpanOver4": 0,
+      "fastPositionJumps": 5,
+      "tightFingerMoves": 1,
+      "rhSameFingerMelody": 0,
+      "rhArpSameString": 0,
+      "rhThumbOnTreble": 0,
+      "authoredThumbOnTreble": 39,
+      "rhThumbOnString3": 65,
+      "barreErrors": 0,
+      "ringingRefrets": 29
+    }
+  },
+  "violin": {
+    "id": "bach-preludio",
+    "notes": 1635,
+    "bpm": 120,
+    "duration": 207.95,
+    "strokes": 1629,
+    "stats": {
+      "notes": 1635,
+      "groups": 1629,
+      "strokes": 1629,
+      "downBows": 815,
+      "upBows": 814,
+      "retakes": 0,
+      "collisionsFixed": 0,
+      "collisionsLeft": 0,
+      "shifts": 404,
+      "crossings": 607,
+      "openNotes": 219,
+      "maxPosition": 4,
+      "forcedString": null
+    }
+  },
+  "runtimeFits": 0
+}

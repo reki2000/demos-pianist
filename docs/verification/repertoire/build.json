@@ -1,0 +1,13 @@
+{
+  "alhambra": {
+    "topMatches": 1332,
+    "innerMatches": 272,
+    "hints": 1238
+  },
+  "violin": {
+    "id": "bach-preludio",
+    "notes": 1635,
+    "bpm": 120,
+    "duration": 207.95
+  }
+}

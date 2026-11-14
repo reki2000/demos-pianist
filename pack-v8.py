@@ -37,6 +37,8 @@ reports.update(version=8,recordedInstrument=manifest['name'],recordedVelocityLay
  motionAndScoreUnchangedFromV7=False,characterMesh='smooth-tailcoat',standaloneHTMLBytes=html.stat().st_size,inlineScripts=script_tags+1,requiresRuntimeNetwork=False,
  browserUIAndAuditoryCheck=False)
 reports['standaloneValidation']=json.loads(subprocess.check_output(['node','validate-v8.cjs'],cwd=root,text=True))
+repertoire_report=root/'docs/verification/repertoire/music.json'
+if repertoire_report.is_file():reports['repertoire']=json.loads(repertoire_report.read_text())
 (root/'v8-verification.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2)+'\n')
 files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  root/'v8-verification.json',root/'audio-manifest.json',
@@ -51,6 +53,11 @@ files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  *root.glob('*test.cjs'),*(root/'docs/verification/guitar-hands').glob('*'),*(root/'docs/verification/guitar-finger-clearance').glob('*'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-left-orientation').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'docs/verification/bow-skin').glob('*'),*(root/'docs/verification/hand-joins').glob('*'),*(root/'docs/verification/piano-hands').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
  root/'audio-source/downloads.json',root/'audio-source/layers.json',root/'THIRD-PARTY-NOTICES.md']
 archive=root/'piano-recital-v8.zip'
+files.extend((root/'repertoire-sources').glob('*'))
+files.append(root/'build-repertoire.cjs')
+files.append(root/'refine-repertoire-violin.cjs')
+files.append(root/'repertoire-patches.json')
+files.extend((root/'docs/verification/repertoire').glob('*'))
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
  for p in files:
   if p.is_file():z.write(p,p.relative_to(root))
