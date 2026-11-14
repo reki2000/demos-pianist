@@ -1,0 +1,58 @@
+{
+  "instruments": [
+    {
+      "instrument": "piano",
+      "song": "elise",
+      "reload": true,
+      "copiedURL": true,
+      "noAutoplay": true
+    },
+    {
+      "instrument": "guitar",
+      "song": "recuerdos",
+      "reload": true,
+      "copiedURL": true,
+      "noAutoplay": true
+    },
+    {
+      "instrument": "violin",
+      "song": "czardas",
+      "reload": true,
+      "copiedURL": true,
+      "noAutoplay": true
+    },
+    {
+      "instrument": "cello",
+      "song": "swan",
+      "reload": true,
+      "copiedURL": true,
+      "noAutoplay": true
+    }
+  ],
+  "invalidLinks": [
+    {
+      "query": "?instrument=missing&song=missing",
+      "instrument": "piano",
+      "song": "hero"
+    },
+    {
+      "query": "?instrument=__proto__&song=constructor",
+      "instrument": "piano",
+      "song": "hero"
+    },
+    {
+      "query": "?instrument=violin&song=missing",
+      "instrument": "violin",
+      "song": "air"
+    },
+    {
+      "query": "?instrument=cello&song=air",
+      "instrument": "cello",
+      "song": "prelude"
+    }
+  ],
+  "pageErrors": [],
+  "backForward": true,
+  "otherParametersAndFragmentPreserved": true,
+  "programmaticPianoSelection": true
+}
