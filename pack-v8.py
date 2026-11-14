@@ -45,8 +45,10 @@ if camera_report.is_file():reports['cameraGestures']=json.loads(camera_report.re
 for name,file in [('stringScoreBeams','beams.json'),('guitarChordGrips','grips.json')]:
  report=root/'docs/verification/string-notation-grips'/file
  if report.is_file():reports[name]=json.loads(report.read_text())
-expression_report=root/'docs/verification/violin-expression/motion.json'
+expression_report=root/'docs/verification/string-player-proportions/motion.json'
 if expression_report.is_file():reports['violinExpression']=json.loads(expression_report.read_text())
+proportion_report=root/'docs/verification/string-player-proportions/dimensions.json'
+if proportion_report.is_file():reports['stringPlayerProportions']=json.loads(proportion_report.read_text())
 reports['standaloneValidation']=json.loads(subprocess.check_output(['node','validate-v8.cjs'],cwd=root,text=True))
 repertoire_report=root/'docs/verification/repertoire/music.json'
 if repertoire_report.is_file():reports['repertoire']=json.loads(repertoire_report.read_text())
@@ -76,6 +78,7 @@ files.extend((root/'docs/verification/string-notation-grips').glob('*'))
 files.append(root/'refine-repertoire-violin.cjs')
 files.append(root/'violin-arm-clearance.cjs')
 files.extend((root/'docs/verification/violin-expression').glob('*'))
+files.extend((root/'docs/verification/string-player-proportions').glob('*'))
 files.append(root/'repertoire-patches.json')
 files.extend((root/'docs/verification/repertoire').glob('*'))
 files.extend((root/'docs/verification/cinematic').glob('*'))

@@ -29,7 +29,7 @@ window.CelloMotion = (() => {
   // RecitalGL planning frame (the renderer reflects X): the performer's
   // LEFT shoulder sits at +X, the right (bow) shoulder at -X.
   const SHOULDER_L = [0.205, 1.13, 0.07], SHOULDER_R = [-0.205, 1.13, 0.07];
-  const ARM = [0.30, 0.28]; // upper, forearm
+  const ARM = window.BowHand.armLengths('cello'); // upper, forearm
   // Per-finger dimensions (metres) — a human hand is not four copies
   // of one finger. Totals follow standard hand anthropometry
   // (Garrett / ANSUR-style tables) with the middle finger as the
@@ -39,9 +39,9 @@ window.CelloMotion = (() => {
   // same ordering (little thinnest, middle stoutest of the four).
   // The thumb is a metacarpal + two phalanges, shortest and
   // stoutest of the five digits.
-  const FINGER_LEN = { 1: [0.043, 0.029, 0.021], 2: [0.046, 0.031, 0.023], 3: [0.045, 0.030, 0.022], 4: [0.036, 0.023, 0.017] };
+  const FINGER_LEN = Object.fromEntries(window.BowHand.dimensions.fingers.map((v,i)=>[i+1,v]));
   const FINGER_R = { 1: [0.0130, 0.0120, 0.0105], 2: [0.0140, 0.0130, 0.0110], 3: [0.0135, 0.0125, 0.0105], 4: [0.0115, 0.0105, 0.0090] };
-  const THUMB_LEN = [0.044, 0.030, 0.022]; // metacarpal, proximal, distal (kept: MC1 44 mm sits in the anatomical 44-47 band; the chain total 96 mm runs a few mm under the ~103 mm anatomical ray, a stated shortfall the thenar mass covers visually)
+  const THUMB_LEN = window.BowHand.dimensions.thumb; // metacarpal plus both phalanges
   const THUMB_CMC_ROT_MAX = 0.6; // Stage 2: cap (rad) on the thenar complex's opposition swing about the wrist centre in thumbSolveFor -- the CMC rotation that supplements the 35 mm slide around the trapezium base
   const THUMB_R = [0.0145, 0.0135, 0.0115]; // FOUNDATION (2026-11-08): trimmed from [16.0, 14.5, 12.5] -- the old metacarpal radius drew a 32 mm tube, fatter than the middle finger, and with no thenar mass shaped around it the thumb read as a fifth finger; still the stoutest digit, now only just past the middle finger's 28 mm
   // Finger/thumb THICKNESS knob (rk 2026-11-08: the foundation
@@ -4699,7 +4699,7 @@ window.CelloMotion = (() => {
     const YAW = { 1: -5.5, 2: -1.2, 3: 2.2, 4: 6.5 };
     // Thumb at its anatomical length (metacarpal 46, phalanges 34 + 27 = 107 mm; the
     // foundation's 96 mm chain could not oppose the fingers without slanting the hand).
-    const TL = [0.046, 0.034, 0.027];
+    const TL = window.BowHand.dimensions.thumb;
     const FB = {}, ROOT = {};
     for (let f = 1; f <= 4; f++) {
       const y = YAW[f] * D2R, c = MC_CUP[f] * D2R;
@@ -5554,8 +5554,9 @@ window.CelloMotion = (() => {
   function withBowHand(p) {
     const axis = sub(p.bow.stickTip, p.bow.stickFrog);
     const bowHand = window.BowHand.create('cello', p.bow.stickFrog, axis, M.n);
-    return { ...p, bowHand, rightArm: { ...p.rightArm, wrist: bowHand.wrist,
-      elbow: solveElbow(p.rightArm.shoulder, bowHand.wrist, [-0.55, -1, 0.15]) } };
+    const leftPole=sub(p.leftArm.elbow,lerp(p.leftArm.shoulder,p.leftArm.wrist,.5));
+    return {...p,bowHand,leftArm:window.BowHand.arm('cello',p.leftArm.shoulder,p.leftArm.wrist,leftPole),
+      rightArm:window.BowHand.arm('cello',p.rightArm.shoulder,bowHand.wrist,[-.55,-1,.15])};
   }
 
   let HAND_SOLVER = 'natural';
@@ -5668,6 +5669,24 @@ window.CelloMotion = (() => {
     const bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return entry._numbers = new Float32Array(bytes.buffer);
   };
+  // Cartesian cache interpolation slightly shortened individual phalanges.
+  // Restore the fixed chain analytically about its original cap contact.
+  // This is a two-bone construction, with no iterative fit on the render clock.
+  function restoreCachedDigits(p){
+    const restore=(digit,L)=>{
+      const B=digit.points[0],T=digit.cap,l1=L[0],l2=L[1],l3=L[2]-digit.capR,d=sub(T,B),distance=Math.hypot(...d),axis=norm(d);
+      const s2=norm(sub(digit.points[2],digit.points[1])),s3=norm(sub(T,digit.points[2]));
+      let virtual=Math.sqrt(l2*l2+l3*l3+2*l2*l3*clamp(dot(s2,s3),-1,1));
+      virtual=clamp(virtual,Math.max(Math.abs(l2-l3),Math.abs(distance-l1)+1e-10),Math.min(l2+l3,distance+l1-1e-10));
+      const curl=Math.acos(clamp((virtual*virtual-l2*l2-l3*l3)/(2*l2*l3),-1,1)),a=(l1*l1-virtual*virtual+distance*distance)/(2*distance),h=Math.sqrt(Math.max(0,l1*l1-a*a));
+      let side=sub(sub(digit.points[1],B),mul(axis,dot(sub(digit.points[1],B),axis)));side=norm(side);
+      const P1=add(B,add(mul(axis,a),mul(side,h))),vd=norm(sub(T,P1)),normal=norm(M.vec.cross(vd,side)),psi=Math.atan2(l3*Math.sin(curl),l2+l3*Math.cos(curl));
+      const direction=add(mul(vd,Math.cos(psi)),mul(M.vec.cross(normal,vd),Math.sin(psi))),P2=add(P1,mul(direction,l2)),P3=add(T,mul(norm(sub(T,P2)),digit.capR));
+      return {...digit,points:[B,P1,P2,P3]};
+    };
+    const fingers={};for(let f=1;f<=4;f++)fingers[f]=restore(p.fingers[f],FINGER_LEN[f]);
+    return {...p,fingers,thumb:restore(p.thumb,window.BowHand.dimensions.thumb)};
+  }
   const poseCached = (song, t) => {
     const entry = POSE_CACHE && POSE_CACHE.solvers && POSE_CACHE.solvers[HAND_SOLVER] && POSE_CACHE.solvers[HAND_SOLVER][song.id];
     if (!entry || !entry.data || !entry.frames) return null;
@@ -5675,7 +5694,7 @@ window.CelloMotion = (() => {
     const x = clamp(t, 0, entry.duration), q = x / entry.step, i = Math.min(entry.frames - 1, Math.floor(q)), j = Math.min(entry.frames - 1, i + 1), u = Math.min(1, q - i);
     const a0 = i * entry.width, b0 = j * entry.width, n = new Array(entry.width);
     for (let k = 0; k < entry.width; k++) n[k] = Math.fround(data[a0 + k] + (data[b0 + k] - data[a0 + k]) * u);
-    return withBowHand(cachePose(cacheUnflat(entry.schema, n, u < 0.5 ? entry.strings[i] : entry.strings[j], { i: 0 }, { i: 0 })));
+    return withBowHand(restoreCachedDigits(cachePose(cacheUnflat(entry.schema, n, u < 0.5 ? entry.strings[i] : entry.strings[j], { i: 0 }, { i: 0 }))));
   };
 
   // ---- drawing ----
@@ -5742,18 +5761,9 @@ R.setFaceDetail?.(false);
     // continuous. The same treatment runs on the finger/thumb
     // chains below (extensions 0.22x segment length; joint balls
     // sized by the no-bulge rule there, see drawChain).
-    for (const [arm, sleeve] of [[p.leftArm, SUIT], [p.rightArm, SUIT]]) {
-      const dUE = norm(sub(arm.elbow, arm.shoulder)), dEF = norm(sub(arm.wrist, arm.elbow));
-      R.segment(arm.shoulder, add(arm.elbow, mul(dUE, 0.012)), 0.047, sleeve, 'limb');
-      if (arm === p.leftArm && p.hand.model === 'natural') {
-        // the sleeve stops short of the wrist; the bare wrist narrows into the carpus
-        R.segment(sub(arm.elbow, mul(dEF, 0.012)), sub(arm.wrist, mul(dEF, 0.030)), 0.038, sleeve, 'limb');
-        R.segment(sub(arm.wrist, mul(dEF, 0.075)), add(arm.wrist, mul(dEF, 0.006)), 0.0265, SKIN, 'limb');
-      } else
-      R.segment(sub(arm.elbow, mul(dEF, 0.012)), add(arm.wrist, mul(dEF, 0.012)), 0.038, sleeve, 'limb');
-      R.ball(arm.elbow, [0.046, 0.046, 0.046], sleeve);
-      R.ball(arm.shoulder, [0.050, 0.050, 0.050], sleeve);
-    }
+    const leftHand={basis:p.hand.frame?[p.hand.frame.x,p.hand.frame.y,p.hand.frame.z]:[M.v,M.u,M.n]};
+    for(const [A,H] of [[p.leftArm,leftHand],[p.rightArm,p.bowHand]])
+      window.BowHand.drawArm(R,A,H,{suit:SUIT,skin:SKIN,shirt:SHIRT});
     // Left hand, one assembly (see pose()): carpus at the wrist
     // joint, the palm's shaped masses spanning wrist -> knuckle
     // row, the thenar eminence at the thumb's base, then the
@@ -5857,27 +5867,30 @@ R.setFaceDetail?.(false);
   // distal phalanx ends in a ball of its own radius centred on the
   // tip cap -- the very sphere the solver lays tangent to the board,
   // so what touches in the pose touches on screen.
-  function drawNaturalHand(R, p, colOf) {
-    const ms = p.hand.masses, skin = colOf || (() => SKIN), tipCol = colOf ? colOf : (() => SKIN_L);
-    R.piece('joint', ms.carpus.centre, ms.carpus.radii.map(r => r * 1.15), skin('palm'), ...ms.carpus.euler);
-    for (const k of ['palm', 'pad', 'hypothenar', 'thenar']) R.piece('joint', ms[k].centre, ms[k].radii, skin('palm'), ...ms[k].euler);
-    R.segment(ms.web[0], ms.web[1], 0.0055, skin('palm'), 'joint'); // the web between thumb and index
-    const chain = (c, radii, rootThin, key) => {
-      const pts = c.points;
-      for (let j = 0; j < 3; j++) {
-        const a = pts[j], b = pts[j + 1], d = sub(b, a), L = Math.hypot(...d) || 1e-9, dir = mul(d, 1 / L);
-        if (j === 2) {
-          R.segment(sub(a, mul(dir, 0.22 * L)), add(c.cap, mul(dir, c.capR * 0.25)), radii[2], tipCol(key), 'limb');
-          R.ball(c.cap, [c.capR, c.capR, c.capR], tipCol(key));
-          continue;
-        }
-        if (j === 0 && rootThin) R.segment(sub(a, mul(dir, 0.18 * L)), add(a, mul(dir, 0.45 * L)), radii[0] * 0.74, skin(key), 'limb');
-        R.segment(sub(a, mul(dir, j === 0 && rootThin ? -0.15 * L : 0.2 * L)), add(b, mul(dir, 0.22 * L)), radii[j], skin(key), 'limb');
-        const rB = (radii[j] + radii[j + 1]) / 2; R.ball(b, [rB, rB, rB], skin(key));
+  const handSkins=new WeakMap();
+  function surfaceHand(p){
+    const f=p.hand.frame,D=window.BowHand.dimensions;
+    const fingers=[1,2,3,4].map((key,i)=>({points:[...p.fingers[key].points.slice(0,3),p.fingers[key].cap],radii:FINGER_R[key],rounded:true}));
+    return {basis:[mul(f.x,-1),f.y,f.z],palmPos:p.hand.masses.palm.centre,palmScale:p.hand.masses.palm.radii,
+      wrist:p.hand.wrist,fingers,thumbRadii:THUMB_R,thumb:[...p.thumb.points.slice(0,3),p.thumb.cap],thenarCover:true};
+  }
+  function conformHandSurface(positions){
+    const h=1e-5;
+    for(let i=0;i<positions.length;i+=3){
+      let p=Array.from(positions.subarray(i,i+3)),q=NH.toNeck(p);
+      for(let pass=0;pass<2;pass++){
+        const d=NH.sdInst(q);if(d>=-.00005)break;
+        const gradient=[0,1,2].map(k=>{const a=q.slice(),b=q.slice();a[k]+=h;b[k]-=h;return (NH.sdInst(a)-NH.sdInst(b))/(2*h);}),length=Math.hypot(...gradient);if(length<1e-6)break;
+        q=q.map((v,k)=>v+gradient[k]*(-d+.0002)/length);p=NH.toWorld(q);
       }
-    };
-    for (let f = 1; f <= 4; f++) chain(p.fingers[f], FINGER_R[f], true, f);
-    chain(p.thumb, THUMB_R, false, 'T');
+      for(let k=0;k<3;k++)positions[i+k]=p[k];
+    }
+  }
+  function drawNaturalHand(R,p,colOf){
+    let state=handSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true);
+      state.thumb.radii=window.BowHand.dimensions.thumbRadii;state.thumb.skinBaseT=.95;handSkins.set(R,state);}
+    const H=surfaceHand(p);
+    R.dynamicMesh('cello-left-hand',window.ViolinFingerSkin.update(state,H,undefined,conformHandSurface),colOf?colOf('palm'):SKIN);
   }
 
   function draw(R, song, t, opts = {}) {
@@ -5951,5 +5964,5 @@ R.setFaceDetail?.(false);
     };
   };
 
-  return { plan, pose, poseCached, packPose, setPoseCache, poseLegacy, setHandSolver, NH, drawNaturalHand, draw, setVariant, setCarriage, setRadiusScale, setPlaceVariant, VARIANTS, BONE, PLACE_VARIANTS, ROM, restHand, _romLog: ROM_LOG, _ik: { solveElbow, fingerChain, fingerChainPad, MIN_SPAN, PAD }, SKELETON: { SHOULDER_L, SHOULDER_R, ARM, FINGER_LEN, FINGER_R, THUMB_LEN, THUMB_R, THUMB_CMC_ROT_MAX, get RADIUS_SCALE() { return RADIUS_SCALE; }, HAND: { PALM_LEN, MC_ROW, MC_LEN, MC_BASE, MC_YAW, MC_CUP, SCAPHOID, PLATE, KNUCKLE_PAD, THENAR, HYPOTHENAR, CARPUS: CARPUS_R, THUMB_BASE, THUMB_DIR, REST_CURL, REST_CURL_THUMB } } };
+  return { plan, pose, poseCached, packPose, setPoseCache, poseLegacy, setHandSolver, NH, surfaceHand, conformHandSurface, drawNaturalHand, draw, setVariant, setCarriage, setRadiusScale, setPlaceVariant, VARIANTS, BONE, PLACE_VARIANTS, ROM, restHand, _romLog: ROM_LOG, _ik: { solveElbow, fingerChain, fingerChainPad, MIN_SPAN, PAD }, SKELETON: { SHOULDER_L, SHOULDER_R, ARM, FINGER_LEN, FINGER_R, THUMB_LEN, THUMB_R, THUMB_CMC_ROT_MAX, get RADIUS_SCALE() { return RADIUS_SCALE; }, HAND: { PALM_LEN, MC_ROW, MC_LEN, MC_BASE, MC_YAW, MC_CUP, SCAPHOID, PLATE, KNUCKLE_PAD, THENAR, HYPOTHENAR, CARPUS: CARPUS_R, THUMB_BASE, THUMB_DIR, REST_CURL, REST_CURL_THUMB } } };
 })();

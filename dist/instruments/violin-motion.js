@@ -35,8 +35,8 @@ const rotAxis = (v, axis, ang) => { // Rodrigues
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 
 // Selected proportion B: shorten the four left fingers by 20%; palm/thumb stay unchanged.
-const FINGER_LENGTH_SCALE = .8;
-const FINGER_LENGTHS = [[.046, .028, .020], [.052, .032, .022], [.048, .030, .021], [.038, .024, .017]].map(finger=>finger.map(length=>length*FINGER_LENGTH_SCALE));
+const FINGER_LENGTHS = window.BowHand.dimensions.fingers;
+const ARM_LENGTHS = window.BowHand.armLengths('violin');
 const NOMINAL = [0, 2, 4, 5.5];               // hover semitone offset of fingers 1-4 inside a position
 const SHIFT_LEAD = 0.18;                      // hand starts shifting this long before the target note
 const VIB = { minDur: 0.55, delay: 0.22, ramp: 0.35, rate: 5.6, extentMm: 1.5 };
@@ -227,7 +227,7 @@ function expressionAt(P,t){
 }
 // The upper arm opens sideways, while its height follows the string plane.
 function bowArm(shoulder,wrist,string=1.5){
-  return solveArm(shoulder,wrist,.36,.34,[-1.0,-.12+(string-1.5)*.08,.16]);
+  return window.BowHand.arm('violin',shoulder,wrist,[-1.0,-.02+(string-1.5)*.08,.16]);
 }
 
 function atLegacy(P, t) {
@@ -399,8 +399,8 @@ function atLegacy(P, t) {
   const hintL = add(mul([0.30, -1, 0.35], 1 - kbL), mul([0.85, -0.55, 0.30], kbL));
   // The left clavicle protracts as the hand travels toward the bridge. A
   // fixed rear shoulder forced the elbow around the bout and folded the wrist.
-  const clavicle=add([-.020,-.015,-.085],mul([-.025,-.005,-.020],smooth((hd.dist-85)/80)));
-  const armL = solveArm(add(add(add([0.205, 1.452, -0.03],clavicle), sway), mul(follow, 0.45)), wristL, 0.36, 0.34, hintL);
+  const clavicle=add([-.020,-.015,-.105],mul([-.025,-.005,-.020],smooth((hd.dist-85)/80)));
+  const armL = solveArm(add(add(add([0.205, 1.452, -0.03],clavicle), sway), mul(follow, 0.45)), wristL, ...ARM_LENGTHS, hintL);
   // The head is clamped to the violin by the chin, so it rides the
   // instrument's sway only — not the torso's bow follow (the neck
   // absorbs the difference, and the chin stays on the rest). The base
@@ -633,5 +633,5 @@ function atCached(P,t){
   S.armR=bowArm(S.armR.shoulder,S.handR.wrist,S.bow.string);S.debug.arms=[S.armL,S.armR];
   return S;
 }
-return { expressionAt,bowArm, plan, at, atCached, packPose, songSignature, cacheStamp, setPoseCache, atLegacy, setHandSolver, NH, solveChain, solveArm, handDistAt, bowAt, vibrato, VIB, BOW_TILT, FINGER_LENGTHS };
+return { expressionAt,bowArm, plan, at, atCached, packPose, songSignature, cacheStamp, setPoseCache, atLegacy, setHandSolver, NH, solveChain, solveArm, handDistAt, bowAt, vibrato, VIB, BOW_TILT, FINGER_LENGTHS, ARM_LENGTHS };
 })();

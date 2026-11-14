@@ -1,10 +1,10 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');global.window=globalThis;
 for(const n of ['bow-hand','violin-fingering','violin-songs','hand-surface','violin-skin','violin-model','violin-hand','violin-hand-frames','violin-motion'])vm.runInThisContext(fs.readFileSync(`dist/instruments/${n}.js`,'utf8'),{filename:n});
-const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={fingerLengthScale:.8,fingerLengthsMm:ViolinMotion.FINGER_LENGTHS.map(f=>f.reduce((a,b)=>a+b,0)*1000),thumbLengthsMm:N.THUMB_LEN.map(v=>v*1000),samples:0,maxContactError:0,maxBoneError:0,maxRootError:0,maxWristAngle:0};
-// The selected B proportion is a persistent product requirement.
-for(const [f,total] of [.0752,.0848,.0792,.0632].entries())assert(Math.abs(ViolinMotion.FINGER_LENGTHS[f].reduce((a,b)=>a+b,0)-total)<1e-10,'Selected 20% shortening changed');
-assert.deepEqual(N.THUMB_LEN,[.042,.032,.026],'Thumb length changed');
+const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={proportionReference:"cello",fingerLengthsMm:ViolinMotion.FINGER_LENGTHS.map(f=>f.reduce((a,b)=>a+b,0)*1000),thumbLengthsMm:N.THUMB_LEN.map(v=>v*1000),samples:0,maxContactError:0,maxBoneError:0,maxRootError:0,maxWristAngle:0};
+// The current product requirement supersedes B: match the cello dimensions.
+for(const [f,total] of [.093,.100,.097,.076].entries())assert(Math.abs(ViolinMotion.FINGER_LENGTHS[f].reduce((a,b)=>a+b,0)-total)<1e-10,'Cello finger proportions changed');
+assert.deepEqual(N.THUMB_LEN,[.046,.034,.027],'Thumb length changed');
 // Planning X is reflected by RecitalGL. A left radial/distal/dorsal
 // frame must therefore have negative planning determinant and positive drawn
 // determinant; the former rig incorrectly had the right hand's chirality.
@@ -19,7 +19,7 @@ for(const song of VIOLIN_SONGS){
   const S=ViolinMotion.at(P,t),L=S.handL,old=ViolinMotion.atLegacy(P,t);assert.equal(L.model,'natural');assert(L.fingers.flatMap(f=>f.points.flat()).every(Number.isFinite));
   assert.deepEqual(S.handR,old.handR,'Left hand changed bow hold');assert.deepEqual(S.armR,old.armR);assert.deepEqual(S.head,old.head);
   assert(dist(L.wrist,S.armL.wrist)<1e-9,'Wrist disconnected');
-  assert(Math.abs(dist(S.armL.shoulder,S.armL.elbow)-.36)<1e-7&&Math.abs(dist(S.armL.elbow,S.armL.wrist)-.34)<1e-7,'Left arm stretched');
+  assert(Math.abs(dist(S.armL.shoulder,S.armL.elbow)-ViolinMotion.ARM_LENGTHS[0])<1e-7&&Math.abs(dist(S.armL.elbow,S.armL.wrist)-ViolinMotion.ARM_LENGTHS[1])<1e-7,'Left arm stretched');
   const determinant=dot(cross(L.basis[0],L.basis[1]),L.basis[2]);
   assert(determinant<-.999999,'Left hand has right hand chirality');
   const B=L.basis.map(drawn),drawnDet=dot(cross(B[0],B[1]),B[2]);

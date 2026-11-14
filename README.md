@@ -68,3 +68,5 @@ MIDI voices are redistributed to two playable hands by span and travel distance;
 Current chord-shape and string-score checks, screenshots and rebuild steps: [verification](docs/verification/string-notation-grips/README.md).
 
 Violin motion opens the bow elbow sideways and uses a shared upper-body parent for the chest, shoulders, head, instrument, bow and hands. Smoothed bow reach and musical energy drive the phrasing while preserving musical contact. [Posture and expression verification](docs/verification/violin-expression/README.md).
+
+Cello and violin now share cello-reference finger/thumb dimensions, closed thenar skin, 8% shorter arms and the same symmetric sleeve/cuff geometry. [Dimensions and verification](docs/verification/string-player-proportions/README.md).

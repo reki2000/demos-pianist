@@ -18,8 +18,8 @@ for(const song of VIOLIN_SONGS){
   assert(angle<85,`${song.id} ${t}: folded-back left wrist (${angle})`);
   assert(dot(B[0],ViolinModel.GEOM.U)>0,'Thumb/index side turned away from scroll');
   const leftOut=S.armL.elbow[0];report.minLeftElbowSide=Math.min(report.minLeftElbowSide,leftOut);assert(leftOut>.075,'Left elbow crosses the torso');
-  const elbow=S.armR.shoulder[0]-S.armR.elbow[0];report.minRightElbowOutward=Math.min(report.minRightElbowOutward,elbow);assert(elbow>.075,'Bow elbow points inward');
-  for(const arm of [S.armL,S.armR]){report.maxArmError=Math.max(report.maxArmError,arm.error);assert(arm.error<1e-6);assert(Math.abs(dist(arm.shoulder,arm.elbow)-.36)<1e-8);assert(Math.abs(dist(arm.wrist,arm.elbow)-.34)<1e-8);}
+  const elbow=S.armR.shoulder[0]-S.armR.elbow[0];report.minRightElbowOutward=Math.min(report.minRightElbowOutward,elbow);assert(elbow>.075*BowHand.dimensions.armScale,'Bow elbow points inward');
+  for(const arm of [S.armL,S.armR]){report.maxArmError=Math.max(report.maxArmError,arm.error);assert(arm.error<1e-6);assert(Math.abs(dist(arm.shoulder,arm.elbow)-ViolinMotion.ARM_LENGTHS[0])<1e-8);assert(Math.abs(dist(arm.wrist,arm.elbow)-ViolinMotion.ARM_LENGTHS[1])<1e-8);}
   for(const axis of [F.U,F.V,F.W])assert(Math.abs(Math.hypot(...axis)-1)<1e-10);assert(Math.abs(dot(F.U,F.V))+Math.abs(dot(F.U,F.W))+Math.abs(dot(F.V,F.W))<1e-10);
   // The parent hierarchy must preserve musical contact and bone distances.
   for(let f=0;f<4;f++)if(S.debug.contacts[f].contact){const e=dist(transform(F,L.fingers[f].points[3]),transform(F,S.debug.contacts[f].target));report.maxWorldContactError=Math.max(report.maxWorldContactError,e);assert(e<.00005,`${song.id} ${t} finger ${f}: contact error ${e}`);}

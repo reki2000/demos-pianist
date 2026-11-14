@@ -23,7 +23,7 @@ for(const song of VIOLIN_SONGS){
  for(let pass=0;pass<12;pass++){
   const times=new Set([0,song.duration]);for(let t=0;t<song.duration;t+=1/30)times.add(t);for(const n of P.notes)for(const t of [n.t0,n.t0+n.dur/2,n.t1])times.add(t);
   const bad=[];for(const t of times){const S=ViolinMotion.atLegacy(P,t),q=N.jointsAt(P,t,keys,S.debug.contacts),m=measure(q,S.armL.shoulder);if(m.depth>.00095||m.outward<0)bad.push({...q,t});}
-  console.error(song.id,'arm repair',pass,bad.length);if(!bad.length)break;if(pass===11)throw Error('Unresolved forearm clearance: '+song.id);
+  console.error(song.id,'arm repair',pass,bad.length);if(!bad.length)break;if(pass===11){console.error(bad.map(q=>({t:q.t,...measure(q,ViolinMotion.atLegacy(P,q.t).armL.shoulder)})));throw Error('Unresolved forearm clearance: '+song.id);}
   for(const key of bad){fit(P,key);const old=keys.findIndex(k=>Math.abs(k.t-key.t)<1e-7);if(old>=0)keys[old].x[11]=key.x[11];else keys.push({t:key.t,u:key.u,x:key.x.slice(0,12),a:key.a});}keys.sort((a,b)=>a.t-b.t);
  }
 }
