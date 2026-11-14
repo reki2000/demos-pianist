@@ -219,7 +219,7 @@ let cReport;
   const RG = c.RecitalGL, M = c.CelloModel, Mo = c.CelloMotion;
   const recorder = () => {
     const calls = [];
-    return { calls, begin() {}, project: () => null, box: (...a) => calls.push({ k: 'box', a }), ball: (...a) => calls.push({ k: 'ball', a }), bone: (...a) => calls.push({ k: 'bone', a }), segment: (...a) => calls.push({ k: 'segment', a }), piece: (...a) => calls.push({ k: 'piece', a }) };
+    return { calls, dynamicMesh: (...a) => calls.push({ k: 'dynamicMesh', a }), begin() {}, project: () => null, box: (...a) => calls.push({ k: 'box', a }), ball: (...a) => calls.push({ k: 'ball', a }), bone: (...a) => calls.push({ k: 'bone', a }), segment: (...a) => calls.push({ k: 'segment', a }), piece: (...a) => calls.push({ k: 'piece', a }) };
   };
   const R = recorder();
   Mo.plan(c.CELLO_SONGS[0]);

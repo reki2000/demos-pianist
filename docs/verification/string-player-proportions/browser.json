@@ -1,0 +1,381 @@
+{
+  "poses": [
+    {
+      "type": "violin",
+      "song": "air",
+      "time": 13.75
+    },
+    {
+      "type": "violin",
+      "song": "czardas",
+      "time": 216.1
+    },
+    {
+      "type": "cello",
+      "song": "prelude",
+      "time": 20
+    },
+    {
+      "type": "cello",
+      "song": "swan",
+      "time": 60
+    },
+    {
+      "type": "cello",
+      "song": "gigue",
+      "time": 33
+    }
+  ],
+  "playback": [
+    {
+      "type": "violin",
+      "seconds": 75,
+      "first": {
+        "time": 0.8720181405895692,
+        "buffers": {
+          "buffers": 2,
+          "uploads": 301,
+          "bytes": 36582336
+        },
+        "gl": 0,
+        "fits": 0,
+        "playing": true
+      },
+      "observations": [
+        {
+          "time": 5.446349206349207,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 335,
+            "bytes": 40714560
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 10.020680272108843,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 369,
+            "bytes": 44846784
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 14.641451247165532,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 401,
+            "bytes": 48735936
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 19.308662131519277,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 435,
+            "bytes": 52868160
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 23.975873015873017,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 467,
+            "bytes": 56757312
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 28.61986394557823,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 502,
+            "bytes": 61011072
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 33.47283446712018,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 537,
+            "bytes": 65264832
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 38.07038548752835,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 570,
+            "bytes": 69275520
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 42.807256235827666,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 605,
+            "bytes": 73529280
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 47.47446712018141,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 637,
+            "bytes": 77418432
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 52.211337868480726,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 668,
+            "bytes": 81186048
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 56.83210884353742,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 678,
+            "bytes": 82401408
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 62.19591836734694,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 683,
+            "bytes": 83009088
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 67.55972789115647,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 688,
+            "bytes": 83616768
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        },
+        {
+          "time": 72.87709750566894,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 693,
+            "bytes": 84224448
+          },
+          "gl": 0,
+          "fits": 0,
+          "playing": true
+        }
+      ]
+    },
+    {
+      "type": "cello",
+      "seconds": 75,
+      "first": {
+        "time": 0.5004988662131638,
+        "buffers": {
+          "buffers": 2,
+          "uploads": 696,
+          "bytes": 84589056
+        },
+        "gl": 0,
+        "playing": true
+      },
+      "observations": [
+        {
+          "time": 5.051609977324276,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 705,
+            "bytes": 85682880
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 9.695600907029487,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 715,
+            "bytes": 86898240
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 14.641451247165534,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 731,
+            "bytes": 88842816
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 19.030022675736973,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 750,
+            "bytes": 91152000
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 23.48825396825397,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 768,
+            "bytes": 93339648
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 28.225124716553296,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 794,
+            "bytes": 96499584
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 32.84589569160998,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 820,
+            "bytes": 99659520
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 37.69886621315193,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 847,
+            "bytes": 102940992
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 42.50539682539683,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 873,
+            "bytes": 106100928
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 47.126167800453516,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 901,
+            "bytes": 109503936
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 51.77015873015874,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 927,
+            "bytes": 112663872
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 56.483809523809526,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 955,
+            "bytes": 116066880
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 61.08136054421769,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 982,
+            "bytes": 119348352
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 65.74857142857144,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 1010,
+            "bytes": 122751360
+          },
+          "gl": 0,
+          "playing": true
+        },
+        {
+          "time": 70.55510204081634,
+          "buffers": {
+            "buffers": 2,
+            "uploads": 1037,
+            "bytes": 126032832
+          },
+          "gl": 0,
+          "playing": true
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "auditoryCheck": false
+}

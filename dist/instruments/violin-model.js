@@ -236,17 +236,8 @@ R.piece('head', H.pos, [.112, .148, .128], skinLight, H.pitch, H.yaw, H.roll);
   R.segment(hp([-0.02, -0.074, 0.113]), hp([0.02, -0.072, 0.113]), 0.0042, [.62, .38, .33]);
 R.setFaceDetail?.(false);
   // Arms (joints solved by motion): suit sleeves, white cuff, skin hands.
-  for (const arm of [S.armL, S.armR]) {
-    R.piece('joint', arm.shoulder, [.062, .066, .062], suit);
-    // Capsule radii asserted against the body by clearance-test.cjs.
-    R.segment(arm.shoulder, arm.elbow, 0.055, suit);
-    const natural = arm === S.armL && S.handL.model === 'natural';
-    R.piece('joint', arm.elbow, [.050, .050, .050], suit);
-    const fl = Math.hypot(...arm.elbow.map((v, i) => v - arm.wrist[i])) || 1;
-    const cuff = arm.wrist.map((v, i) => v + (arm.elbow[i] - v) * 0.05 / fl);
-    if(natural)drawForearm(R,arm,S.handL);
-    else {R.segment(arm.elbow,arm.wrist,.042,suit,'limb');R.segment(arm.wrist,cuff,.034,shirt);}
-  }
+  for (const [arm,hand] of [[S.armL,S.handL],[S.armR,S.handR]])
+    window.BowHand.drawArm(R,arm,hand,{suit,skin,shirt});
   drawLeftHand(R,S.handL);
   // Five articulated digits share the exact bow frame.
   window.BowHand.draw(R, S.handR, skin, skinLight);
@@ -255,22 +246,14 @@ R.setFaceDetail?.(false);
 // The wrist is oval, with its broad axis across the palm. Circular sleeve
 // and wrist bridges made the arm thicker than the hand and forced false
 // collision-avoidance bends near the violin's upper bout.
-function drawForearm(R,arm,hand){
-  const unit=p=>mul(p,1/(Math.hypot(...p)||1)),length=Math.hypot(...sub(arm.elbow,arm.wrist)),Y=unit(sub(arm.wrist,arm.elbow));
-  let X=sub(hand.basis[0],mul(Y,dot(hand.basis[0],Y)));if(Math.hypot(...X)<1e-6)X=cross([0,0,1],Y);X=unit(X);const Z=cross(X,Y);
-  const cuff=add(arm.wrist,mul(sub(arm.elbow,arm.wrist),.05/length)),end=add(arm.wrist,mul(sub(arm.elbow,arm.wrist),.03/length));
-  const part=(shape,a,b,width,depth,color)=>R.oriented(shape,mul(add(a,b),.5),[width,Math.hypot(...sub(b,a))*.5,depth],color,0,X,Y,Z);
-  part('forearm',arm.elbow,cuff,.035,.022,suit);
-  part('bodyLimb',arm.wrist,cuff,.022,.014,skin);
-  part('bodyLimb',end,cuff,.025,.016,shirt);
-}
+function drawForearm(R,arm,hand){window.BowHand.drawForearm(R,arm,hand,{suit,skin,shirt});}
 
 // Shared by the scene renderer and the actual-triangle clearance audit.
-const fingerSkins=new WeakMap(),fingerBoard={O:O0,U,V,W,top:wFB};
+const fingerSkins=new WeakMap(),fingerBoard={O:O0,U,V,W,top:wFB,neck:true};
 function drawLeftHand(R,H) {
   const natural=H.model==='natural';
   if(natural&&window.HandSurface&&R.dynamicMesh){
-    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true);fingerSkins.set(R,state);}
+    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true);state.thumb.radii=window.BowHand.dimensions.thumbRadii;state.thumb.skinBaseT=.95;fingerSkins.set(R,state);}
     R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skin);return;
   }
   if(natural&&H.wrist)R.oriented('joint',H.wrist,[.022,.018,.016],skin,0,...H.basis);

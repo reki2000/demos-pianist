@@ -1,0 +1,30 @@
+{
+  "proportionReference": "cello",
+  "fingerLengthsMm": [
+    93,
+    100,
+    97,
+    76
+  ],
+  "thumbLengthsMm": [
+    46,
+    34,
+    27
+  ],
+  "samples": 17226,
+  "maxContactError": 5.373808868238123e-11,
+  "maxBoneError": 5.759281940243e-16,
+  "maxRootError": 4.775249788392736e-16,
+  "maxWristAngle": 82.42095155904275,
+  "minDrawnLeftDeterminant": 0.9999999999999998,
+  "maxWristStep": 0.09726480081442619,
+  "maxFingertipStep": 0.05965940963322772,
+  "maxKnotWristJump": 1.38859315995239e-10,
+  "maxKnotElbowJump": 0.000033771030261329506,
+  "renderedSkinPenetration": {
+    "body": 0,
+    "board": 0,
+    "neck": 0,
+    "forearm": 0
+  }
+}

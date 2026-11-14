@@ -1,0 +1,47 @@
+{
+  "sourcePerformancesPreserved": 4,
+  "air": {
+    "strings": [
+      3,
+      2
+    ],
+    "maxPosition": 1
+  },
+  "samples": 67084,
+  "maxWristAngleDegrees": 82.4209516675549,
+  "minRightElbowOutward": 0.06999797584967565,
+  "minLeftElbowSide": 0.09088782852220229,
+  "maxArmError": 0,
+  "maxWorldContactError": 5.4241664145041884e-11,
+  "maxExpressionStep": 0.005519467401615629,
+  "runtimeFits": 0,
+  "songs": [
+    {
+      "id": "air",
+      "instrumentTravelMetres": 0.023480914645960554,
+      "expressionKeys": 2317
+    },
+    {
+      "id": "czardas",
+      "instrumentTravelMetres": 0.033495792722395924,
+      "expressionKeys": 8305
+    },
+    {
+      "id": "meditation",
+      "instrumentTravelMetres": 0.026369605002238977,
+      "expressionKeys": 6946
+    },
+    {
+      "id": "bach-preludio",
+      "instrumentTravelMetres": 0.02763067152661909,
+      "expressionKeys": 6240
+    }
+  ],
+  "bowLevelHeights": [
+    1.5064692657634946,
+    1.4940452792536267,
+    1.4836760681912842,
+    1.4765983754250438
+  ],
+  "parentTransformVerified": true
+}

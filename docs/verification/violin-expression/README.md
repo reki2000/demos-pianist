@@ -1,5 +1,7 @@
 # Violin wrist posture and upper-body phrasing
 
+Historical verification for PR #22. The subsequent [cello-reference hands and shorter, symmetric arms](../string-player-proportions/README.md) supersede its dimensions and motion measurements.
+
 The former trajectory could fold the left wrist beyond 90° and carry the
 elbow across the torso. The hand already had left-hand chirality, but the
 forearm approached the palm from behind its distal axis, making it look like

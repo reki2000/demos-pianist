@@ -20,7 +20,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     return [[e*d,-f*d,-t],[e*t*s-f*c,-f*t*s-e*c,d*s],[e*t*c+f*s,-f*t*c+e*s,d*c]];
   }
   const ROOT=[[.027,.070,0],[.009,.074,0],[-.009,.072,0],[-.027,.066,0]];
-  const THUMB_BASE=[.032,.035,-.012],THUMB_LEN=[.042,.032,.026],FR=[.006825,.005785,.004745],TR=[.009,.008,.007];
+  const THUMB_BASE=[.032,.035,-.012],THUMB_LEN=window.BowHand.dimensions.thumb,FR=[0,1,2].map(j=>Math.max(...window.BowHand.dimensions.radii.map(r=>r[j]))),TR=window.BowHand.dimensions.thumbRadii;
   const LIMIT=[[-.70,1.54],[-.85,.85],[.10,2.18]],DIP=.67;
   function fk(f,a){
     const m=[Math.sin(a[1]),Math.cos(a[1]),0],pts=[ROOT[f]],angles=[a[0],a[0]+a[2],a[0]+(1+DIP)*a[2]];
@@ -114,7 +114,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     let pole=sub(mul(axis,projection),distal);
     if(Math.hypot(...pole)<1e-6)pole=direction([0,1,-.5]);
     const angle=q.x[11],along=dot(axis,pole);pole=add(add(mul(pole,Math.cos(angle)),mul(cross(axis,pole),Math.sin(angle))),mul(axis,along*(1-Math.cos(angle))));
-    return solveArm(shoulder,wrist,.36,.34,pole);
+    return window.BowHand.arm('violin',shoulder,wrist,pole);
   }
   function decode(x,targets,u){
     const R=rotation(x.slice(3,6)),w=x.slice(0,3),a=targets.map((t,f)=>t.contact?ik(f,null,inverse(R,sub(t.p,w))):x.slice(12+f*3,15+f*3));
@@ -374,10 +374,10 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     const q=jointsAt(P,t,prepare(P),contacts),fingers=[],out=[];
     for(let f=0;f<4;f++){
       const c=contacts[f],points=fk(f,q.a[f]).map(p=>world(H2N(q,p))),error=Math.hypot(...sub(points[3],c.target));
-      fingers.push({points,angles:q.a[f],error});out.push({...c,error});
+      fingers.push({points,angles:q.a[f],error,radii:window.BowHand.dimensions.radii[f]});out.push({...c,error});
     }
     const basis=q.R.map(direction),thumb=thumbData(q).points.map(world);
-    return {hand:{model:'natural',wrist:world(q.w),palmPos:world(H2N(q,[0,.035,0])),basis,pitch:0,yaw:0,roll:0,fingers,thumb,thumbAngles:q.th,thumbPadRadius:thumbData(q).padRadius,frameKey:'fk6:'+q.key,carriage:q.x.slice(0,6),swivel:q.x[11]},wrist:world(q.w),contacts:out,q};
+    return {hand:{model:'natural',thenarCover:true,wrist:world(q.w),palmPos:world(H2N(q,[0,.035,0])),basis,pitch:0,yaw:0,roll:0,fingers,thumb,thumbAngles:q.th,thumbPadRadius:thumbData(q).padRadius,frameKey:'fk6:'+q.key,carriage:q.x.slice(0,6),swivel:q.x[11]},wrist:world(q.w),contacts:out,q};
   }
   return {at,prepare,available,stamp,SOLVE_TOL,planAngles,fitJointKey,refine,correctCarriage,nearbyGoals,jointsAt,safety,solveKey,residual,track,decode,blend,armOf,ROOT,THUMB_BASE,THUMB_LEN,FR,TR,LIMIT,fk,ik,thumbFK,thumbData,rotation,local,world,H2N,surface,neck,board,body,palmSamples,stats:()=>({solves:solveCount}),source:()=>window.ViolinHand.toString()};
 };

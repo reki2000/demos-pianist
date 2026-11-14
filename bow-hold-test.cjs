@@ -22,7 +22,7 @@ function check(H,arm,type){
       const key=type+'/'+d.name+'/'+j,L=dist(d.points[j],d.points[j+1]);
       if(!(key in originalLengths))originalLengths[key]=L;
       const error=Math.abs(L-originalLengths[key]);r.maxBoneError=Math.max(r.maxBoneError,error);assert(error<1e-7,'Finger stretched');
-      assert(L>.010&&L<.040,'Implausible phalanx length');
+      assert(L>.010&&L<.055,'Implausible phalanx length');
     }
     const centre=d.points[d.contactIndex];let error;
     if(d.contact.kind==='frog'){

@@ -1,0 +1,13 @@
+{
+  "poses": 808,
+  "componentSurface": {
+    "triangles": 960,
+    "closedDigits": 5
+  },
+  "wholeHandTriangles": 1688,
+  "maxSurfaceContactGap": 0.0005940210024056759,
+  "frames": 4500,
+  "gpuBuffers": 2,
+  "gpuUploads": 2,
+  "gpuUpdates": 0
+}

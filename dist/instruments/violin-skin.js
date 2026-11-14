@@ -29,10 +29,12 @@ window.ViolinFingerSkin = (() => {
   function update(state,hand,board,deform){
     const p=state.positions,n=state.normals,dirs=state.directions,lengths=state.lengths;
     const bow=state.bow;
-    if(state.surface&&!bow)state.thumb.points=hand.thumb;
+    if(state.surface&&!bow){state.thumb.points=hand.thumb;
+      if(hand.thenarCover){state.thumb.radii=hand.thumbRadii||window.BowHand.dimensions.thumbRadii;state.thumb.skinBaseT=.95;}
+    }
     for(let f=0;f<state.count;f++){
-      const rounded=bow||f===4,profile=rounded?bowSections:sections;
       const digit=bow?(f===0?hand.thumb:hand.fingers[f-1]):f===4?state.thumb:hand.fingers[f],points=digit.points,base=f*PER_FINGER;
+      const rounded=bow||f===4||digit.rounded,profile=rounded?bowSections:sections;
       for(let s=0;s<3;s++){
         const a=points[s],b=points[s+1],x=b[0]-a[0],y=b[1]-a[1],z=b[2]-a[2],length=Math.hypot(x,y,z)||1;
         lengths[s]=length;dirs[s*3]=x/length;dirs[s*3+1]=y/length;dirs[s*3+2]=z/length;
@@ -68,7 +70,9 @@ window.ViolinFingerSkin = (() => {
         // matches the original grip; the left hand keeps its flat string pads.
         const radius=rounded?(s<2?digit.radii[s]+(digit.radii[s+1]-digit.radii[s])*Math.max(0,t):digit.radii[2])*(r===RINGS-1?Math.SQRT1_2:1):0;
         for(let j=0;j<SIDES;j++){
-          const c=circle[j*2]*(rounded?radius:widths[r]),d=circle[j*2+1]*(rounded?radius:depths[r]),k=(base+r*SIDES+j)*3;
+          const fingerR=digit.radii?digit.radii[s]+(digit.radii[Math.min(2,s+1)]-digit.radii[s])*Math.max(0,Math.min(1,t)):0;
+          const width=digit.radii?(r===RINGS-1?fingerR*.70:fingerR):widths[r],depth=digit.radii?(r===RINGS-1?fingerR*.40:fingerR):depths[r];
+          const c=circle[j*2]*(rounded?radius:width),d=circle[j*2+1]*(rounded?radius:depth),k=(base+r*SIDES+j)*3;
           let vx=cx+rx*c+zx*d,vy=cy+ry*c+zy*d,vz=cz+rz*c+zz*d;
           // Soft fingertip tissue conforms to the board. The skeleton and
           // its sounding contact point are never moved by the skin update.
@@ -88,7 +92,7 @@ window.ViolinFingerSkin = (() => {
       window.HandSurface.update(state.surface,p,hand);
       if(!state.surface.initialized){window.HandSurface.connect(state.surface,state.topology,p);state.indices.set(state.topology);state.surface.initialized=true;}
       window.HandSurface.blendSockets(state.surface,p);
-      window.HandSurface.conform(state.surface,p,board);
+      window.HandSurface.conform(state.surface,p,board,hand.thenarCover?0:undefined);
     }
     if(deform)deform(p,hand);
     n.fill(0);
