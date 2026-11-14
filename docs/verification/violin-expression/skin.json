@@ -1,0 +1,16 @@
+{
+  "poses": 404,
+  "frames": 4500,
+  "componentSurface": {
+    "vertices": 392,
+    "triangles": 768,
+    "closedComponents": 4
+  },
+  "wholeHandTriangles": 1688,
+  "uploadBytes": 121536,
+  "newGpuBuffers": 1,
+  "gpuAllocations": 1,
+  "bufferSubData": 4499,
+  "dynamicDraws": 4500,
+  "cpuMilliseconds": 2493.9941309999995
+}

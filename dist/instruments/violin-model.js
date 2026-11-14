@@ -202,6 +202,10 @@ function drawPerformer(R, S) {
     // centre sits 80mm toward the facing from the ankle, as there.
     R.piece('shoe', P([s * 0.11, 0.038, -0.072]), [.058, .040, .140], ebony, 0, Math.PI, 0);
   }
+  if(S.expression&&R.withTransform)return R.withTransform(S.expression.frame,()=>drawUpperBody(R,S,P2,up));
+  return drawUpperBody(R,S,P2,up);
+}
+function drawUpperBody(R,S,P2,up){
   // Torso: jacket loft, slight forward lean and breath.
   const root = P2([0, 1.17, 0.012]);
   R.piece('jacket', root, [.265 * (1 + S.breath * 0.01), .40, .180 * (1 + S.breath * 0.01)], suit, S.lean, S.torsoYaw, S.torsoRoll);
@@ -240,16 +244,25 @@ R.setFaceDetail?.(false);
     R.piece('joint', arm.elbow, [.050, .050, .050], suit);
     const fl = Math.hypot(...arm.elbow.map((v, i) => v - arm.wrist[i])) || 1;
     const cuff = arm.wrist.map((v, i) => v + (arm.elbow[i] - v) * 0.05 / fl);
-    R.segment(arm.elbow, natural ? cuff : arm.wrist, .042, suit, natural ? 'forearm' : 'limb');
-    if (natural) {
-      R.segment(arm.wrist,cuff,.024,skin,'bodyLimb');
-      const cuffEnd=arm.wrist.map((v,i)=>v+(arm.elbow[i]-v)*.030/fl);
-      R.segment(cuffEnd,cuff,.028,shirt);
-    } else R.segment(arm.wrist, cuff, 0.034, shirt);
+    if(natural)drawForearm(R,arm,S.handL);
+    else {R.segment(arm.elbow,arm.wrist,.042,suit,'limb');R.segment(arm.wrist,cuff,.034,shirt);}
   }
   drawLeftHand(R,S.handL);
   // Five articulated digits share the exact bow frame.
   window.BowHand.draw(R, S.handR, skin, skinLight);
+}
+
+// The wrist is oval, with its broad axis across the palm. Circular sleeve
+// and wrist bridges made the arm thicker than the hand and forced false
+// collision-avoidance bends near the violin's upper bout.
+function drawForearm(R,arm,hand){
+  const unit=p=>mul(p,1/(Math.hypot(...p)||1)),length=Math.hypot(...sub(arm.elbow,arm.wrist)),Y=unit(sub(arm.wrist,arm.elbow));
+  let X=sub(hand.basis[0],mul(Y,dot(hand.basis[0],Y)));if(Math.hypot(...X)<1e-6)X=cross([0,0,1],Y);X=unit(X);const Z=cross(X,Y);
+  const cuff=add(arm.wrist,mul(sub(arm.elbow,arm.wrist),.05/length)),end=add(arm.wrist,mul(sub(arm.elbow,arm.wrist),.03/length));
+  const part=(shape,a,b,width,depth,color)=>R.oriented(shape,mul(add(a,b),.5),[width,Math.hypot(...sub(b,a))*.5,depth],color,0,X,Y,Z);
+  part('forearm',arm.elbow,cuff,.035,.022,suit);
+  part('bodyLimb',arm.wrist,cuff,.022,.014,skin);
+  part('bodyLimb',end,cuff,.025,.016,shirt);
 }
 
 // Shared by the scene renderer and the actual-triangle clearance audit.
@@ -287,6 +300,7 @@ function drawLeftHand(R,H) {
 }
 
 function draw(R, S) {
+  const instrument=()=>{
   drawViolin(R, S.frame, S.activeStrings);
   // Hot speaking lengths for sounding strings (stop point -> bridge).
   for (const a of S.sounding) {
@@ -294,12 +308,14 @@ function draw(R, S) {
     R.bone(from, S.frame.point(0, STRING_V_BRIDGE[a.string], BRIDGE_W + 0.0004), STRING_R[a.string] + 0.0004, steelHot, 0.35);
   }
   drawBow(R, S.bow);
+  };
+  if(S.expression&&R.withTransform)R.withTransform(S.expression.frame,instrument);else instrument();
   drawPerformer(R, S);
 }
 
 return {
   GEOM: { STRING_LENGTH, O0, U, V, W, STRING_V_BRIDGE, STRING_V_NUT, STRING_R, BRIDGE_W, BOW_CONTACT_U, wFB, wStr, vStr },
-  frame, draw, drawViolin, drawLeftHand, BODY_SPEC, OUTLINE, BODY_MESH, bodyWidth, bodyTop,
+  frame, draw, drawViolin, drawLeftHand, drawForearm, BODY_SPEC, OUTLINE, BODY_MESH, bodyWidth, bodyTop,
   palette: { skin, skinLight, suit, varnish },
 };
 })();

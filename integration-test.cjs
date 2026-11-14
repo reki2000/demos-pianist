@@ -203,7 +203,10 @@ let vReport;
       if (S.sounding.length) { sndFrames++; if (!(projFrontX(S.armR.wrist) < projFrontX(S.armL.wrist))) screenBad++; }
     }
   }
-  assert(minSideB > 0.05, 'violin bow wrist not on anatomical right: ' + (minSideB * 1000).toFixed(1) + ' mm');
+  // Forward movement of the left shoulder shifts this shoulder-midpoint
+  // reference. Keep a clear anatomical-right margin without prescribing
+  // the former fixed-clavicle 50 mm offset.
+  assert(minSideB > 0.035, 'violin bow wrist not on anatomical right: ' + (minSideB * 1000).toFixed(1) + ' mm');
   assert(maxTipSide < 0, 'violin sounding fingertips not on anatomical left: ' + (maxTipSide * 1000).toFixed(1) + ' mm');
   assert.equal(screenBad, 0, 'violin front-view hand order violations');
   vReport = { states, bowWristSideMinMm: +(minSideB * 1000).toFixed(1), fingeringWristSideMaxMm: +(maxSideF * 1000).toFixed(1), soundingTipSideMaxMm: +(maxTipSide * 1000).toFixed(1), screenBad, sndFrames };

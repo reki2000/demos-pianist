@@ -65,3 +65,5 @@ MIDI voices are redistributed to two playable hands by span and travel distance;
 - GitHub Actions runs `verify.cjs` + `audio-test.cjs`, builds `piano-recital.html`/`.zip`, and deploys to GitHub Pages on every push to `main`.
 
 Current chord-shape and string-score checks, screenshots and rebuild steps: [verification](docs/verification/string-notation-grips/README.md).
+
+Violin motion opens the bow elbow sideways and uses a shared upper-body parent for the chest, shoulders, head, instrument, bow and hands. Smoothed bow reach and musical energy drive the phrasing while preserving musical contact. [Posture and expression verification](docs/verification/violin-expression/README.md).

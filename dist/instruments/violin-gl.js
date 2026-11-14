@@ -46,7 +46,12 @@ tail:mesh(loft([[-1,.5,.1],[-.6,.92,.13],[.4,1,.14],[1,.8,.12]],12)),
 cushion:mesh(loft([[-1,.9,.88,0,5],[-.55,1,1,0,5],[.45,1,1,0,5],[.85,.96,.94,0,5],[1,.84,.8,0,5]],12))};
 let faceDetail=false;
 function setFaceDetail(value){faceDetail=!!value}
-function draw(shape,m,c,metal=0){m=new Float32Array(m);for(let i of [0,4,8,12])m[i]=-m[i];let normal=new Float32Array(9);for(let j=0;j<3;j++){let k=j*4,n=m[k]*m[k]+m[k+1]*m[k+1]+m[k+2]*m[k+2];for(let i=0;i<3;i++)normal[j*3+i]=m[k+i]/Math.max(n,1e-12)}gl.uniformMatrix3fv(u.uN,false,normal);let me=shapes[shape];gl.bindBuffer(gl.ARRAY_BUFFER,me.b);for(let i=0;i<2;i++){gl.enableVertexAttribArray(attrs[i]);gl.vertexAttribPointer(attrs[i],3,gl.FLOAT,false,24,i*12)}gl.uniformMatrix4fv(u.uM,false,m);gl.uniform3fv(u.uC,c);gl.uniform1f(u.uMetal,metal);gl.drawArrays(gl.TRIANGLES,0,me.count)}
+// A parent frame for the violin upper-body hierarchy, applied before the
+// renderer's X reflection. Dynamic hand skins share this same rigid transform.
+let parentFrame=null;
+function withTransform(frame,render){const previous=parentFrame;parentFrame=frame;try{return render();}finally{parentFrame=previous;}}
+function draw(shape,m,c,metal=0){m=new Float32Array(m);
+if(parentFrame){const {U,V,W,O}=parentFrame;for(let j=0;j<4;j++){const k=j*4,x=m[k],y=m[k+1],z=m[k+2];for(let i=0;i<3;i++)m[k+i]=U[i]*x+V[i]*y+W[i]*z+(j===3?O[i]:0);}}for(let i of [0,4,8,12])m[i]=-m[i];let normal=new Float32Array(9);for(let j=0;j<3;j++){let k=j*4,n=m[k]*m[k]+m[k+1]*m[k+1]+m[k+2]*m[k+2];for(let i=0;i<3;i++)normal[j*3+i]=m[k+i]/Math.max(n,1e-12)}gl.uniformMatrix3fv(u.uN,false,normal);let me=shapes[shape];gl.bindBuffer(gl.ARRAY_BUFFER,me.b);for(let i=0;i<2;i++){gl.enableVertexAttribArray(attrs[i]);gl.vertexAttribPointer(attrs[i],3,gl.FLOAT,false,24,i*12)}gl.uniformMatrix4fv(u.uM,false,m);gl.uniform3fv(u.uC,c);gl.uniform1f(u.uMetal,metal);gl.drawArrays(gl.TRIANGLES,0,me.count)}
 function box(p,s,c,metal=0,r=0){draw('box',model(p,s,r),c,metal)}
 function ball(p,s,c,metal=0,r=0){draw('sphere',model(p,s,r),c,metal)}
 function piece(shape,p,s,c,rx=0,ry=0,rz=0){let m=model(p,s,rx);if(ry){let cy=Math.cos(ry),sy=Math.sin(ry);for(let i=0;i<3;i++){let x=m[i*4],z=m[i*4+2];m[i*4]=x*cy+z*sy;m[i*4+2]=z*cy-x*sy}}if(rz){let c=Math.cos(rz),s=Math.sin(rz);for(let j=0;j<3;j++){let k=j*4,x=m[k],y=m[k+1];m[k]=x*c-y*s;m[k+1]=x*s+y*c}}draw(shape,m,c,0)}
@@ -86,5 +91,5 @@ function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up)
 // uploads fail with INVALID_OPERATION (black stage). The host renderer's
 // begin() (dist/gl.js) carries the same fix.
 gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
-return{box,ball,bone,piece,segment,setFaceDetail,oriented,mesh:drawMesh,dynamicMesh,dynamicStats,begin,project,gl};}
+return{box,ball,bone,piece,segment,setFaceDetail,withTransform,oriented,mesh:drawMesh,dynamicMesh,dynamicStats,begin,project,gl};}
 return{create,toWorld,look,perspective,multiply};})();

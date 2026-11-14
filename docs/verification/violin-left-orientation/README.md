@@ -1,5 +1,9 @@
 # Anatomical violin left hand
 
+Current wrist, elbow and upper-body motion is documented in the later
+[posture and expression update](../violin-expression/README.md). The measurements
+below describe the earlier chirality correction.
+
 The former palm frame had the right hand's chirality after `RecitalGL` reflected planning X. Reflecting the hand across the longitudinal neck plane corrects the thumb/finger sides without changing the selected B finger lengths or the connected hand surface. The surface receives the mirrored-frame flag so its dorsal axis and winding agree with the skeleton.
 
 String positions now run G–D–A–E from the player's left to right when looking along the neck from bridge to scroll. Bow-plane tilts follow that order. The instrument is rolled 30° with its E edge lower, making space for the forearm below the body. The thumb supports the G side in lower positions and travels around the heel for higher positions. Carriages and elbow swivels are fitted offline; playback continues to interpolate cached joint coordinates.

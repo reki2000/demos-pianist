@@ -59,6 +59,7 @@ node refine-guitar-clearance.cjs recuerdos
 node precompute-violin-hand.cjs bach-preludio
 node precompute-violin-orientation.cjs bach-preludio
 node refine-repertoire-violin.cjs
+node precompute-violin-orientation.cjs
 ```
 
 The Alhambra builder starts from the shipped combined hand cache and preserves
