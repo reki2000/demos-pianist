@@ -203,6 +203,33 @@ function bowAt(P, t) {
   return { s: clamp(s, 0.01, 0.99), stringF, dir, bowId, sounding };
 }
 
+// Two-pole low-pass phrasing, compiled once per plan. Bow reach and string
+// level lead the shoulder/chest together; fast tremolo does not shake the body.
+function expressionAt(P,t){
+  if(!P.expressionTrack){
+    const keys=[],dt=1/30;let a=[.5,1.5,0],b=a.slice();
+    for(let i=0;i<=Math.ceil(P.song.duration/dt);i++){
+      const time=i*dt,bow=bowAt(P,time),energy=P.envelope[Math.min(P.envelope.length-1,Math.round(time*10))]?.energy||0;
+      const target=[bow.s,bow.stringF,energy];
+      for(let j=0;j<3;j++){a[j]+=(target[j]-a[j])*(1-Math.exp(-dt/.24));b[j]+=(a[j]-b[j])*(1-Math.exp(-dt/.24));}
+      keys.push(b.slice());
+    }P.expressionTrack=keys;
+  }
+  const x=clamp(t*30,0,P.expressionTrack.length-1),i=Math.floor(x),a=P.expressionTrack[i],b=P.expressionTrack[Math.min(i+1,P.expressionTrack.length-1)],v=a.map((q,k)=>mix(q,b[k],smooth(x-i)));
+  const [reach,string,energy]=v,phrase=Math.sin(t*Math.PI*2/6.8),answer=Math.sin(t*Math.PI*2/11+.8);
+  const yaw=(reach-.5)*.19+phrase*(.025+.025*energy);
+  const roll=(reach-.5)*-.10+answer*(.016+.020*energy);
+  const pitch=.018*phrase+energy*.025+(string-1.5)*.009;
+  const rotate=p=>rotAxis(rotAxis(rotAxis(p,[0,0,1],roll),[1,0,0],pitch),[0,1,0],yaw);
+  const pivot=[0,1.03,0],offset=[phrase*(.006+.009*energy),.004*Math.sin(t*Math.PI*2/3.4),-.006*energy+.006*answer];
+  const frame={U:rotate([1,0,0]),V:rotate([0,1,0]),W:rotate([0,0,1]),O:sub(add(pivot,offset),rotate(pivot))};
+  return {frame,yaw,pitch,roll,reach,energy};
+}
+// The upper arm opens sideways, while its height follows the string plane.
+function bowArm(shoulder,wrist,string=1.5){
+  return solveArm(shoulder,wrist,.36,.34,[-1.0,-.12+(string-1.5)*.08,.16]);
+}
+
 function atLegacy(P, t) {
   const G = window.ViolinModel.GEOM;
   const F = window.ViolinModel.frame([0, 0, 0]); // sway applied to the body only; the violin stays put
@@ -364,13 +391,16 @@ function atLegacy(P, t) {
   const follow = mul(unit(sub(wristR, SR)), clamp(dR - 0.63, 0, 0.19));
   SR = add(SR, follow);
   const upperSway = add(sway, mul(follow, 0.7));
-  const armR = solveArm(SR, wristR, 0.36, 0.34, [-0.30, -0.9, 0.50]);
+  const armR = bowArm(SR,wristR,bow.stringF);
   // In high positions the left elbow swings toward the scroll so the
   // forearm passes beside the upper bout instead of through it; the
   // blend follows the hand's distance along the string (continuous).
   const kbL = clamp((hd.dist - 190) / 70, 0, 1);
   const hintL = add(mul([0.30, -1, 0.35], 1 - kbL), mul([0.85, -0.55, 0.30], kbL));
-  const armL = solveArm(add(add([0.205, 1.452, -0.03], sway), mul(follow, 0.45)), wristL, 0.36, 0.34, hintL);
+  // The left clavicle protracts as the hand travels toward the bridge. A
+  // fixed rear shoulder forced the elbow around the bout and folded the wrist.
+  const clavicle=add([-.020,-.015,-.085],mul([-.025,-.005,-.020],smooth((hd.dist-85)/80)));
+  const armL = solveArm(add(add(add([0.205, 1.452, -0.03],clavicle), sway), mul(follow, 0.45)), wristL, 0.36, 0.34, hintL);
   // The head is clamped to the violin by the chin, so it rides the
   // instrument's sway only — not the torso's bow follow (the neck
   // absorbs the difference, and the chin stays on the rest). The base
@@ -385,7 +415,7 @@ function atLegacy(P, t) {
     pitch: 0.30 + accent * 0.05 + env * 0.03, yaw: Math.PI - 0.40, roll: 0.17,
   };
   return {
-    time: t, frame: F, sway, upperSway, headSway, breath,
+    time: t, expression:expressionAt(P,t), frame: F, sway, upperSway, headSway, breath,
     lean: 0.05 + env * 0.035, torsoYaw: 0.05, torsoRoll: 0.02 * Math.sin(t * 0.4),
     head, armL, armR,
     handL: { palmPos: add(add(add(palmC, mul(G.W, mix(-0.076, -0.034, kb))), mul(G.U, -0.026)), mul(G.V, -0.004)), pitch: -0.45, yaw: Math.atan2(G.U[0], G.U[2]) + 0.5, roll: 0.35, fingers, thumb },
@@ -579,7 +609,7 @@ function packPose(S){const v=cacheView(S),schema=cacheSchema(v),numbers=[],strin
 const signatureCache=new WeakMap();
 function songSignature(P){if(!signatureCache.has(P))signatureCache.set(P,JSON.stringify([P.song.id,P.song.duration,P.song.notes,P.notes,P.song.harmonics||[]]));return signatureCache.get(P);}
 function cacheStamp(){
-  const source=[atLegacy,at,solveChain,solveArm,handDistAt,bowAt,vibrato,plan,clamp,smooth,mix,rotAxis,lowerBound].map(f=>f.toString()).join('\n')+(NH?NH.source():'')+window.BowHand.source()+JSON.stringify([FINGER_LENGTHS,NOMINAL,VIB,BOW_TILT,BOW_LEN,A0,SHIFT_LEAD,window.ViolinModel.GEOM],(k,v)=>typeof v==='function'?v.toString():v)+window.ViolinModel.frame.toString();
+  const source=[atLegacy,at,expressionAt,bowArm,solveChain,solveArm,handDistAt,bowAt,vibrato,plan,clamp,smooth,mix,rotAxis,lowerBound].map(f=>f.toString()).join('\n')+(NH?NH.source():'')+window.BowHand.source()+JSON.stringify([FINGER_LENGTHS,NOMINAL,VIB,BOW_TILT,BOW_LEN,A0,SHIFT_LEAD,window.ViolinModel.GEOM],(k,v)=>typeof v==='function'?v.toString():v)+window.ViolinModel.frame.toString();
   let h=2166136261;for(let i=0;i<source.length;i++)h=Math.imul(h^source.charCodeAt(i),16777619);return (h>>>0).toString(16);
 }
 function setPoseCache(data){POSE_CACHE=data&&data.version===CACHE_VERSION&&data.stamp===cacheStamp()?data:null;return !!POSE_CACHE;}
@@ -597,11 +627,11 @@ function atCached(P,t){
   for(let k=0;k<entry.width;k++)n[k]=data[i*entry.width+k]+(data[j*entry.width+k]-data[i*entry.width+k])*u;
   const S=cacheUnflatten(entry.schema,n,entry.strings[u<.5?i:j],{n:0,s:0});
   for(const key of ['activeStrings','sounding'])S[key]=S[key].values.slice(0,Math.round(S[key].count));
-  S.debug.activeNotes=S.debug.activeNotes.values.slice(0,Math.round(S.debug.activeNotes.count));S.frame=window.ViolinModel.frame();S.time=t;
+  S.debug.activeNotes=S.debug.activeNotes.values.slice(0,Math.round(S.debug.activeNotes.count));S.frame=window.ViolinModel.frame();S.time=t;S.expression=expressionAt(P,t);
   // Rebuild rigid contacts after cache interpolation instead of stretching fingers.
   S.handR=window.BowHand.create('violin',S.bow.frogStick,S.bow.axis,S.bow.down);
-  S.armR=solveArm(S.armR.shoulder,S.handR.wrist,.36,.34,[-.30,-.9,.50]);S.debug.arms=[S.armL,S.armR];
+  S.armR=bowArm(S.armR.shoulder,S.handR.wrist,S.bow.string);S.debug.arms=[S.armL,S.armR];
   return S;
 }
-return { plan, at, atCached, packPose, songSignature, cacheStamp, setPoseCache, atLegacy, setHandSolver, NH, solveChain, solveArm, handDistAt, bowAt, vibrato, VIB, BOW_TILT, FINGER_LENGTHS };
+return { expressionAt,bowArm, plan, at, atCached, packPose, songSignature, cacheStamp, setPoseCache, atLegacy, setHandSolver, NH, solveChain, solveArm, handDistAt, bowAt, vibrato, VIB, BOW_TILT, FINGER_LENGTHS };
 })();

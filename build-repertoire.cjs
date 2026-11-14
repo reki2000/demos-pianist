@@ -6,6 +6,9 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const {readMidi}=require('./midi.cjs');
 process.chdir(__dirname);global.window=globalThis;
 for(const name of ['guitar-songs','violin-songs'])vm.runInThisContext(fs.readFileSync(`dist/instruments/${name}.js`,'utf8'));
+// The shipped Air is Bach’s original D-major register, not Wilhelmj’s
+// transposed C-major G-string arrangement. Let the normal planner use A/E.
+delete VIOLIN_SONGS.find(s=>s.id==='air').forceString;
 const round=x=>Math.round(x*1e5)/1e5;
 const guitar=GUITAR_SONGS.find(s=>s.id==='recuerdos');
 const {phrases,locations,barStarts}=require('./alhambra-grips.cjs').build(guitar);

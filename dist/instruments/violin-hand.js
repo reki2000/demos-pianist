@@ -198,7 +198,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
   }
   let solveCount=0;
   function solveKey(P,t,previous,goals=[]){
-    const spec=track(P,t);spec.goals=goals;const seed=previous?previous.x.slice():spec.seed;
+    const spec=track(P,t);spec.goals=goals;const seed=previous?[...previous.x.slice(0,12),...(previous.a||Array.from({length:4},(_,f)=>previous.x.slice(12+f*3,15+f*3))).flat()]:spec.seed;
     // Carry the previous frame to this continuous semitone anchor.
     if(previous)seed[0]+=spec.u-previous.u;
     const fn=x=>residual(decode(x,spec.targets,spec.u),spec,seed);let fit=minimize(fn,seed,30);
@@ -324,7 +324,7 @@ window.ViolinHand = ({atLegacy,solveArm,FINGER_LENGTHS,lowerBound,smooth,vibrato
     keys.splice(0,keys.length,...bestKeys);
   }
   function stamp(){
-    const source=window.ViolinHand.toString()+[atLegacy,solveArm,lowerBound,smooth,handDistAt,M.frame].map(f=>f.toString()).join('\n')+(window.BowHand?.source()||'').replace(/-?\d+\.\d+(?:e[+-]?\d+)?/g,n=>Number(n).toFixed(9))+JSON.stringify(FINGER_LENGTHS)+M.bodyWidth.toString()+M.bodyTop.toString()+JSON.stringify(G,(k,v)=>typeof v==='function'?v.toString():v);
+    const source=window.ViolinHand.toString()+[atLegacy,solveArm,lowerBound,smooth,handDistAt,M.frame].map(f=>f.toString()).join('\n')+(window.BowHand?.source()||'').replace(/-?\d+\.\d+(?:e[+-]?\d+)?/g,n=>Number(n).toFixed(9))+JSON.stringify(FINGER_LENGTHS)+(M.drawForearm?.toString()||'')+M.bodyWidth.toString()+M.bodyTop.toString()+JSON.stringify(G,(k,v)=>typeof v==='function'?v.toString():v);
     let h=2166136261;for(let i=0;i<source.length;i++)h=Math.imul(h^source.charCodeAt(i),16777619);return (h>>>0).toString(16);
   }
   let compiledObject=null,compiledValid=false;

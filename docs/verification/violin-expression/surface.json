@@ -1,0 +1,26 @@
+{
+  "violinLeft": {
+    "vertices": 846,
+    "triangles": 1688,
+    "components": 1,
+    "openEdges": 0,
+    "poses": 404,
+    "uploadBytes": 121536
+  },
+  "violinRight": {
+    "vertices": 846,
+    "triangles": 1688,
+    "components": 1,
+    "openEdges": 0,
+    "poses": 404,
+    "uploadBytes": 121536
+  },
+  "celloRight": {
+    "vertices": 846,
+    "triangles": 1688,
+    "components": 1,
+    "openEdges": 0,
+    "poses": 404,
+    "uploadBytes": 121536
+  }
+}

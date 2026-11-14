@@ -48,6 +48,7 @@ jobs:
           node hand-surface-test.cjs > hand-surface-verification.json
           node violin-skin-test.cjs > violin-skin-verification.json
           node violin-left-hand-test.cjs > violin-left-hand-verification.json
+          node violin-expression-test.cjs > docs/verification/violin-expression/motion.json
           node score-test.cjs > score-verification.json
           node pedal-test.cjs > pedal-verification.json
       - name: Build standalone HTML and zip

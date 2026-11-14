@@ -64,7 +64,7 @@ function meshAudit(){
  for(const song of VIOLIN_SONGS){const P=ViolinMotion.plan(song),times=new Set([0,song.duration]);for(let t=0;t<song.duration;t+=1)times.add(t);for(const n of P.notes)for(const t of [n.t0,n.t0+n.dur/2,n.t1])times.add(t);
   for(const t of [...times].sort((a,b)=>a-b)){const S=ViolinMotion.at(P,t);vertices.length=0;ViolinModel.drawLeftHand(R,S.handL);for(const point of vertices){const p=N.local([-point[0],point[1],point[2]]);result.body=Math.max(result.body,bodyDepth(p));result.board=Math.max(result.board,-N.board(p));result.neck=Math.max(result.neck,-N.neck(p,true));}
    vertices.length=0;const arm=S.armL,fl=dist(arm.elbow,arm.wrist),cuff=arm.wrist.map((v,i)=>v+(arm.elbow[i]-v)*.05/fl);
-   R.segment(arm.elbow,cuff,.042,[0,0,0],'forearm');R.segment(arm.wrist,cuff,.024,[0,0,0],'bodyLimb');
+   ViolinModel.drawForearm(R,arm,S.handL);
    for(const point of vertices)result.forearm=Math.max(result.forearm,bodyDepth(N.local([-point[0],point[1],point[2]])));
   }}
  return result;
