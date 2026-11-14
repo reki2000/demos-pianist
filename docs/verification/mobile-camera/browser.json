@@ -1,0 +1,55 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "instruments": [
+    {
+      "instrument": "piano",
+      "panPixels": [
+        16,
+        12
+      ],
+      "pinchDistanceRatio": 0.8,
+      "oneFingerRotation": true,
+      "presetReset": true,
+      "glErrors": 0
+    },
+    {
+      "instrument": "guitar",
+      "panPixels": [
+        16,
+        12
+      ],
+      "pinchDistanceRatio": 0.7999999999999999,
+      "oneFingerRotation": true,
+      "presetReset": true,
+      "glErrors": 0
+    },
+    {
+      "instrument": "violin",
+      "panPixels": [
+        16,
+        12
+      ],
+      "pinchDistanceRatio": 0.8,
+      "oneFingerRotation": true,
+      "presetReset": true,
+      "glErrors": 0
+    },
+    {
+      "instrument": "cello",
+      "panPixels": [
+        16,
+        12
+      ],
+      "pinchDistanceRatio": 0.8000000000000002,
+      "oneFingerRotation": true,
+      "presetReset": true,
+      "glErrors": 0
+    }
+  ],
+  "interruptedInstrumentSwitch": true,
+  "desktopMouseAndWheel": true,
+  "pageErrors": []
+}

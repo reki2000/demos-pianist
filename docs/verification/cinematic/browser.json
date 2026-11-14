@@ -1,0 +1,574 @@
+{
+  "views": [
+    {
+      "instrument": "piano",
+      "viewport": {
+        "width": 1000,
+        "height": 800
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 4.095756950796763
+        },
+        {
+          "index": 1,
+          "label": "02 / Keyboard · above both hands",
+          "distance": 1.8914610754652077
+        },
+        {
+          "index": 2,
+          "label": "03 / Left hand · bass-side close-up",
+          "distance": 0.9484856351047178
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left profile",
+          "distance": 1.4408764693754978
+        },
+        {
+          "index": 4,
+          "label": "05 / Right hand · treble-side close-up",
+          "distance": 0.9151092830913692
+        },
+        {
+          "index": 5,
+          "label": "06 / Over the pianist’s shoulder",
+          "distance": 1.9462078511813685
+        },
+        {
+          "index": 6,
+          "label": "07 / Keyboard · low bass-side angle",
+          "distance": 1.8783303756261835
+        },
+        {
+          "index": 7,
+          "label": "08 / Performer · right profile",
+          "distance": 1.96262075835385
+        },
+        {
+          "index": 8,
+          "label": "09 / Hands · high treble-side angle",
+          "distance": 1.7821686227739506
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · from the keyboard",
+          "distance": 1.2640114714669326
+        },
+        {
+          "index": 10,
+          "label": "11 / Grand piano · wide reverse angle",
+          "distance": 4.947042045505577
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands and wrists · frontal detail",
+          "distance": 1.5951253869210404
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    },
+    {
+      "instrument": "guitar",
+      "viewport": {
+        "width": 1000,
+        "height": 800
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 3.230050309205725
+        },
+        {
+          "index": 1,
+          "label": "02 / Fretting hand · treble-side detail",
+          "distance": 0.8455915089450696
+        },
+        {
+          "index": 2,
+          "label": "03 / Plucking hand · soundhole detail",
+          "distance": 0.7653920563998557
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left profile",
+          "distance": 1.363900656206309
+        },
+        {
+          "index": 4,
+          "label": "05 / Both hands · high angle",
+          "distance": 1.5087163417952363
+        },
+        {
+          "index": 5,
+          "label": "06 / Fretting hand · opposite side",
+          "distance": 0.848425011418216
+        },
+        {
+          "index": 6,
+          "label": "07 / Performer · right profile",
+          "distance": 2.047952095673583
+        },
+        {
+          "index": 7,
+          "label": "08 / Plucking hand · low string angle",
+          "distance": 0.734931969640728
+        },
+        {
+          "index": 8,
+          "label": "09 / Over the fretting shoulder",
+          "distance": 1.311192205590012
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · right three-quarter",
+          "distance": 1.3369835451493035
+        },
+        {
+          "index": 10,
+          "label": "11 / Stage · reverse angle",
+          "distance": 3.0719281435103745
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands · front three-quarter",
+          "distance": 1.4995749397746017
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    },
+    {
+      "instrument": "violin",
+      "viewport": {
+        "width": 1000,
+        "height": 800
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 3.5649999999999995
+        },
+        {
+          "index": 1,
+          "label": "02 / Left hand · fingerboard detail",
+          "distance": 0.912975903296467
+        },
+        {
+          "index": 2,
+          "label": "03 / Right hand · bow grip detail",
+          "distance": 0.8939379173074605
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left three-quarter",
+          "distance": 1.402684925419818
+        },
+        {
+          "index": 4,
+          "label": "05 / Violin and both hands · high angle",
+          "distance": 1.3724886156176306
+        },
+        {
+          "index": 5,
+          "label": "06 / Left hand · opposite fingerboard angle",
+          "distance": 0.8712777972610114
+        },
+        {
+          "index": 6,
+          "label": "07 / Performer · bow-side profile",
+          "distance": 2.3039461076327807
+        },
+        {
+          "index": 7,
+          "label": "08 / Right hand · low bow-side angle",
+          "distance": 0.8581520844232683
+        },
+        {
+          "index": 8,
+          "label": "09 / Over the violinist’s shoulder",
+          "distance": 1.2376287811779427
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · right profile",
+          "distance": 1.3115734825010759
+        },
+        {
+          "index": 10,
+          "label": "11 / Stage · high reverse angle",
+          "distance": 3.4132534927893046
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands and instrument · front detail",
+          "distance": 1.502572793577735
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    },
+    {
+      "instrument": "cello",
+      "viewport": {
+        "width": 1000,
+        "height": 800
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 3.552917814979682
+        },
+        {
+          "index": 1,
+          "label": "02 / Left hand · fingerboard detail",
+          "distance": 0.9190892230899022
+        },
+        {
+          "index": 2,
+          "label": "03 / Right hand · bow grip detail",
+          "distance": 0.8727685833025843
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left three-quarter",
+          "distance": 1.4405641256119077
+        },
+        {
+          "index": 4,
+          "label": "05 / Both hands · high string angle",
+          "distance": 1.4320352649289052
+        },
+        {
+          "index": 5,
+          "label": "06 / Left hand · opposite fingerboard angle",
+          "distance": 0.8910246910159112
+        },
+        {
+          "index": 6,
+          "label": "07 / Performer · bow-side profile",
+          "distance": 2.5599401195919786
+        },
+        {
+          "index": 7,
+          "label": "08 / Right hand · low bow-side angle",
+          "distance": 0.8545905452320427
+        },
+        {
+          "index": 8,
+          "label": "09 / Over the cellist’s shoulder",
+          "distance": 1.3635340113103156
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · right profile",
+          "distance": 1.3057660586797315
+        },
+        {
+          "index": 10,
+          "label": "11 / Stage · high reverse angle",
+          "distance": 3.242590818149839
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands and bow · frontal detail",
+          "distance": 1.5050664437160242
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    },
+    {
+      "instrument": "piano",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 5.521439473629759
+        },
+        {
+          "index": 1,
+          "label": "02 / Keyboard · above both hands",
+          "distance": 2.7607197368148793
+        },
+        {
+          "index": 2,
+          "label": "03 / Left hand · bass-side close-up",
+          "distance": 0.9484856351047178
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left profile",
+          "distance": 1.4408764693754978
+        },
+        {
+          "index": 4,
+          "label": "05 / Right hand · treble-side close-up",
+          "distance": 0.9151092830913692
+        },
+        {
+          "index": 5,
+          "label": "06 / Over the pianist’s shoulder",
+          "distance": 2.5398621578696887
+        },
+        {
+          "index": 6,
+          "label": "07 / Keyboard · low bass-side angle",
+          "distance": 2.5398621578696883
+        },
+        {
+          "index": 7,
+          "label": "08 / Performer · right profile",
+          "distance": 2.4294333683970937
+        },
+        {
+          "index": 8,
+          "label": "09 / Hands · high treble-side angle",
+          "distance": 2.539862157869689
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · from the keyboard",
+          "distance": 1.4355742631437374
+        },
+        {
+          "index": 10,
+          "label": "11 / Grand piano · wide reverse angle",
+          "distance": 6.62572736835571
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands and wrists · frontal detail",
+          "distance": 2.539862157869688
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    },
+    {
+      "instrument": "guitar",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 3.3128636841778554
+        },
+        {
+          "index": 1,
+          "label": "02 / Fretting hand · treble-side detail",
+          "distance": 0.8455915089450696
+        },
+        {
+          "index": 2,
+          "label": "03 / Plucking hand · soundhole detail",
+          "distance": 0.7653920563998557
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left profile",
+          "distance": 1.4355742631437372
+        },
+        {
+          "index": 4,
+          "label": "05 / Both hands · high angle",
+          "distance": 1.9877182105067126
+        },
+        {
+          "index": 5,
+          "label": "06 / Fretting hand · opposite side",
+          "distance": 0.848425011418216
+        },
+        {
+          "index": 6,
+          "label": "07 / Performer · right profile",
+          "distance": 2.4294333683970937
+        },
+        {
+          "index": 7,
+          "label": "08 / Plucking hand · low string angle",
+          "distance": 0.734931969640728
+        },
+        {
+          "index": 8,
+          "label": "09 / Over the fretting shoulder",
+          "distance": 1.987718210506713
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · right three-quarter",
+          "distance": 1.435574263143737
+        },
+        {
+          "index": 10,
+          "label": "11 / Stage · reverse angle",
+          "distance": 3.5337212631230455
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands · front three-quarter",
+          "distance": 1.987718210506713
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    },
+    {
+      "instrument": "violin",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 3.5649999999999995
+        },
+        {
+          "index": 1,
+          "label": "02 / Left hand · fingerboard detail",
+          "distance": 0.912975903296467
+        },
+        {
+          "index": 2,
+          "label": "03 / Right hand · bow grip detail",
+          "distance": 0.8939379173074605
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left three-quarter",
+          "distance": 1.5460030526163322
+        },
+        {
+          "index": 4,
+          "label": "05 / Violin and both hands · high angle",
+          "distance": 2.319004578924498
+        },
+        {
+          "index": 5,
+          "label": "06 / Left hand · opposite fingerboard angle",
+          "distance": 0.8712777972610114
+        },
+        {
+          "index": 6,
+          "label": "07 / Performer · bow-side profile",
+          "distance": 2.4294333683970937
+        },
+        {
+          "index": 7,
+          "label": "08 / Right hand · low bow-side angle",
+          "distance": 0.8581520844232683
+        },
+        {
+          "index": 8,
+          "label": "09 / Over the violinist’s shoulder",
+          "distance": 2.3190045789244986
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · right profile",
+          "distance": 1.5460030526163324
+        },
+        {
+          "index": 10,
+          "label": "11 / Stage · high reverse angle",
+          "distance": 3.5337212631230455
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands and instrument · front detail",
+          "distance": 2.3190045789244986
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    },
+    {
+      "instrument": "cello",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "shots": [
+        {
+          "index": 0,
+          "label": "01 / Stage · opening arc",
+          "distance": 3.552917814979682
+        },
+        {
+          "index": 1,
+          "label": "02 / Left hand · fingerboard detail",
+          "distance": 0.9190892230899022
+        },
+        {
+          "index": 2,
+          "label": "03 / Right hand · bow grip detail",
+          "distance": 0.8727685833025843
+        },
+        {
+          "index": 3,
+          "label": "04 / Expression · left three-quarter",
+          "distance": 1.5460030526163322
+        },
+        {
+          "index": 4,
+          "label": "05 / Both hands · high string angle",
+          "distance": 1.9877182105067128
+        },
+        {
+          "index": 5,
+          "label": "06 / Left hand · opposite fingerboard angle",
+          "distance": 0.8910246910159112
+        },
+        {
+          "index": 6,
+          "label": "07 / Performer · bow-side profile",
+          "distance": 2.5599401195919786
+        },
+        {
+          "index": 7,
+          "label": "08 / Right hand · low bow-side angle",
+          "distance": 0.8545905452320427
+        },
+        {
+          "index": 8,
+          "label": "09 / Over the cellist’s shoulder",
+          "distance": 1.9877182105067133
+        },
+        {
+          "index": 9,
+          "label": "10 / Expression · right profile",
+          "distance": 1.5460030526163324
+        },
+        {
+          "index": 10,
+          "label": "11 / Stage · high reverse angle",
+          "distance": 3.312863684177855
+        },
+        {
+          "index": 11,
+          "label": "12 / Hands and bow · frontal detail",
+          "distance": 1.9877182105067128
+        }
+      ],
+      "movingWithinShot": true,
+      "reducedMotion": true
+    }
+  ],
+  "pageErrors": [],
+  "runtimeFits": 0
+}

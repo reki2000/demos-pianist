@@ -24,3 +24,6 @@
 .score-toggle{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;letter-spacing:.06em;padding:3px 9px;margin-left:14px;flex:none}
 .score-toggle:hover{color:var(--gold);border-color:#a28a61}
 @media(max-width:650px){.instruments{width:100%;justify-content:space-between}.instruments-label{display:none}.instruments button{padding:9px 8px;font-size:13px;flex:1}}
+
+/* Gesture hints stay within the mobile stage. */
+.shot-note{max-width:calc(100% - 72px);pointer-events:none}.note-display{pointer-events:none}#shotText{line-height:1.4}

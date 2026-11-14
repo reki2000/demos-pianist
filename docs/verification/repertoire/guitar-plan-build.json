@@ -1,0 +1,41 @@
+{
+ "songs": [
+  {
+   "song": "asturias",
+   "buildMs": 7394,
+   "bytes": 228276,
+   "maxPoseDiff": 0
+  },
+  {
+   "song": "recuerdos",
+   "buildMs": 1292,
+   "bytes": 126501,
+   "maxPoseDiff": 0
+  },
+  {
+   "song": "granada",
+   "buildMs": 1588,
+   "bytes": 122814,
+   "maxPoseDiff": 0
+  },
+  {
+   "song": "sevilla",
+   "buildMs": 2044,
+   "bytes": 192606,
+   "maxPoseDiff": 0
+  },
+  {
+   "song": "capricho",
+   "buildMs": 888,
+   "bytes": 99489,
+   "maxPoseDiff": 0
+  },
+  {
+   "song": "andaluza",
+   "buildMs": 1605,
+   "bytes": 122299,
+   "maxPoseDiff": 0
+  }
+ ],
+ "totalBytes": 892440
+}

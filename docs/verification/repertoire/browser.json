@@ -1,0 +1,42 @@
+{
+  "instruments": [
+    {
+      "instrument": "guitar",
+      "song": "recuerdos",
+      "playedSeconds": 5.469569160997732,
+      "peakRMS": 0.13909883383218333,
+      "seekTimes": [
+        0,
+        20,
+        60,
+        100
+      ],
+      "fits": 0,
+      "solves": 0,
+      "gl": [
+        0,
+        0
+      ]
+    },
+    {
+      "instrument": "violin",
+      "song": "bach-preludio",
+      "playedSeconds": 5.492789115646259,
+      "peakRMS": 0.07282470944017629,
+      "seekTimes": [
+        0,
+        20,
+        60,
+        100
+      ],
+      "fits": 0,
+      "solves": 0,
+      "gl": [
+        0,
+        0
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "auditoryCheck": false
+}

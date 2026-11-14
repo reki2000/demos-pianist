@@ -9,11 +9,19 @@ const plans=GUITAR_SONGS.map(song=>{song.fingering=GUITAR_PLAN_CACHE[song.id];re
 const rightSeed=[G.PLUCK_D,-.055,.075,.25,0,0],rightBase=N.rightTargets(G.poseLegacy(plans[0],0,false));
 const fn=x=>{
  const r=N.constraints(x,1,rightBase,[],rightSeed);
- const H=N.frame(x,1),strings={p:[4,5,6],i:[1,2,3,4,5],m:[1,2,3,4,5],a:[1,2,3,4]};
+ const H=N.frame(x,1),strings={p:[2,3,4,5,6],i:[1,2,3,4,5],m:[1,2,3,4,5],a:[1,2,3,4]};
  for(const [name,ss] of Object.entries(strings))for(const s of ss){const f=name==='p'?4:['i','m','a'].indexOf(name),root=N.point(H,N.ROOT[f]),target=G.pluckPoint(s,.005).map((v,k)=>v+(f===4?G.u[k]*.025:0)),F=N.finger(root,target,f===4?0:f+1,f===4?G.u:G.w);r.push(F.error/.00003);}
  return r;
 };
 let right=N.minimize(fn,rightSeed,45,N.rightLimits);console.error('right',right);
+if(process.argv.includes('--right-only')){
+ vm.runInThisContext(fs.readFileSync('dist/instruments/guitar-hand-frames.js','utf8'));
+ const D=GUITAR_HAND_FRAMES;if(D.stamp!==N.stamp())throw Error('Stale hand geometry');
+ for(const P of plans)if(D.songs[P.song.id]?.signature!==N.signature(P))throw Error('Stale left-hand trajectory: '+P.song.id);
+ D.right=right.x;
+ fs.writeFileSync('dist/instruments/guitar-hand-frames.js',"'use strict';\n// Offline trajectories, rendered-skin clearance and thumb reach on strings 2–6.\nwindow.GUITAR_HAND_FRAMES="+JSON.stringify(D,(k,v)=>typeof v==='number'?Math.round(v*1e8)/1e8:v)+';\n');
+ console.log(JSON.stringify({right,unchangedLeftTrajectories:true},null,2));process.exit(0);
+}
 const summary=[];
 for(const P of plans){
  if(selected.length&&!selected.includes(P.song.id))continue;

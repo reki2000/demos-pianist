@@ -1,0 +1,2 @@
+# Preserve the downloaded historical LilyPond sources, including their spacing.
+repertoire-sources/*.ly -whitespace

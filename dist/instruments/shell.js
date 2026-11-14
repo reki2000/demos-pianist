@@ -30,6 +30,7 @@ const noteName = n => ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 
 // ------------------------------------------------------------------
 // Adapters: normalize each module's INTERFACE entry point.
 // ------------------------------------------------------------------
+const cinematic = Object.fromEntries(['guitar','violin','cello'].map(id=>[id,CinematicCamera.create(id)]));
 const plans = new Map();       // 'inst:song' -> motion plan
 const planned = new Set();     // song objects whose plan() already ran
 function getPlan(inst, song) {
@@ -175,7 +176,7 @@ let ctx = null; const voices = {};   // one AudioContext, one voice per instrume
 let anchor = 0, startPos = 0, next = 0, timer = null;
 let renderer = null;
 let camMode = 'auto', eye = [1.8, 2.25, -2.35], target = [0, 1.28, -0.74];
-let orbitA = -0.8, orbitH = 2.2, orbitR = 4.2, drag = null;
+let orbitA = -0.8, orbitH = 2.2, orbitR = 4.2, manualCamera = null, lastCamera = null;
 const memory = {};             // per-instrument {songId, position}
 let pianoButtons = null;       // stashed piano song buttons
 const pianoDOM = {};           // original texts to restore
@@ -258,12 +259,13 @@ function enterString(a) {
     pianoDOM.startHidden = $('start').classList.contains('hidden');
     $('pedalHUD').classList.add('hidden'); $('start').classList.add('hidden');
   }
+  cameraControl.cancel();
   active = a;
   document.querySelector('.edition').innerHTML = a.collection + ' <b>' + String(a.songs().length).padStart(2, '0') + '</b>';
   document.querySelector('.collection-heading>span').textContent = 'Choose from ' + a.songs().length + ' pieces';
   hintSpan.textContent = a.scoreHint;
   document.querySelectorAll('.instruments button').forEach(b => { const on = b.dataset.instrument === a.id; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
-  $('cameraLabel').textContent = camLabel();
+  syncCameraUI();
   buildSongs();
   const mem = memory[a.id];
   selectSong(mem && a.songs().some(s => s.id === mem.songId) ? mem.songId : a.songs()[0].id);
@@ -277,6 +279,7 @@ function enterPiano() {
   // two live contexts compete for the device audio path (and burn CPU).
   // playStr() resumes it on the next string playback.
   if (ctx && ctx.state === 'running') ctx.suspend();
+  cameraControl.cancel();
   active = null; song = null; plan = null;
   window.recital.setRenderEnabled(true);
   if (pianoButtons) { const wrap = $('songs'); wrap.innerHTML = ''; for (const b of pianoButtons) wrap.append(b); }
@@ -297,6 +300,7 @@ function enterPiano() {
   }
   $('play').textContent = '▶'; $('play').setAttribute('aria-label', 'Play');
   $('cameraLabel').textContent = ({ auto: 'CINEMATIC', hands: 'PLAYER VIEW', portrait: 'PIANIST', pedal: 'PEDAL', wide: 'STAGE', orbit: 'FREE CAMERA' })[document.querySelector('[data-camera].selected')?.dataset.camera || 'auto'];
+  window.recital.syncCameraUI?.();
 }
 
 // ------------------------------------------------------------------
@@ -353,19 +357,23 @@ function frame(now) {
   const previousProgram = sharedGL && typeof sharedGL.getParameter === 'function' ? sharedGL.getParameter(sharedGL.CURRENT_PROGRAM) : null;
   if (!renderer) { try { renderer = window.RecitalGL.create($('scene')); attachCelloMesh(renderer); } catch (e) { return; } }
   const t = currentTime();
-  const pose = active.id === 'cello' ? null : active.pose(plan, t);
+  const pose = active.id === 'cello' ? (camMode==='auto'?window.CelloMotion.poseCached(song,t):null) : active.pose(plan, t);
   // Camera resolution.
   let shot = null, dynEye = null, dynAt = null;
   const S = active.shots;
-  if (camMode === 'auto') { shot = S.auto[Math.floor(t / 11) % S.auto.length]; }
+  if (camMode === 'auto') { shot = cinematic[active.id].at(t,CinematicCamera.subjects(active.id,pose),{key:song.id,aspect:$('scene').clientWidth/$('scene').clientHeight,reducedMotion:!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches}); }
   else if (camMode === 'hands' && typeof S.hands === 'function') { const d = S.hands(pose); dynEye = d.eye; dynAt = d.at; shot = d; }
-  else if (camMode === 'orbit') { dynEye = [Math.sin(orbitA) * orbitR, orbitH, Math.cos(orbitA) * orbitR]; dynAt = [0, 1.05, 0]; shot = { label: 'Drag to orbit · scroll to zoom' }; }
+  else if (camMode === 'orbit') { dynEye = manualCamera?manualCamera.eye:[Math.sin(orbitA) * orbitR, orbitH, Math.cos(orbitA) * orbitR]; dynAt = manualCamera?manualCamera.at:[0, 1.05, 0]; shot = { label: 'Drag to rotate · pinch/scroll to zoom · two fingers to pan' }; }
   else shot = S[camMode === 'pedal' ? 'detail' : camMode] || S.auto[0];
-  if (dynEye) { eye = lerp(eye, dynEye, 1 - Math.exp(-dt * 3)); target = lerp(target, dynAt, 1 - Math.exp(-dt * 3)); }
+  const manual=camMode==='orbit'&&manualCamera;
+  if(manual){eye=manual.eye;target=manual.at;}
+  else if(camMode==='auto'){eye=shot.eye;target=shot.at;}
+  else if (dynEye) { eye = lerp(eye, dynEye, 1 - Math.exp(-dt * 3)); target = lerp(target, dynAt, 1 - Math.exp(-dt * 3)); }
   else if (shot) { const k = camMode === 'auto' ? 2 : 3; eye = lerp(eye, shot.eye, 1 - Math.exp(-dt * k)); target = lerp(target, shot.at, 1 - Math.exp(-dt * k)); }
-  const narrow = $('scene').clientWidth < 650 && !['hands', 'pedal', 'portrait'].includes(camMode);
+  const narrow = !manual && camMode!=='auto' && $('scene').clientWidth < 650 && !['hands', 'pedal', 'portrait'].includes(camMode);
   const renderEye = narrow ? eye.map((v, i) => i === 1 ? v + 0.4 : v * 1.23) : eye;
-  renderer.begin(renderEye, target);
+  lastCamera={eye:renderEye.slice(),at:target.slice(),up:manual?manual.up.slice():camMode==='auto'?shot.up:[0,1,0]};
+  renderer.begin(renderEye, target,lastCamera.up);
   drawStage(renderer);
   if (active.id === 'cello') active.draw(renderer, plan, t, song); else active.draw(renderer, plan, t);
   // Score.
@@ -418,14 +426,11 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
   if (!active) return;
   const b = e.target.closest && e.target.closest('[data-camera]');
-  if (b) { camMode = b.dataset.camera; $('cameraLabel').textContent = camLabel(); }
+  if (b) { cameraControl.cancel();manualCamera=null;camMode=b.dataset.camera;syncCameraUI(); }
 });
 // Orbit controls for string mode.
-$('scene').addEventListener('pointerdown', e => { if (active && camMode === 'orbit') { drag = [e.clientX, e.clientY]; e.target.setPointerCapture(e.pointerId); } });
-$('scene').addEventListener('pointermove', e => { if (active && drag) { orbitA -= (e.clientX - drag[0]) * 0.008; orbitH = clamp(orbitH + (e.clientY - drag[1]) * 0.014, 0.6, 5); drag = [e.clientX, e.clientY]; } });
-$('scene').addEventListener('pointerup', () => drag = null);
-$('scene').addEventListener('pointercancel', () => drag = null);
-$('scene').addEventListener('wheel', e => { if (active && camMode === 'orbit') { e.preventDefault(); orbitR = clamp(orbitR + e.deltaY * 0.007, 2.2, 9); } }, { passive: false });
+function syncCameraUI(){document.querySelectorAll('[data-camera]').forEach(b=>b.classList.toggle('selected',b.dataset.camera===camMode));$('cameraLabel').textContent=camLabel();}
+const cameraControl=CameraGestures.bind($('scene'),{enabled:()=>!!active,isOrbit:()=>camMode==='orbit',camera:()=>camMode==='orbit'&&manualCamera||lastCamera,minDistance:.15,maxDistance:25,change:c=>{manualCamera=c;if(camMode!=='orbit'){camMode='orbit';syncCameraUI();}}});
 
 // ------------------------------------------------------------------
 // Switcher wiring + score panel collapse (works for every instrument)

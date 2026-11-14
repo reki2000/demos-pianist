@@ -1,0 +1,17 @@
+{
+  "probes": 40193,
+  "probeIntervalSeconds": 0.000002,
+  "method": "Richardson extrapolation to zero interval",
+  "wrist": {
+    "d": 2.6389017722973495e-7,
+    "id": "sevilla",
+    "t": 110.26705
+  },
+  "tip": {
+    "d": 0.0000030134756283302786,
+    "id": "andaluza",
+    "t": 16.88333333,
+    "f": 1
+  },
+  "limitMm": 0.1
+}

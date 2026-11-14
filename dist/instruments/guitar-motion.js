@@ -105,7 +105,7 @@ function plan(song) {
   // strum window, same feasibility split) — one source of truth.
   const grouped = window.GuitarFingering.groupEvents(notes, window.GuitarFingering.windowOf(song), song.tuning || window.GuitarFingering.OPEN);
   const events = grouped.map(ev => ({ t: ev.t, notes: ev.notes.map(i => { const nn = notes[i], a = A[i];
-    return { i, t: nn[0], end: nn[0] + nn[1], pitch: nn[2], vel: nn[3], string: a.string, fret: a.fret, lh: a.lh, barre: a.barre, rh: a.rh, pos: a.pos, sweep: !!a.sweep, brush: !!a.brush }; }) }));
+    return { i, t: nn[0], end: Math.min(nn[0] + nn[1],a.releaseAt??Infinity), pitch: nn[2], vel: nn[3], string: a.string, fret: a.fret, lh: a.lh, barre: a.barre, rh: a.rh, pos: a.pos, sweep: !!a.sweep, brush: !!a.brush }; }) }));
   for (const ev of events) for (const nt of ev.notes) nt.ev = ev;
   const chronological=events.flatMap(e=>e.notes).sort((a,b)=>a.t-b.t||a.i-b.i);
   // A string cannot retain its former fret after it is plucked again.

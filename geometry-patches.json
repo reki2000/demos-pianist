@@ -25,10 +25,10 @@
   },
   "guitar-motion.js": {
     "upstream": "28544a85b0efb99b02f73f5418cf46d8a99b0933758f8306e4bf10209db406b0",
-    "integrated": "77a470cf47c1c47b5f4749a4a08b09b100ba1926dfd8f2083035a58743d58f7f"
+    "integrated": "2ebbdc9995c53b55667224d5019e7421993eb4afd3eff1290881e5e0f4f63d96"
   },
   "guitar-fingering.js": {
     "upstream": "3360cfde54b27d63fee96030a37e7060cb7cfdabcc4d8f8a873b87f61d9d3d9b",
-    "integrated": "712206f2bf19721ab73b4f7d65fbf481340ddf2f8060e2d42510635cd9d2a6fa"
+    "integrated": "e2a2dca0595c3da23ce67c23719bbdeddd31f2023261e8b1826717cfe0cd2b53"
   }
 }

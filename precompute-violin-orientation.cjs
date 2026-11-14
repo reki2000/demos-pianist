@@ -5,6 +5,7 @@ const fs=require('node:fs'),vm=require('node:vm');global.window=globalThis;
 for(const n of ['bow-hand','violin-fingering','violin-songs','hand-surface','violin-skin','violin-model','violin-hand','violin-hand-frames','violin-motion'])vm.runInThisContext(fs.readFileSync(`dist/instruments/${n}.js`,'utf8'));
 const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const sourceIndex=process.argv.indexOf('--from');
+const selected=process.argv.slice(2).filter((s,i,a)=>s!=='--from'&&a[i-1]!=='--from');
 if(sourceIndex>=0){vm.runInThisContext(fs.readFileSync(process.argv[sourceIndex+1],'utf8'));for(const song of Object.values(VIOLIN_HAND_FRAMES.songs))for(const key of song.keys){key.x[1]=-key.x[1];key.x[11]=-key.x[11];}}
  let bound,matrix;const vertices=[];function upload(data){const seen=new Set();bound.points=[];for(let j=0;j<data.length;j+=6){const p=Array.from(data.slice(j,j+3)),key=p.map(v=>Math.round(v*1e8)).join(':');if(!seen.has(key)){seen.add(key);bound.points.push(p);}}}const gl={VERTEX_SHADER:1,FRAGMENT_SHADER:2,COMPILE_STATUS:3,LINK_STATUS:4,ARRAY_BUFFER:5,STATIC_DRAW:6,DYNAMIC_DRAW:9,FLOAT:7,TRIANGLES:8,
  createShader:()=>({}),shaderSource(){},compileShader(){},getShaderParameter:()=>true,createProgram:()=>({}),attachShader(){},linkProgram(){},getProgramParameter:()=>true,useProgram(){},getAttribLocation:(_,n)=>n==='aP'?0:1,getUniformLocation:(_,n)=>n,createBuffer:()=>({}),bindBuffer:(_,b)=>{bound=b},bufferData:(_,data)=>upload(data),bufferSubData:(_,__,data)=>upload(data),enableVertexAttribArray(){},vertexAttribPointer(){},uniformMatrix4fv:(n,_,m)=>{if(n==='uM')matrix=Array.from(m)},uniformMatrix3fv(){},uniform3fv(){},uniform1f(){},drawArrays:(_,__,count)=>{for(const a of bound.points){vertices.push([0,1,2].map(i=>matrix[i]*a[0]+matrix[4+i]*a[1]+matrix[8+i]*a[2]+matrix[12+i]));}}};
@@ -33,6 +34,7 @@ function fit(P,key,reference=key.x[11]){
  key.x[11]=best.angle;return best;
 }
 for(const song of VIOLIN_SONGS){
+ if(selected.length&&!selected.includes(song.id))continue;
  const P=ViolinMotion.plan(song),entry=VIOLIN_HAND_FRAMES.songs[song.id],keys=entry.keys;
  if(entry.signature!==JSON.stringify(P.notes))throw Error('Notes changed: '+song.id);
  let previous=0;for(let i=0;i<keys.length;i++){const b=fit(P,keys[i],previous);previous=b.angle;if(i%250===0)console.error(song.id,i,'/',keys.length,'depth',b.depth);}

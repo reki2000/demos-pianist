@@ -66,7 +66,14 @@ const PAIRS = [
 ];
 const geometryPatches = JSON.parse(fs.readFileSync('geometry-patches.json', 'utf8'));
 const audioLifecyclePatches = JSON.parse(fs.readFileSync('audio-lifecycle-patches.json', 'utf8'));
+const repertoirePatches = JSON.parse(fs.readFileSync('repertoire-patches.json', 'utf8'));
 for (const [name, src] of PAIRS) {
+  const repertoirePatch = repertoirePatches[name];
+  if (repertoirePatch) {
+    assert.equal(sha(src), repertoirePatch.upstream, 'repertoire upstream changed: review adaptation for ' + name);
+    assert.equal(sha(DI(name)), repertoirePatch.integrated, 'repertoire adaptation changed: review and update hashes for ' + name);
+    continue;
+  }
   const audioPatch = audioLifecyclePatches[name];
   if (audioPatch) {
     // Documented host fixes: source retirement and bounded debug history.
@@ -281,7 +288,7 @@ const documentStub = {
 let rafQ = [];
 const c = { window: null, document: documentStub, performance: { now: () => 0 }, requestAnimationFrame: f => { rafQ.push(f); }, devicePixelRatio: 1, innerWidth: 1440, matchMedia: () => ({ matches: false }), addEventListener() {}, console, setInterval: () => 1, clearInterval() {}, AudioContext: undefined };
 c.window = c; vm.createContext(c);
-const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'piano-skin.js', 'app.js',
+const SCRIPTS = ['songs.js', 'gl.js', 'motion.js', 'pedal.js', 'score.js', 'audio-manifest.js', 'audio.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'piano-skin.js', 'cinematic-camera.js', 'camera-gestures.js', 'app.js',
   'instruments/guitar-songs.js', 'instruments/guitar-fingering.js', 'instruments/guitar-motion.js', 'instruments/guitar-hands.js', 'instruments/guitar-hand-frames.js', 'instruments/guitar-skin.js', 'instruments/guitar-model.js', 'instruments/guitar-audio.js', 'instruments/guitar-score.js', 'instruments/guitar-instrument.js', 'instruments/guitar-plans.js',
   'instruments/bow-hand.js', 'instruments/violin-gl.js', 'instruments/violin-fingering.js', 'instruments/violin-songs.js', 'instruments/hand-surface.js', 'instruments/violin-skin.js', 'instruments/violin-model.js', 'instruments/violin-hand.js', 'instruments/violin-hand-frames.js', 'instruments/violin-motion.js', 'instruments/violin-audio.js', 'instruments/violin-instrument.js',
   'instruments/cello-fingering.js', 'instruments/cello-model.js', 'instruments/cello-motion.js', 'instruments/cello-audio.js', 'instruments/cello-songs.js', 'instruments/cello-instrument.js',
@@ -295,7 +302,7 @@ assert.equal(getEl('songs').children.length, 18, 'piano song list intact at load
 let nowMs = 0;
 function tick(n) { for (let i = 0; i < n; i++) { nowMs += 16.7; const q = rafQ; rafQ = []; for (const f of q) f(nowMs); } }
 tick(5);
-const EXPECT = { guitar: 6, violin: 3, cello: 4 };
+const EXPECT = { guitar: 6, violin: 4, cello: 4 };
 const shellReport = {};
 for (const id of ['guitar', 'violin', 'cello']) {
   c.multiShell.chooseInstrument(id);
