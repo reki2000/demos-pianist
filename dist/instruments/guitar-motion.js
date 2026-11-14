@@ -111,7 +111,7 @@ function plan(song) {
   // A string cannot retain its former fret after it is plucked again.
   // Keep the score/audio source notes intact; this is the fretting hold.
   const lastOnString=new Map();
-  for(const nt of chronological){const old=lastOnString.get(nt.string);if(old)old.end=Math.min(old.end,nt.t);lastOnString.set(nt.string,nt);}
+  for(const nt of chronological){const old=lastOnString.get(nt.string);if(old){const handoff=old.lh&&nt.lh&&old.lh!==nt.lh?.045:0;old.end=Math.min(old.end,Math.max(old.t+.004,nt.t-handoff));}lastOnString.set(nt.string,nt);}
   // Release before a large shift, rather than stretching a held finger
   // across two positions. Source note timing and pitches remain untouched.
   const shiftEvents=events.filter(e=>e.notes.some(n=>n.fret>0));
@@ -133,6 +133,13 @@ function plan(song) {
     }
     if(idx)lastIndex=idx;
   }
+  // Finish a former hold before forming the next chord. A hold ending
+  // exactly at its onset must not pin the old wrist for that first frame.
+  for(const b of events)if(b.notes.filter(n=>n.fret>0).length>=2){
+    for(const nt of chronological){if(nt.t>=b.t)break;
+      if(nt.fret&&nt.end>=b.t-.020&&nt.end<=b.t+.015&&!b.notes.some(q=>q.lh===nt.lh&&q.fret===nt.fret&&(q.string===nt.string||q.lh===1&&q.barre)))nt.end=Math.min(nt.end,Math.max(nt.t+.004,b.t-.035));
+    }
+  }
   // One barre spans a strummed/held chord, even when the MIDI event
   // window splits the bass and treble attacks into separate blocks.
   let barreGroup=null;
@@ -146,6 +153,12 @@ function plan(song) {
     group.target=add(fretPoint(group.strings.at(-1),group.fret,.002,.0042),mul(w,-.004));
     group.points=group.strings.map(s=>fretPoint(s,group.fret,.002,.0042));
     group.span=Math.hypot(...sub(fretPoint(group.strings.at(-1),group.fret),fretPoint(group.strings[0],group.fret)));
+  }
+  // Lift the former fingertip before a new index barre takes over the
+  // same fret/string, even when that string is not plucked again yet.
+  for(const group of new Set(chronological.filter(n=>n.barre).map(n=>n.barreGroup))){
+    const start=group.notes[0].t,lo=group.strings[0],hi=group.strings.at(-1);
+    for(const nt of chronological){if(nt.t>=start)break;if(nt.lh>1&&nt.fret===group.fret&&nt.string>=lo&&nt.string<=hi)nt.end=Math.min(nt.end,Math.max(nt.t+.004,start-.045));}
   }
   // Per-LH-finger note lists (digits 1..4) and per-RH-finger lists.
   const lhByFinger = { 1: [], 2: [], 3: [], 4: [] }, rhByFinger = { p: [], i: [], m: [], a: [] };

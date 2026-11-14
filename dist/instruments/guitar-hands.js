@@ -16,8 +16,9 @@ window.makeGuitarHands=()=>{
  const point=(H,p)=>add(H.wrist,H.basis.reduce((s,a,j)=>add(s,mul(a,p[j])),[0,0,0]));
  function frame(x,hand){const H={model:'guitar-B',wrist:world(x),basis:basis(x,hand)};H.palmPos=point(H,[0,.035,0]);return H;}
  const resultant=(L,q)=>[L[0]+L[1]*Math.cos(q)+L[2]*Math.cos(1.67*q),L[1]*Math.sin(q)+L[2]*Math.sin(1.67*q)];
- function finger(base,target,digit,hint){
-  const L=LENGTHS[digit],v=sub(target,base),distance=Math.hypot(...v),X=norm(v),Y=norm(sub(hint,mul(X,dot(hint,X))));
+ function finger(base,target,digit,hint,swivel=0){
+  const L=LENGTHS[digit],v=sub(target,base),distance=Math.hypot(...v),X=norm(v);let Y=norm(sub(hint,mul(X,dot(hint,X))));
+  if(swivel){const Z=[X[1]*Y[2]-X[2]*Y[1],X[2]*Y[0]-X[0]*Y[2],X[0]*Y[1]-X[1]*Y[0]];Y=add(mul(Y,Math.cos(swivel)),mul(Z,Math.sin(swivel)));}
   let lo=0,hi=2.18;for(let j=0;j<16;j++){const q=(lo+hi)/2;if(Math.hypot(...resultant(L,q))>distance)lo=q;else hi=q;}
   const q=(lo+hi)/2,[a,b]=resultant(L,q),angle=Math.atan2(b,a),points=[base];
   for(let j=0;j<3;j++){const t=angle-(j===0?0:j===1?q:1.67*q);points.push(add(points[j],add(mul(X,L[j]*Math.cos(t)),mul(Y,L[j]*Math.sin(t)))));}
@@ -42,11 +43,12 @@ window.makeGuitarHands=()=>{
   const H=frame(x,hand);x=x.slice();H.fingers=[];
   const input=targets,resolve=()=>input.map((T,f)=>{
    if(!T)return T;const rest=point(H,[ROOT[f]?.[0]||0,.105,hand?-.024:-.036]);let target=T.target;
-   if(T.to){const from=T.from||rest;target=add(add(mul(from,1-T.phase),mul(T.to,T.phase)),mul(n,T.lift));}
+   if(T.to){const from=T.from?add(mul(T.from,1-(T.fromRelease||0)),mul(rest,T.fromRelease||0)):rest;target=add(add(mul(from,1-T.phase),mul(T.to,T.phase)),mul(n,T.lift));}
    else if(T.releaseFrom)target=add(mul(T.releaseFrom,1-T.release),mul(rest,T.release));
    target=target||rest;
-   if(!hand&&f<4&&!T.contact){const root=point(H,ROOT[f]),reach=LENGTHS[f+1].reduce((a,b)=>a+b,0)-.010,envelope=T.to?Math.sin(Math.PI*T.phase):T.releaseFrom?T.release:1,far=smooth((Math.hypot(...sub(target,root))-reach)/.030)*(1-(T.barreWeight||0))*envelope;target=add(mul(target,1-far),mul(rest,far));}
-   return {...T,target};
+   const released=T.fromRelease||0,relax=!hand&&!T.contact?(T.to?released*(1-T.phase)+(1-released)*Math.sin(Math.PI*T.phase):T.releaseFrom?T.release:1):0;
+   if(!hand&&f<4&&!T.contact){const root=point(H,ROOT[f]),reach=LENGTHS[f+1].reduce((a,b)=>a+b,0)-.010,envelope=relax,far=smooth((Math.hypot(...sub(target,root))-reach)/.030)*(1-(T.barreWeight||0))*envelope;target=add(mul(target,1-far),mul(rest,far));}
+   target=add(mul(target,1-relax),mul(rest,relax));return {...T,target,relax};
   });targets=resolve();
   // Preserve a barre through carriage interpolation by solving its MCP
   // position analytically. The whole hand translates; no bone is stretched.
@@ -62,7 +64,7 @@ window.makeGuitarHands=()=>{
   targets=resolve();
   for(let f=0;f<4;f++){
    const root=point(H,ROOT[f]),target=targets[f]?.target||point(H,[ROOT[f][0],.105,hand?-.024:-.036]);
-   const F={...targets[f],...finger(root,target,f+1,hand?w:n)};
+   const F={...targets[f],...finger(root,target,f+1,hand?w:add(mul(n,1-(targets[f]?.relax||0)),mul(H.basis[2],targets[f]?.relax||0)),hand?0:x[6+f]||0)};
    if(!hand&&f===0&&targets[f]?.barreWeight>0){
     const shapes=targets[f].barreShapes.map(q=>({...q,...barreFinger(root,target,q.span)})),weight=targets[f].barreWeight,pts=[root];
     for(let j=0;j<3;j++){let dir=mul(norm(sub(F.points[j+1],F.points[j])),1-weight);for(const q of shapes)dir=add(dir,mul(norm(sub(q.points[j+1],q.points[j])),q.weight));pts.push(add(pts[j],mul(norm(dir),LENGTHS[1][j])));}
@@ -80,7 +82,7 @@ window.makeGuitarHands=()=>{
  }
  function barreSpan(nt){if(nt.barreGroup)return nt.barreGroup.span;const ns=(nt.barreGroup?.notes||nt.ev.notes).filter(q=>q.lh===nt.lh&&q.fret===nt.fret),ss=ns.map(q=>q.string);return Math.hypot(...sub(G.fretPoint(Math.max(...ss),nt.fret),G.fretPoint(Math.min(...ss),nt.fret)));}
  function travel(A,B){
-  const gap=A?Math.max(.000001,B.t-A.t):1,end=B.t-Math.min(.004,gap*.25);let start=A?Math.max(A.t+.004,Math.min((A.barreGroup?.end??A.end)-.02,B.t-.05)):B.t-.18;
+  const gap=A?Math.max(.000001,B.t-A.t):1,end=B.t-Math.min(.004,gap*.25);let start=A?Math.max(A.t+.004,Math.max(B.t-.12,Math.min((A.barreGroup?.end??A.end)-.02,B.t-.05))):B.t-.18;
   if(start>end-Math.min(.012,gap*.5))start=end-Math.min(.012,gap*.5);return {start,end};
  }
  function leftTargets(P,t,S){return [1,2,3,4].map((digit,i)=>{
@@ -88,8 +90,8 @@ window.makeGuitarHands=()=>{
   let phase=0,start=0,end=0;if(B){({start,end}=travel(A,B));phase=smooth((t-start)/(end-start));}
   const repeat=A&&B&&A.string===B.string&&A.fret===B.fret&&B.t-(A.barreGroup?.end??A.end)<=.025, sameBarre=(A?.barreGroup&&A.barreGroup===B?.barreGroup)||repeat;
   if(B&&t>=start&&!sameBarre){
-   T.from=A?pressPoint(A):undefined;T.to=pressPoint(B);T.phase=phase;T.lift=Math.sin(Math.PI*phase)*.006;
-   const ab=A?.barre?1:0,bb=B.barre?1:0,wa=ab*(1-phase),wb=bb*Math.min(phase,smooth((t-B.t+.050)/.046));if(wa>0)shapes.push({span:barreSpan(A),weight:wa});if(wb>0)shapes.push({span:barreSpan(B),weight:wb});weight=wa+wb;source=B.barre?B:A?.barre?A:null;
+   T.from=A?pressPoint(A):undefined;T.fromRelease=A?smooth((start-(A.barreGroup?.end??A.end))/.12):1;T.to=pressPoint(B);T.phase=phase;T.lift=Math.sin(Math.PI*phase)*.006;
+   const ab=A?.barre?1-(T.fromRelease||0):0,bb=B.barre?1:0,wa=ab*(1-phase),wb=bb*Math.min(phase,smooth((t-B.t+.050)/.046));if(wa>0)shapes.push({span:barreSpan(A),weight:wa});if(wb>0)shapes.push({span:barreSpan(B),weight:wb});weight=wa+wb;source=B.barre?B:A?.barre?A:null;
   }else if(A&&(repeat||t<=(A.barreGroup?.end??A.end)+1e-9)){T.target=pressPoint(A);T.contact=true;T.barre=A.barre;source=A;weight=A.barre?1:0;if(weight)shapes.push({span:barreSpan(A),weight});}
   else if(A){T.releaseFrom=pressPoint(A);T.release=smooth((t-(A.barreGroup?.end??A.end))/.12);source=A;weight=A.barre?1-T.release:0;if(weight)shapes.push({span:barreSpan(A),weight});}
   if(i===0&&source?.barre){T.pressPoints=source.barreGroup?.points||source.ev.notes.filter(q=>q.lh===digit&&q.fret===source.fret).map(q=>G.fretPoint(q.string,q.fret,.002,.0042));T.barreSpan=barreSpan(source);T.barreWeight=weight;T.barreShapes=shapes;}
@@ -106,6 +108,14 @@ window.makeGuitarHands=()=>{
   if(A.barreGroup)return A.barreGroup.points;
   return A.ev.notes.filter(nt=>nt.lh===f+1&&nt.fret===A.fret).map(nt=>G.fretPoint(nt.string,nt.fret,.002,.0042));
  }
+ // Exact closest distance between two finite bone segments (including parallel cases).
+ function segmentGap(a,b,c,d){
+  const v=sub(b,a),w=sub(d,c),q=sub(a,c),A=dot(v,v),B=dot(v,w),C=dot(w,w),D=dot(v,q),E=dot(w,q),den=A*C-B*B;
+  let s=den>1e-16?clamp((B*E-C*D)/den,0,1):0,t=(B*s+E)/C;
+  if(t<0){t=0;s=clamp(-D/A,0,1);}else if(t>1){t=1;s=clamp((B-D)/A,0,1);}
+  return Math.hypot(...sub(add(a,mul(v,s)),add(c,mul(w,t))));
+ }
+ function fingerClearance(H){let gap=Infinity;for(let f=0;f<4;f++)for(let g=f+1;g<4;g++)for(let j=0;j<3;j++)for(let k=0;k<3;k++)gap=Math.min(gap,segmentGap(H.fingers[f].points[j],H.fingers[f].points[j+1],H.fingers[g].points[k],H.fingers[g].points[k+1]));return gap;}
  function box(p,c,b){const q=p.map((v,i)=>Math.abs(v-c[i])-b[i]);return Math.hypot(...q.map(v=>Math.max(0,v)))+Math.min(0,Math.max(...q));}
  function wood(p){
   const d=local(p),width=G.fretboardHalfWidth(d[0]);
@@ -126,19 +136,20 @@ window.makeGuitarHands=()=>{
    }
    for(let j=0;j<3;j++)for(const t of [0,.5,1])collision(add(F.points[j],mul(sub(F.points[j+1],F.points[j]),t)),j===2?.002:.004,.0006);
   }
+  if(!hand)for(let f=0;f<4;f++)for(let g=f+1;g<4;g++)for(let j=0;j<3;j++)for(let k=0;k<3;k++)r.push(Math.max(0,.006-segmentGap(H.fingers[f].points[j],H.fingers[f].points[j+1],H.fingers[g].points[k],H.fingers[g].points[k+1]))/.0003);
   for(const p of palmChecks)collision(point(H,p),.0005,.0007);
   const thumb=H.thumb;for(let j=0;j<3;j++)for(const t of (j===0?[.65,.8,1]:[0,.5,1])){const radii=[.012,.0085,.0065],radius=j<2?radii[j]+(radii[j+1]-radii[j])*t:radii[2];collision(add(thumb[j],mul(sub(thumb[j+1],thumb[j]),t)),radius,.0008);}
   if(!hand)r.push(H.thumbInfo.error/.002);
   else r.push(H.thumbInfo.error/.0001);
-  r.push(...x.map((v,i)=>(v-reference[i])/(i<3?.035:.45)));
+  r.push(...x.map((v,i)=>(v-(reference[i]||0))/(i<3?.035:.45)));
   return r;
  }
- const limits=[[0,.50],[.025,.20],[-.10,.18],[.20,1.50],[-.65,.65],[-1.40,.55]],rightLimits=[[.48,.60],[-.10,.02],[.045,.15],[-.30,.80],[-.55,.55],[-.5,.5]];
+ const limits=[[0,.50],[.025,.20],[-.10,.18],[.20,1.50],[-.65,.65],[-1.40,.55],...Array.from({length:4},()=>[-1.25,1.25])],rightLimits=[[.48,.60],[-.10,.02],[.045,.15],[-.30,.80],[-.55,.55],[-.5,.5]];
  function linear(A,b){
   const n=b.length,m=A.map((r,i)=>[...r,b[i]]);for(let j=0;j<n;j++){let k=j;for(let i=j+1;i<n;i++)if(Math.abs(m[i][j])>Math.abs(m[k][j]))k=i;[m[k],m[j]]=[m[j],m[k]];if(Math.abs(m[j][j])<1e-18)return null;const d=m[j][j];for(let c=j;c<=n;c++)m[j][c]/=d;for(let i=0;i<n;i++)if(i!==j){const a=m[i][j];for(let c=j;c<=n;c++)m[i][c]-=a*m[j][c];}}return m.map(r=>r[n]);
  }
  function minimize(fn,initial,iterations=12,bounds=limits){
-  let x=initial.map((v,i)=>clamp(v,...bounds[i])),r=fn(x),cost=dot(r,r),lambda=.03;
+  let x=bounds.map((b,i)=>clamp(initial[i]||0,...b)),r=fn(x),cost=dot(r,r),lambda=.03;
   for(let it=0;it<iterations;it++){
    const J=x.map((v,j)=>{const y=x.slice(),h=j<3?2e-6:2e-5;y[j]+=h;const s=fn(y);return s.map((v,i)=>(v-r[i])/h);}),A=x.map((_,i)=>x.map((_,j)=>dot(J[i],J[j]))),b=J.map(v=>dot(v,r));let accepted=false;
    for(let retry=0;retry<7;retry++){const M=A.map((row,i)=>row.map((v,j)=>v+(i===j?lambda*(A[i][i]+1e-6):0))),d=linear(M,b);if(!d)break;const y=x.map((v,i)=>clamp(v-d[i],...bounds[i])),s=fn(y),c=dot(s,s);if(c<cost){const gain=cost-c;x=y;r=s;cost=c;lambda=Math.max(1e-7,lambda*.3);accepted=gain>1e-8;break;}lambda*=5;}if(!accepted)break;
@@ -168,7 +179,10 @@ window.makeGuitarHands=()=>{
  }
  function normalizeBoundaries(P,keys){
   for(const t of boundaries(P)){const before=leftTargets(P,t-.000001,G.poseLegacy(P,t-.000001,false)),after=leftTargets(P,t+.000001,G.poseLegacy(P,t+.000001,false));const was=before[0].contact&&before[0].barre,now=after[0].contact&&after[0].barre;if(!!was===!!now)continue;
-   const H=buildHand(carriage(keys,t),0,was?before:after),i=keys.findIndex(k=>Math.abs(k.t-t)<.0001),key={t,x:H.carriage};if(i>=0)keys[i]=key;else keys.push(key);keys.sort((a,b)=>a.t-b.t);
+   let x=carriage(keys,t);const adjacent=was?G.lowerBound(keys,t-1e-7)-1:G.lowerBound(keys,t+1e-7),near=keys[adjacent];
+   if(near&&Math.abs(near.t-t)<.001)x=near.x;
+   const H=buildHand(x,0,was?before:after),key={t,x:H.carriage},i=keys.findIndex(k=>Math.abs(k.t-t)<1e-7);
+   if(i>=0){keys[i]=key;for(let j=keys.length-1;j>i;j--)if(Math.abs(keys[j].t-t)<1e-7)keys.splice(j,1);}else keys.push(key);keys.sort((a,b)=>a.t-b.t);
   }return keys;
  }
  function stamp(){const text=window.makeGuitarHands.toString()+G.poseLegacy.toString()+G.plan.toString()+G.stringPoint.toString()+G.bodyWidth.toString()+JSON.stringify([G.BODY_SPEC,G.BODY_OUTLINE])+G.neckSection.toString()+G.neckDistance.toString()+G.fretboardHalfWidth.toString()+G.fretPoint.toString()+G.pluckPoint.toString()+JSON.stringify([G.SCALE,G.NUT,G.u,G.w,G.n,G.BOARD_END,G.NECK_END,G.FRETS,LENGTHS]);let h=2166136261;for(let i=0;i<text.length;i++)h=Math.imul(h^text.charCodeAt(i),16777619);return (h>>>0).toString(16);}
@@ -183,6 +197,6 @@ window.makeGuitarHands=()=>{
   S.lhFingers=H.fingers;S.lhThumb={...H.thumbInfo,digit:0};S.rhFingers={p:{...S.rhFingers.p,...R.thumbInfo,points:R.thumb},i:R.fingers[0],m:R.fingers[1],a:R.fingers[2],c:R.fingers[3]};
   S.palm=H.palmPos;S.hands=[H,R];S.wristL=H.wrist;S.wristR=R.wrist;S.arms=[arm(S.arms[0].shoulder,H.wrist,[1,-.5,.25]),arm(S.arms[1].shoulder,R.wrist,[-1,-.6,-.1])];return S;
  }
- return {boundaries,normalizeBoundaries,barreFinger, ROOT,LENGTHS,local,world,basis,frame,point,finger,buildHand,leftTargets,rightTargets,barrePoints,segmentDistance,wood,constraints,minimize,limits,rightLimits,fitLeft,stamp,signature,available,carriage,pose,stats:()=>({fits})};
+ return {segmentGap,fingerClearance,boundaries,normalizeBoundaries,barreFinger, ROOT,LENGTHS,local,world,basis,frame,point,finger,buildHand,leftTargets,rightTargets,barrePoints,segmentDistance,wood,constraints,minimize,limits,rightLimits,fitLeft,stamp,signature,available,carriage,pose,stats:()=>({fits})};
 };
 window.GuitarHands=window.makeGuitarHands();

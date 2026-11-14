@@ -307,6 +307,34 @@ function assignRH(song, events, A) {
   });
 }
 
+// Reuse an already held index barre for equal-fret treble notes. A note
+// above the barre still needs another finger. Extending the barre must not
+// mute an open/lower-fret string sounding inside its span.
+function reuseBarres(notes,assignments){
+ const ringing=new Map();let index=null,changed=0;
+ for(let i=0;i<notes.length;){
+  let end=i+1;while(end<notes.length&&notes[end][0]===notes[i][0])end++;
+  const t=notes[i][0],current=assignments.slice(i,end),own=current.find(a=>a.lh===1);
+  for(const [s,r]of ringing)if(r.until<=t+1e-8)ringing.delete(s);
+  if(own&&(!index||own.fret!==index.fret))index={fret:own.fret,until:t,notes:[]};
+  if(index&&index.until<t-1e-8)index=null;
+  if(!index&&own)index={fret:own.fret,until:t,notes:[]};
+  if(index){
+   for(let k=i;k<end;k++)if(assignments[k].lh===1){index.until=Math.max(index.until,t+notes[k][1]);index.notes.push(assignments[k]);}
+   for(let k=i;k<end;k++){
+    const a=assignments[k];if(a.lh<=1||a.string!==1||a.fret!==index.fret||current.some(b=>b.lh===1&&b.fret!==a.fret))continue;
+    const span=Math.max(a.string,...index.notes.map(b=>b.string)),nextStrings=new Set(current.map(b=>b.string));
+    const blocked=[...ringing].some(([s,r])=>s<=span&&!nextStrings.has(s)&&r.fret<a.fret)||current.some(b=>b.string<=span&&b.fret<a.fret);
+    if(blocked)continue;
+    a.lh=1;a.barre=1;for(const b of index.notes)b.barre=Math.max(1,b.barre);index.notes.push(a);index.until=Math.max(index.until,t+notes[k][1]);changed++;
+   }
+  }
+  for(let k=i;k<end;k++){const a=assignments[k];ringing.set(a.string,{fret:a.fret,until:t+notes[k][1]});}
+  i=end;
+ }
+ return changed;
+}
+
 function build(song) {
   const open = song.tuning || OPEN;
   const notes = song.notes, win = windowOf(song);
@@ -343,6 +371,7 @@ function build(song) {
   });
   const chosen = beam[0].picks;
   const assignments = assignFingers(song, events, chosen);
+  reuseBarres(notes,assignments);
   assignRH(song, events, assignments);
   let barreChords = 0;
   events.forEach(ev => { if (ev.notes.some(ni => assignments[ni].barre)) barreChords++; });
@@ -403,4 +432,4 @@ function validate(song) {
   return v;
 }
 
-window.GuitarFingering = { OPEN, MAXFRET, build, validate, detectTremolo, groupEvents, windowOf };
+window.GuitarFingering = { reuseBarres, OPEN, MAXFRET, build, validate, detectTremolo, groupEvents, windowOf };

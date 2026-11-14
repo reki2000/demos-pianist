@@ -12,14 +12,14 @@
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 12,
-          "bytes": 1458432,
+          "uploads": 4,
+          "bytes": 486144,
           "gl": 0
         }
       ],
@@ -29,21 +29,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 4.865850340136054,
+        "time": 4.610430839002268,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 64,
-          "bytes": 7778304,
+          "uploads": 24,
+          "bytes": 2916864,
           "gl": 0
         }
       ],
@@ -53,21 +53,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 9.904580498866213,
+        "time": 9.254421768707482,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 132,
-          "bytes": 16042752,
+          "uploads": 36,
+          "bytes": 4375296,
           "gl": 0
         }
       ],
@@ -77,21 +77,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 14.827210884353741,
+        "time": 14.78077097505669,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 196,
-          "bytes": 23821056,
+          "uploads": 56,
+          "bytes": 6806016,
           "gl": 0
         }
       ],
@@ -101,15 +101,87 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 20.446439909297055,
+        "time": 20.05170068027211,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
+          "gl": 0
+        },
+        {
+          "buffers": 2,
+          "uploads": 86,
+          "bytes": 10452096,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "guitar",
+        "song": "granada",
+        "time": 24.90467120181406,
+        "playing": true
+      },
+      "buffers": 41,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 2,
+          "bytes": 243072,
+          "gl": 0
+        },
+        {
+          "buffers": 2,
+          "uploads": 128,
+          "bytes": 15556608,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "guitar",
+        "song": "granada",
+        "time": 29.943401360544218,
+        "playing": true
+      },
+      "buffers": 41,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 2,
+          "bytes": 243072,
+          "gl": 0
+        },
+        {
+          "buffers": 2,
+          "uploads": 176,
+          "bytes": 21390336,
+          "gl": 0
+        }
+      ],
+      "solves": 0
+    },
+    {
+      "state": {
+        "instrument": "guitar",
+        "song": "granada",
+        "time": 34.95891156462585,
+        "playing": true
+      },
+      "buffers": 41,
+      "renderers": [
+        {
+          "buffers": 2,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
@@ -125,21 +197,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 25.229750566893426,
+        "time": 39.99764172335601,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 280,
-          "bytes": 34030080,
+          "uploads": 310,
+          "bytes": 37676160,
           "gl": 0
         }
       ],
@@ -149,21 +221,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 30.45424036281179,
+        "time": 45.08281179138322,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 318,
-          "bytes": 38648448,
+          "uploads": 380,
+          "bytes": 46183680,
           "gl": 0
         }
       ],
@@ -173,21 +245,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 36.21278911564626,
+        "time": 49.912562358276645,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 354,
-          "bytes": 43023744,
+          "uploads": 454,
+          "bytes": 55177344,
           "gl": 0
         }
       ],
@@ -197,21 +269,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 41.321179138321995,
+        "time": 54.81197278911565,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 420,
-          "bytes": 51045120,
+          "uploads": 530,
+          "bytes": 64414080,
           "gl": 0
         }
       ],
@@ -221,21 +293,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 46.15092970521542,
+        "time": 59.68816326530612,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 494,
-          "bytes": 60038784,
+          "uploads": 598,
+          "bytes": 72678528,
           "gl": 0
         }
       ],
@@ -245,21 +317,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 51.166439909297054,
+        "time": 64.44825396825397,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 568,
-          "bytes": 69032448,
+          "uploads": 662,
+          "bytes": 80456832,
           "gl": 0
         }
       ],
@@ -269,21 +341,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 56.019410430839,
+        "time": 69.23156462585034,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 644,
-          "bytes": 78269184,
+          "uploads": 718,
+          "bytes": 87262848,
           "gl": 0
         }
       ],
@@ -293,93 +365,21 @@
       "state": {
         "instrument": "guitar",
         "song": "granada",
-        "time": 60.082902494331066,
+        "time": 72.78421768707483,
         "playing": true
       },
       "buffers": 41,
       "renderers": [
         {
           "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
+          "uploads": 2,
+          "bytes": 243072,
           "gl": 0
         },
         {
           "buffers": 2,
-          "uploads": 688,
-          "bytes": 83616768,
-          "gl": 0
-        }
-      ],
-      "solves": 0
-    },
-    {
-      "state": {
-        "instrument": "guitar",
-        "song": "granada",
-        "time": 65.0055328798186,
-        "playing": true
-      },
-      "buffers": 41,
-      "renderers": [
-        {
-          "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
-          "gl": 0
-        },
-        {
-          "buffers": 2,
-          "uploads": 744,
-          "bytes": 90422784,
-          "gl": 0
-        }
-      ],
-      "solves": 0
-    },
-    {
-      "state": {
-        "instrument": "guitar",
-        "song": "granada",
-        "time": 69.83528344671203,
-        "playing": true
-      },
-      "buffers": 41,
-      "renderers": [
-        {
-          "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
-          "gl": 0
-        },
-        {
-          "buffers": 2,
-          "uploads": 806,
-          "bytes": 97958016,
-          "gl": 0
-        }
-      ],
-      "solves": 0
-    },
-    {
-      "state": {
-        "instrument": "guitar",
-        "song": "granada",
-        "time": 74.59537414965986,
-        "playing": true
-      },
-      "buffers": 41,
-      "renderers": [
-        {
-          "buffers": 2,
-          "uploads": 4,
-          "bytes": 486144,
-          "gl": 0
-        },
-        {
-          "buffers": 2,
-          "uploads": 862,
-          "bytes": 104764032,
+          "uploads": 746,
+          "bytes": 90665856,
           "gl": 0
         }
       ],
@@ -397,14 +397,14 @@
     "renderers": [
       {
         "buffers": 2,
-        "uploads": 12,
-        "bytes": 1458432,
+        "uploads": 10,
+        "bytes": 1215360,
         "gl": 0
       },
       {
         "buffers": 3,
-        "uploads": 906,
-        "bytes": 110111616,
+        "uploads": 800,
+        "bytes": 97228800,
         "gl": 0
       }
     ],

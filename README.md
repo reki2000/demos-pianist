@@ -33,7 +33,7 @@ Violin and cello right hands use five articulated digits anchored to the frog, w
 
 Piano hands share the B proportions for the four fingers and palm, with a shorter articulated thumb and connected skin. The piano stage is normalized to a 23.5 mm white-key pitch. Unreachable chords are rolled with synchronized sound/keys and short pedal bridges, following small-hand performance techniques. All source pitches and fingerings remain; [piano hand verification](docs/verification/piano-hands/README.md) documents dimensions, timing adaptations and resource checks. Regenerate the trajectories offline with `node precompute-piano-hands.cjs`.
 
-Guitar hands now use the same B skeleton and connected palm/wrist skin on both sides, with offline trajectories and fixed bone lengths. The classical guitar is normalized to a 650 mm scale and a 490 × 370 × 99 mm body; its neck, fingerboard and soundhole are aligned to those dimensions. See [guitar hand references, screenshots and verification](docs/verification/guitar-hands/README.md).
+Guitar hands now use the same B skeleton and connected palm/wrist skin on both sides, with offline trajectories and fixed bone lengths. The classical guitar is normalized to a 650 mm scale and a 490 × 370 × 99 mm body; its neck, fingerboard and soundhole are aligned to those dimensions. See [guitar hand references, screenshots and verification](docs/verification/guitar-hands/README.md) and [finger crossing / barre handoff checks](docs/verification/guitar-finger-clearance/README.md).
 
 ## Program
 

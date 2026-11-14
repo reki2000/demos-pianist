@@ -27,6 +27,7 @@ html.write_text(page)
 reports={name:json.loads((root/file).read_text()) for name,file in [
  ('integration','verification.json'),('pianoHands','piano-hand-verification.json'),('sampleEngine','audio-verification.json'),
  ('violinLeftHand','violin-left-hand-verification.json'),('violinSkin','violin-skin-verification.json'),('bowSkin','bow-skin-verification.json'),('handSurface','hand-surface-verification.json'),
+ ('guitarFingerClearance','docs/verification/guitar-finger-clearance/clearance.json'),
  ('guitarHands','docs/verification/guitar-hands/verification.json'),('guitarSkin','docs/verification/guitar-hands/skin.json'),('guitarGeometry','docs/verification/guitar-hands/geometry.json'),('guitarContinuity','docs/verification/guitar-hands/continuity.json'),
  ('nativeListeningPreview','audio-render-verification.json')] if (root/file).is_file()}
 reports.update(version=8,recordedInstrument=manifest['name'],recordedVelocityLayers=4,
@@ -47,7 +48,7 @@ files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  root/'add-songs.cjs',root/'arrangements.cjs',root/'midi.cjs',*root.glob('mutopia-sources/*.ly'),
  root/'capture-scene.cjs',root/'render-egl.py',root/'render-preview.py',
  root/'render-check/hands.json',root/'render-check/hands-motion.gif',root/'render-check/portrait-motion.gif',
- *root.glob('*test.cjs'),*(root/'docs/verification/guitar-hands').glob('*'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'docs/verification/bow-skin').glob('*'),*(root/'docs/verification/hand-joins').glob('*'),*(root/'docs/verification/piano-hands').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
+ *root.glob('*test.cjs'),*(root/'docs/verification/guitar-hands').glob('*'),*(root/'docs/verification/guitar-finger-clearance').glob('*'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'docs/verification/bow-skin').glob('*'),*(root/'docs/verification/hand-joins').glob('*'),*(root/'docs/verification/piano-hands').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
  root/'audio-source/downloads.json',root/'audio-source/layers.json',root/'THIRD-PARTY-NOTICES.md']
 archive=root/'piano-recital-v8.zip'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:

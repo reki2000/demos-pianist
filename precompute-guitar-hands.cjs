@@ -30,22 +30,25 @@ for(const P of plans){
   }
   fs.writeFileSync(file,JSON.stringify({stamp,signature,phase:'initial',keys}));
  }
+ for(const key of keys)while(key.x.length<10)key.x.push(0);
  keys.sort((a,b)=>a.t-b.t);keys=keys.filter((k,i,a)=>!i||k.t-a[i-1].t>.0001);
  // Finish a barre carriage before its attack; avoid a last-4-ms pose snap.
  for(const nt of P.lhByFinger[1])if(nt.barre&&nt.t>.004){const t=nt.t-.004;if(!keys.some(k=>Math.abs(k.t-t)<1e-7)){const x=N.carriage(keys,nt.t);keys.push({t,x});keys.sort((a,b)=>a.t-b.t);}}
  N.normalizeBoundaries(P,keys);
- for(let pass=0;pass<5;pass++){
+ for(let pass=0;pass<12;pass++){
   const times=new Set([0,P.song.duration]);for(let t=0;t<P.song.duration;t+=1/60)times.add(t);
   for(const n of P.song.notes)for(const dt of [-.004,0,.001,.025,n[1]/2,n[1]-.001])times.add(Math.max(0,n[0]+dt));
-  const bad=[];let worst=0;
+  const intervals=new Map();let worst=0;
   for(const t of [...times].sort((a,b)=>a-b)){
-   const S=G.poseLegacy(P,t,false),T=N.leftTargets(P,t,S),H=N.buildHand(N.carriage(keys,t),0,T);let e=0;
+   const S=G.poseLegacy(P,t,false),T=N.leftTargets(P,t,S),H=N.buildHand(N.carriage(keys,t),0,T);let e=Math.max(0,.00525-N.fingerClearance(H));
    for(let f=0;f<4;f++)if(T[f].contact){e=Math.max(e,H.fingers[f].error);if(T[f].barre)for(const p of N.barrePoints(P,t,f))e=Math.max(e,Math.max(0,Math.min(...H.fingers[f].points.slice(0,3).map((a,j)=>N.segmentDistance(p,a,H.fingers[f].points[j+1])))-.003));}
-   worst=Math.max(worst,e);if(e>.0005)bad.push({t,x:H.carriage,e});
+   worst=Math.max(worst,e);if(e>.0007){const k=G.lowerBound(keys,t+1e-8)-1,old=intervals.get(k);if(!old||e>old.e)intervals.set(k,{t,x:H.carriage,e});}
   }
-  console.error(P.song.id,'repair',pass,bad.length,'max',worst);if(!bad.length){summary.push({id:P.song.id,keys:keys.length,maxContactError:worst});break;}
-  if(pass===4)throw Error('Unresolved guitar contacts: '+P.song.id);
-  for(const b of bad){const q=N.fitLeft(P,b.t,b.x),i=keys.findIndex(k=>Math.abs(k.t-b.t)<1e-7);if(i>=0)keys[i]={t:b.t,x:q.x};else keys.push({t:b.t,x:q.x});}keys.sort((a,b)=>a.t-b.t);N.normalizeBoundaries(P,keys);
+  const bad=[...intervals.values()];console.error(P.song.id,'repair',pass,bad.length,'max',worst);if(!bad.length){summary.push({id:P.song.id,keys:keys.length,maxConstraintError:worst});break;}
+  if(pass===11)throw Error('Unresolved guitar contacts: '+P.song.id);
+  for(const b of bad){const T=N.leftTargets(P,b.t,G.poseLegacy(P,b.t,false)),H=N.buildHand(b.x,0,T),contact=Math.max(0,...H.fingers.map((f,i)=>T[i].contact?f.error:0));let q;
+   if(contact<.0005){const barres=T.map((q,f)=>q.contact&&q.barre?N.barrePoints(P,b.t,f):[]),fn=angles=>N.constraints([...b.x.slice(0,6),...angles],0,T,barres,b.x),fit=N.minimize(fn,b.x.slice(6),25,Array.from({length:4},()=>[-1.25,1.25])),x=[...b.x.slice(0,6),...fit.x];q={x};if(N.fingerClearance(N.buildHand(x,0,T))<.00485){const fn=x=>N.constraints(x,0,T,barres,b.x),fit=N.minimize(fn,x,40),h=N.buildHand(fit.x,0,T);q={x:h.carriage};if(N.fingerClearance(h)<.0048||h.fingers.some((f,i)=>T[i].contact&&f.error>.0005))q=N.fitLeft(P,b.t,q.x);}}
+   else {const barres=T.map((q,f)=>q.contact&&q.barre?N.barrePoints(P,b.t,f):[]),fn=x=>N.constraints(x,0,T,barres,b.x),fit=N.minimize(fn,b.x,40),h=N.buildHand(fit.x,0,T);q={x:h.carriage};if(h.fingers.some((f,i)=>T[i].contact&&f.error>.0005)||N.fingerClearance(h)<.0048)q=N.fitLeft(P,b.t,q.x);}const i=keys.findIndex(k=>Math.abs(k.t-b.t)<1e-7);if(i>=0)keys[i]={t:b.t,x:q.x};else keys.push({t:b.t,x:q.x});}keys.sort((a,b)=>a.t-b.t);N.normalizeBoundaries(P,keys);
   fs.writeFileSync(file,JSON.stringify({stamp,signature,phase:'repair',keys}));
  }
  for(let i=keys.length-1;i>0;i--)if(keys[i].t-keys[i-1].t<.0001)keys.splice(i,1);

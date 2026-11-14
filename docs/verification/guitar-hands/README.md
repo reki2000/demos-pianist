@@ -4,6 +4,8 @@ Both hands use the piano's B anatomy: a 76 × 70 × 26 mm palm, fixed knuckle ro
 
 The renderer reflects X. The fretting hand has the opposite anatomical frame from the plucking hand after that reflection. The left thumb supports the neck, fingers approach the strings from above, and the right thumb plays neckward of i–m–a. The right little finger remains relaxed rather than being planted on the soundboard.
 
+Finger-to-finger separation and barre handoffs are covered by the [additional motion checks](../guitar-finger-clearance/README.md).
+
 ## Instrument measurements
 
 Measurements come from transformed renderer vertices, rather than parameter names alone. Units are millimetres.
@@ -53,7 +55,7 @@ NODE_PATH=/path/to/playwright/node_modules node guitar-hand-browser-test.cjs
 
 The offline hand builder saves restartable work files. `GUITAR_HAND_SEED` may point to an earlier work directory for the same source notes; changed fingerings are fitted again.
 
-The final audit covers 30,204 poses and all 9,709 source notes, with a maximum fretting error of 0.413 mm and fixed bone lengths. The skin audit covers 46,700 hand poses; maximum measured body/neck penetration is below 0.85 mm. The 75-second browser run keeps GPU buffer count constant at 41 with zero nonlinear fits and no JavaScript/WebGL errors.
+The final audit covers 30,204 poses and all 9,709 source notes, with a maximum fretting error of 0.498 mm and fixed bone lengths. The skin audit covers 49,674 hand poses; maximum measured body/neck penetration is below 0.85 mm. The 75-second browser run keeps GPU buffer count constant at 41 with zero nonlinear fits and no JavaScript/WebGL errors.
 
 Reports: [skeleton/contact/source notes](verification.json), [rendered dimensions and face](geometry.json), [rendered skin clearance](skin.json), [transition continuity](continuity.json), [75-second browser playback and instrument switching](browser.json). The transition test extrapolates displacement to a zero time interval to distinguish actual pose jumps from fast continuous motion; the animation remains an automatic interpretation of the MIDI. Clearance is sampled against actual indexed skin vertices and instrument geometry; it is not a proof for every possible interpolated time. Browser validation uses software WebGL and does not claim a physical-device listening test. Local integration checks cover the shell and all four instruments; byte comparison against separate sibling repositories requires those checkouts. The [local integration report](local-integration.json) excludes only that external comparison. [Regression reports](regressions.json) cover existing piano, audio, shared skin, violin and cello checks.
 
