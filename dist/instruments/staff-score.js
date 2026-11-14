@@ -47,6 +47,27 @@ function prepare(song, cfg) {
     out[i] = { beat, durBeats: Math.max(0.05, cfg.beatAt(n[0] + n[1]) - beat), dia: sp.diatonic, accidental };
     void bar;
   }
+  // Build beams for the complete score, so scrolling does not split a group.
+  const groups=[];
+  for(let i=0;i<out.length;i++){
+    const e=out[i],last=groups.at(-1);
+    if(last&&Math.abs(e.beat-last.beat)<.045)last.items.push(i);
+    else groups.push({beat:e.beat,items:[i]});
+  }
+  const beams=[];let run=[];
+  const finish=()=>{if(run.length>1){const beam={groups:run.slice()};beams.push(beam);for(const g of run)g.beam=beam;}run=[];};
+  for(const g of groups){
+    g.clef=cfg.clefFor(song.notes[g.items[0]][2]);
+    g.duration=Math.min(...g.items.map(i=>out[i].durBeats));g.flags=PS.flagCount(g.duration);
+    const sig=cfg.signatureAt?cfg.signatureAt(g.beat):sig0,origin=sig.beat||0;
+    const unit=sig.denominator===8&&sig.numerator%3===0?1.5:4/sig.denominator;
+    g.cell=origin+':'+Math.floor((g.beat-origin+1e-5)/unit);
+    const prev=run.at(-1),rhythm=prev?2**Math.round(Math.log2(prev.duration)):0;
+    if(!g.flags){finish();continue;}
+    if(prev&&(prev.cell!==g.cell||prev.clef!==g.clef||g.beat-prev.beat>rhythm+.08))finish();
+    run.push(g);
+  }
+  finish();out.groups=groups;out.beams=beams;
   cache.set(song, out);
   return out;
 }
@@ -94,12 +115,13 @@ function render(canvas, cfg) {
   // Visible note range.
   let lo = 0, hi = song.notes.length;
   while (lo < hi) { const m = (lo + hi) >> 1; if (notes[m].beat < startBeat - 0.5) lo = m + 1; else hi = m; }
-  // Group simultaneous notes (same beat) into chord clusters.
-  const groups = [];
-  for (let i = lo; i < song.notes.length && notes[i].beat <= endBeat + 0.4; i++) {
-    const g = groups[groups.length - 1];
-    if (g && Math.abs(notes[i].beat - g.beat) < 0.045) g.items.push(i); else groups.push({ beat: notes[i].beat, items: [i] });
-  }
+  // Find full-score clusters around the visible window.
+  let gl=0,gh=notes.groups.length;
+  while(gl<gh){const m=(gl+gh)>>1;if(notes.groups[m].beat<startBeat-.5)gl=m+1;else gh=m;}
+  const groups=[];for(let i=gl;i<notes.groups.length&&notes.groups[i].beat<=endBeat+.4;i++)groups.push(notes.groups[i]);
+  const visibleBeams=new Set(groups.map(g=>g.beam).filter(Boolean));
+  const beamUp=new Map([...visibleBeams].map(b=>{const ids=b.groups.flatMap(g=>g.items);return[b,ids.reduce((v,i)=>v+notes[i].dia,0)/ids.length<CLEFS[b.groups[0].clef].bottom+4];}));
+  c.save();c.beginPath();c.rect(timeX+30,0,Math.max(0,w-timeX-30),h);c.clip();
   let prevClef = curClef;
   // Walk groups in order; clef changes are tracked from the piece start
   // so a change glyph is drawn exactly where the clef actually changes.
@@ -118,7 +140,7 @@ function render(canvas, cfg) {
     const items = g.items.map(i => ({ i, n: song.notes[i], e: notes[i], y: yOf(notes[i].dia, clef) }));
     const on = items.some(({ n }) => n[0] <= t && n[0] + n[1] > t);
     const meanDia = items.reduce((s, it) => s + it.e.dia, 0) / items.length;
-    const up = meanDia < CLEFS[clef].bottom + 4;
+    const up = g.beam ? beamUp.get(g.beam) : meanDia < CLEFS[clef].bottom + 4;
     for (const it of items) {
       const color = (it.n[0] <= t && it.n[0] + it.n[1] > t) ? '#ffcc70' : '#d8d0c1';
       c.strokeStyle = '#8b8378'; c.lineWidth = 1;
@@ -129,9 +151,9 @@ function render(canvas, cfg) {
     const far = up ? Math.min(...items.map(it => it.y)) : Math.max(...items.map(it => it.y));
     const stemX = x + (up ? 5 : -5), stemY = far + (up ? -27 : 27);
     const minDur = Math.min(...items.map(it => it.e.durBeats));
-    line(stemX, far, stemX, stemY, on ? '#ffcc70' : '#d8d0c1');
+    if(!g.beam&&minDur<3.6)line(stemX, up?Math.max(...items.map(it=>it.y)):Math.min(...items.map(it=>it.y)), stemX, stemY, on ? '#ffcc70' : '#d8d0c1');
     const flags = PS.flagCount(minDur);
-    if (flags && minDur < 3.6) {
+    if (!g.beam && flags && minDur < 3.6) {
       c.strokeStyle = on ? '#ffcc70' : '#d8d0c1'; c.lineWidth = 1.1;
       for (let f = 0; f < flags; f++) {
         c.beginPath(); c.moveTo(stemX, stemY + (up ? f * 5 : -f * 5));
@@ -155,12 +177,29 @@ function render(canvas, cfg) {
       if (abv) { c.fillStyle = '#a39a8c'; c.font = '11px Georgia,serif'; c.fillText(abv, x - 3, top - 16); }
     }
   });
+  for(const beam of visibleBeams){
+    const up=beamUp.get(beam),offset=up?5:-5;
+    const placed=beam.groups.map(g=>({g,x:headX+(g.beat-beat)*pxBeat+offset,ys:g.items.map(i=>yOf(notes[i].dia,g.clef))}));
+    const first=placed[0],last=placed.at(-1),centre=p=>p.ys.reduce((v,y)=>v+y,0)/p.ys.length;
+    const slope=Math.max(-.22,Math.min(.22,(centre(last)-centre(first))/Math.max(1,last.x-first.x)));
+    const intercept=up?Math.min(...placed.map(p=>Math.min(...p.ys)-27-slope*(p.x-first.x))):Math.max(...placed.map(p=>Math.max(...p.ys)+27-slope*(p.x-first.x)));
+    const beamY=x=>intercept+slope*(x-first.x);
+    const draw=(a,b,level)=>{const dy=(up?1:-1)*level*5.2,thickness=up?3.2:-3.2;c.fillStyle='#d8d0c1';c.beginPath();c.moveTo(a,beamY(a)+dy);c.lineTo(b,beamY(b)+dy);c.lineTo(b,beamY(b)+dy+thickness);c.lineTo(a,beamY(a)+dy+thickness);c.fill();};
+    for(const p of placed){const on=p.g.items.some(i=>song.notes[i][0]<=t&&song.notes[i][0]+song.notes[i][1]>t);line(p.x,up?Math.max(...p.ys):Math.min(...p.ys),p.x,beamY(p.x),on?'#ffcc70':'#d8d0c1');}
+    draw(first.x,last.x,0);
+    for(let level=1;level<Math.max(...placed.map(p=>p.g.flags));level++)for(let i=0;i<placed.length;i++){
+      const p=placed[i],next=placed[i+1],prev=placed[i-1];if(p.g.flags<=level)continue;
+      if(next&&next.g.flags>level)draw(p.x,next.x,level);
+      else if(!prev||prev.g.flags<=level){const direction=next?1:-1,length=Math.min(8,Math.abs((next||prev).x-p.x)*.4);draw(p.x,p.x+direction*length,level);}
+    }
+  }
+  c.restore();
   // Playhead.
   c.fillStyle = '#dfbe83';
   c.fillRect(headX - 0.75, 6, 1.5, h - 12);
   c.beginPath(); c.moveTo(headX - 5, 2); c.lineTo(headX + 5, 2); c.lineTo(headX, 9); c.fill();
   canvas.setAttribute('aria-label', song.title + ': automatic transcription. Clef ' + CLEFS[curClef].name + '.');
-  return { beat, clef: curClef, groups: groups.length };
+  return { beat, clef: curClef, groups: groups.length, beams: visibleBeams.size };
 }
 return { render, prepare, CLEFS };
 })();

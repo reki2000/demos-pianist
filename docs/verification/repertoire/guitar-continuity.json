@@ -1,5 +1,5 @@
 {
-  "probes": 40193,
+  "probes": 37155,
   "probeIntervalSeconds": 0.000002,
   "method": "Richardson extrapolation to zero interval",
   "wrist": {

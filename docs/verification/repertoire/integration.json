@@ -4,11 +4,11 @@
  "audioLifecyclePatches": 3,
  "geometryPatches": 8,
  "guitar": {
-  "frames": 5546,
+  "frames": 5426,
   "worstFrettingSide": -0.0164,
-  "worstPluckingSide": 0.1028,
-  "minScreenGap": 0.049,
-  "projFrames": 5546
+  "worstPluckingSide": 0.0959,
+  "minScreenGap": 0.047,
+  "projFrames": 5426
  },
  "violin": {
   "states": 11461,

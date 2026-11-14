@@ -309,10 +309,13 @@ function assignRH(song, events, A) {
   // High accompaniment notes must still be played by the thumb.
   if(song.rightHandTremolo){
     const {bpm,endBeat}=song.rightHandTremolo;let cycle=0;
-    events.forEach(ev=>{if(ev.notes.length!==1)return;const ni=ev.notes[0],beat=notes[ni][0]*bpm/60;if(beat>=endBeat-1e-4)return;
-
-      const a=A[ni];if(Math.abs(beat*2-Math.round(beat*2))<.001){a.rh='p';a.role='trem-acc';}
-      else{a.rh=['a','m','i'][cycle++%3];a.role='trem-mel';}
+    events.forEach(ev=>{const beat=notes[ev.notes[0]][0]*bpm/60;
+      for(const ni of ev.notes){const a=A[ni],authored=song.fingeringHints?.[ni]?.role;
+       if(song.leftHandPhrases&&!authored)continue;
+       if(!song.leftHandPhrases&&beat>=endBeat-1e-4)continue;
+       if(authored==='p'||!authored&&Math.abs(beat*2-Math.round(beat*2))<.001){a.rh='p';a.role='trem-acc';}
+       else{a.rh=['a','m','i'][cycle++%3];a.role='trem-mel';}
+      }
     });
   }
 
@@ -367,7 +370,8 @@ function build(song) {
         const combo = combo0.map((x, k) => ({ ...x, pitch: notes[ev.notes[k]][2] }));
         let ff = fingersFor(combo.map(x => ({ ...x })), st.prevPos);
         if(ff){ff={...ff,fingers:ff.fingers.slice()};combo.forEach((x,k)=>{const h=hints[ev.notes[k]];if(h?.lh!=null)ff.fingers[k]=h.lh;});
-          if(combo.length===1&&combo[0].fret>0&&hints[ev.notes[0]]?.lh)ff.pos=Math.max(1,combo[0].fret-ff.fingers[0]+1);
+          if(hints[ev.notes[0]]?.pos!=null)ff.pos=hints[ev.notes[0]].pos;
+          else if(combo.length===1&&combo[0].fret>0&&hints[ev.notes[0]]?.lh)ff.pos=Math.max(1,combo[0].fret-ff.fingers[0]+1);
           const occupied=new Map();for(let k=0;k<combo.length;k++){const f=ff.fingers[k];if(f&&occupied.has(f)&&(f!==1||occupied.get(f)!==combo[k].fret)){ff=null;break;}if(f)occupied.set(f,combo[k].fret);}
         }
         const replaced=new Set(combo.map(x=>x.string));
@@ -389,7 +393,8 @@ function build(song) {
   });
   const chosen = beam[0].picks;
   const assignments = assignFingers(song, events, chosen);
-  reuseBarres(notes,assignments);
+  if(!song.leftHandPhrases)reuseBarres(notes,assignments);
+  if(song.leftHandPhrases)for(let i=0;i<assignments.length;i++)if(song.fingeringHints[i])assignments[i].barre=song.fingeringHints[i].barre;
   for(let i=0;i<assignments.length;i++){
     const release=song.fingeringHints?.[i]?.releaseAt;
     if(assignments[i].lh===1&&Number.isFinite(release)&&release>notes[i][0])assignments[i].releaseAt=release;
@@ -446,7 +451,7 @@ function validate(song) {
   let lastMel = null, lastTrem = null; const lastArp = new Map();
   A.forEach((a,i) => {
     const beat=song.rightHandTremolo?notes[i][0]*song.rightHandTremolo.bpm/60:Infinity;
-    const authoredThumb=a.role==='trem-acc'&&beat<song.rightHandTremolo?.endBeat&&Math.abs(beat*2-Math.round(beat*2))<.001;
+    const authoredThumb=a.role==='trem-acc'&&(song.leftHandPhrases?song.fingeringHints?.[i]?.role==='p':beat<song.rightHandTremolo?.endBeat&&Math.abs(beat*2-Math.round(beat*2))<.001);
     if (a.rh === 'p' && a.string <= 2) {if(authoredThumb)v.authoredThumbOnTreble++;else v.rhThumbOnTreble++;}
     if (a.rh === 'p' && a.string === 3) v.rhThumbOnString3++;
     if (a.role === 'mel' && a.rh !== 'p') { if (lastMel && lastMel.rh === a.rh) v.rhSameFingerMelody++; lastMel = a; }

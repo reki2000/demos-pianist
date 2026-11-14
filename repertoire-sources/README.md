@@ -14,23 +14,24 @@ first E to open string 1. This PDF was viewed as a reference and is not bundled.
 Right-hand reference: [Bradford Werner's edition and lesson](https://www.thisisclassicalguitar.com/recuerdos-de-la-alhambra-tarrega-free-pdf/),
 which shows the p–a–m–i tremolo. His edition is not bundled.
 
-`build-repertoire.cjs` adapts explicit left-hand finger/string annotations from
-the licensed LilyPond top and accompaniment voices into indexed hints. It
-propagates fingerings through repeated pitches, aligns the top voice by pitch
-sequence and the inner voice by onset/pitch, and checks the pinned alignment
-counts. The final three bars retain the ordinary engine because the source's
-independent coda chord voices do not align one-to-one. Equivalent reuse of a
-held index barre may replace a source finger at the same fret. The runtime
-does not parse LilyPond. These derived hints are distributed under CC BY-SA 3.0.
+`build-repertoire.cjs` uses `alhambra-grips.cjs` to read the licensed
+LilyPond voices, preserving written bar positions, durations and tuplets.
+The top voice is aligned by pitch sequence; accompaniment is matched by bar,
+within-bar offset and pitch. Source string numbers and position/barre markings
+constrain a joint chord-shape search. Finger numbers are preferences: a
+playable shared shape can use an equivalent finger. The first 54 bars become
+60 hand regions, with adjacent identical shapes shared. The final three bars
+retain the ordinary engine because the source's independent coda voices do
+not align one-to-one. The runtime does not parse LilyPond or fit hands.
+These derived hints and regions are distributed under CC BY-SA 3.0.
 
 The existing 1,338 note pitches, timings, durations and velocities are retained.
-The performance realizes the melody with continuous a–m–i alternation and
-uses the thumb on the eighth-note accompaniment. Ornament notes are included
-in that alternation; left-hand-only ornament articulation is not encoded.
-In bars 9 and 52 the index barre lifts 45 ms before finger 2 takes over
-string 2 (frets 8 and 2 respectively), freeing the index for the first-string
-seventh fret or the open first string. This shortens only the visual fretting
-hold; the original audio/score note data is retained.
+Source voice roles assign the accompaniment to p and the melody to continuous
+a–m–i, including tuplets. Ornament notes are included in that alternation;
+left-hand-only ornament articulation is not encoded. The left hand holds a
+chord through repeated plucks. Only necessary fingers move, with higher stops
+lifted when a lower or open string must sound. Common wrist poses are fitted
+offline for each region and checked against every actual note attack.
 
 ## Bach — Partita No. 3, BWV 1006: Preludio
 
@@ -53,14 +54,14 @@ Rebuild:
 ```sh
 node build-repertoire.cjs
 node precompute-guitar-plans.cjs
-node precompute-guitar-hands.cjs recuerdos
+node precompute-alhambra-grips.cjs
 node refine-guitar-clearance.cjs recuerdos
-node precompute-guitar-hands.cjs --right-only
 node precompute-violin-hand.cjs bach-preludio
 node precompute-violin-orientation.cjs bach-preludio
 node refine-repertoire-violin.cjs
 ```
 
-The hand builders require completed work files for the unchanged songs in
-their work directories before assembling a combined cache. Preserve the
-already shipped trajectories for those songs.
+The Alhambra builder starts from the shipped combined hand cache and preserves
+the other songs and right-hand trajectories. Run clearance refinement after
+the common-grip builder. The violin builders require completed work files for
+unchanged songs before assembling their combined cache.

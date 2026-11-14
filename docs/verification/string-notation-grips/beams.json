@@ -1,0 +1,10 @@
+{
+  "simpleMeter": true,
+  "compoundMeter": true,
+  "mixedSecondaryBeams": true,
+  "sharedChordStems": true,
+  "restsAndBarlines": true,
+  "clefAndMeterChanges": true,
+  "noDuplicateFlags": true,
+  "scrolling": true
+}

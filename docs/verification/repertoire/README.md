@@ -1,16 +1,15 @@
 # Alhambra fingering and fast violin repertoire
 
 `Recuerdos de la Alhambra` retains every original note, onset, duration and
-velocity. The former global pitch-based classifier missed its tremolo and
-assigned accompaniment to i/m. An explicit rhythmic texture now assigns the
-eighth-note accompaniment to p and rotates the melody through a–m–i.
+velocity. Source voice roles now assign accompaniment to p and rotate the
+melody through a–m–i, including tuplets. The opening E stays on string 2 /
+fret 5 / finger 4, followed by the second-string third- and first-fret melody.
 
-The opening E is string 2 / fret 5 / finger 4, followed by the second-string
-third- and first-fret melody. Explicit finger/string numbers from the licensed
-score become indexed hints, with repeated-pitch continuation. Equivalent
-reuse of an existing index barre remains possible. Two short visual releases
-let finger 2 take over while the index leaves its barre. The original audio
-and score durations are retained.
+The first 54 bars now use jointly planned chord regions from the licensed
+score. A repeated pluck no longer lifts the fretting finger or moves the
+wrist. Higher stops lift only when a lower or open string needs to sound.
+See [chord-shape and notation verification](../string-notation-grips/README.md)
+for the current implementation, before/after measurements and screenshots.
 
 The right-hand carriage is also fitted for thumb attacks on strings 2–6;
 Alhambra's high inner voice can use the thumb on string 2. The former
@@ -34,7 +33,7 @@ Checks:
 
 - [Music regression](music.json): all six guitar note hashes, unchanged plans
   for the other five guitar pieces, opening TAB/left-hand fingering, every
-  accompaniment attack, complete a–m–i sequence, source hints, barre handoffs,
+  accompaniment attack, complete a–m–i sequence, source hints, shared chord regions,
   source MIDI equality, score tempo, bow changes and playable violin strings.
 - [Guitar hand](guitar-hand.json), [rendered skin](guitar-skin.json),
   [finger clearance](guitar-clearance.json), [continuity](guitar-continuity.json).

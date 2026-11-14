@@ -1,0 +1,147 @@
+{
+  "scores": [
+    {
+      "instrument": "violin",
+      "song": "air",
+      "viewport": 1100,
+      "totalBeamGroups": 38,
+      "visibleBeams": 10,
+      "clef": "treble"
+    },
+    {
+      "instrument": "violin",
+      "song": "air",
+      "viewport": 390,
+      "totalBeamGroups": 38,
+      "visibleBeams": 10,
+      "clef": "treble"
+    },
+    {
+      "instrument": "violin",
+      "song": "czardas",
+      "viewport": 1100,
+      "totalBeamGroups": 239,
+      "visibleBeams": 6,
+      "clef": "treble"
+    },
+    {
+      "instrument": "violin",
+      "song": "czardas",
+      "viewport": 390,
+      "totalBeamGroups": 239,
+      "visibleBeams": 6,
+      "clef": "treble"
+    },
+    {
+      "instrument": "violin",
+      "song": "meditation",
+      "viewport": 1100,
+      "totalBeamGroups": 39,
+      "visibleBeams": 5,
+      "clef": "treble"
+    },
+    {
+      "instrument": "violin",
+      "song": "meditation",
+      "viewport": 390,
+      "totalBeamGroups": 39,
+      "visibleBeams": 5,
+      "clef": "treble"
+    },
+    {
+      "instrument": "violin",
+      "song": "bach-preludio",
+      "viewport": 1100,
+      "totalBeamGroups": 408,
+      "visibleBeams": 20,
+      "clef": "treble"
+    },
+    {
+      "instrument": "violin",
+      "song": "bach-preludio",
+      "viewport": 390,
+      "totalBeamGroups": 408,
+      "visibleBeams": 20,
+      "clef": "treble"
+    },
+    {
+      "instrument": "cello",
+      "song": "prelude",
+      "viewport": 1100,
+      "totalBeamGroups": 156,
+      "visibleBeams": 17,
+      "clef": "bass"
+    },
+    {
+      "instrument": "cello",
+      "song": "prelude",
+      "viewport": 390,
+      "totalBeamGroups": 156,
+      "visibleBeams": 17,
+      "clef": "bass"
+    },
+    {
+      "instrument": "cello",
+      "song": "swan",
+      "viewport": 1100,
+      "totalBeamGroups": 14,
+      "visibleBeams": 3,
+      "clef": "tenor"
+    },
+    {
+      "instrument": "cello",
+      "song": "swan",
+      "viewport": 390,
+      "totalBeamGroups": 14,
+      "visibleBeams": 3,
+      "clef": "tenor"
+    },
+    {
+      "instrument": "cello",
+      "song": "gigue",
+      "viewport": 1100,
+      "totalBeamGroups": 124,
+      "visibleBeams": 10,
+      "clef": "bass"
+    },
+    {
+      "instrument": "cello",
+      "song": "gigue",
+      "viewport": 390,
+      "totalBeamGroups": 124,
+      "visibleBeams": 10,
+      "clef": "bass"
+    },
+    {
+      "instrument": "cello",
+      "song": "menuet",
+      "viewport": 1100,
+      "totalBeamGroups": 200,
+      "visibleBeams": 13,
+      "clef": "bass"
+    },
+    {
+      "instrument": "cello",
+      "song": "menuet",
+      "viewport": 390,
+      "totalBeamGroups": 200,
+      "visibleBeams": 13,
+      "clef": "bass"
+    }
+  ],
+  "grips": [
+    {
+      "bar": 3,
+      "wristRangeMm": 0,
+      "runtimeFits": 0,
+      "gl": 0
+    },
+    {
+      "bar": 7,
+      "wristRangeMm": 0,
+      "runtimeFits": 0,
+      "gl": 0
+    }
+  ],
+  "pageErrors": []
+}

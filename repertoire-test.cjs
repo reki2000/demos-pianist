@@ -11,12 +11,10 @@ const song=GUITAR_SONGS.find(s=>s.id==='recuerdos');song.fingering=GUITAR_PLAN_C
 const A=song.fingering.assignments,opening=[[5,0,0],[2,5,4],[2,5,4],[2,5,4],[4,2,1],[2,5,4],[2,5,4],[2,5,4],[3,5,3],[2,5,4],[2,5,4],[2,5,4],[4,2,1],[2,5,4],[2,5,4],[2,5,4],[3,4,3],[2,3,2],[2,3,2],[2,3,2],[4,2,1],[2,3,2],[2,3,2],[2,3,2]];
 assert.deepEqual(A.slice(0,24).map(a=>[a.string,a.fret,a.lh]),opening,'Opening TAB/source fingering regressed');
 let melody=0,thumb=0,equivalentBarres=0;
-const singleNotes=new Set(GuitarFingering.groupEvents(song.notes,GuitarFingering.windowOf(song)).filter(e=>e.notes.length===1).flatMap(e=>e.notes));
 for(let i=0;i<song.notes.length;i++){
- const beat=song.notes[i][0]*74/60;if(beat>=162-1e-4)continue;
- if(!singleNotes.has(i))continue;
- const a=A[i];if(Math.abs(beat*2-Math.round(beat*2))<.001){assert.equal(a.rh,'p','Accompaniment must use thumb');thumb++;}
- else{assert.equal(a.rh,['a','m','i'][melody++%3],'Tremolo must rotate a-m-i');}
+ const role=song.fingeringHints[i]?.role;if(!role)continue;
+ const a=A[i];if(role==='p'){assert.equal(a.rh,'p','Accompaniment must use thumb');thumb++;}
+ else assert.equal(a.rh,['a','m','i'][melody++%3],'Tremolo must rotate a-m-i');
 }
 for(const [i,h]of Object.entries(song.fingeringHints)){
  const a=A[i];if(h.string!=null)assert.equal(a.string,h.string,'Explicit source string changed');
@@ -25,11 +23,10 @@ for(const [i,h]of Object.entries(song.fingeringHints)){
 const validation=GuitarFingering.validate(song);
 for(const k of ['pitchErrors','unplayable','stringConflicts','fingerConflicts','rhSameFingerMelody','rhThumbOnTreble','barreErrors'])assert.equal(validation[k],0,k);
 const guitarPlan=GuitarMotion.plan(song);assert(GuitarHands.available(guitarPlan),'Missing rebuilt Alhambra hand trajectories');
-for(const beat of [26,154]){
- const t=beat*60/74,targets=GuitarHands.leftTargets(guitarPlan,t);
- assert(!targets[0].contact,'Index barre must lift before finger 2 takes over');
- assert(targets[1].contact,'Finger 2 must take the accompaniment after barre release');
-}
+// Real position changes use the next region's shape rather than extending an
+// old full-bar barre under the next note. Stationary shapes are audited by
+// guitar-chord-grip-test.cjs against every actual note attack.
+assert(song.leftHandPhrases.some(p=>p.bars.includes(7)&&p.bars.includes(8)));
 
 const violin=VIOLIN_SONGS.find(s=>s.id==='bach-preludio');assert(violin);assert.equal(VIOLIN_SONGS.length,4);
 const midi=require('./midi.cjs').readMidi(fs.readFileSync('repertoire-sources/preludio.mid'));

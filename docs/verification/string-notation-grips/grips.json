@@ -1,0 +1,50 @@
+{
+  "attacksChecked": 1338,
+  "openAndLowerStringsUnmuted": true,
+  "regions": 60,
+  "heldFingerIntervals": 210,
+  "stationary": {
+    "3": {
+      "wristRangeMm": 0,
+      "fingertipRangeMm": [
+        0,
+        0,
+        0
+      ]
+    },
+    "7": {
+      "wristRangeMm": 0,
+      "fingertipRangeMm": [
+        0,
+        0,
+        0
+      ]
+    },
+    "8": {
+      "wristRangeMm": 0,
+      "fingertipRangeMm": [
+        0,
+        0,
+        0
+      ]
+    },
+    "23": {
+      "wristRangeMm": 0.0000021823570460282552,
+      "fingertipRangeMm": [
+        2.220446049250313e-13,
+        0.0000021823570460282552,
+        0.0000021823570460282552
+      ]
+    },
+    "24": {
+      "wristRangeMm": 0.000002153679314975488,
+      "fingertipRangeMm": [
+        2.7755575615628914e-13,
+        0.000002153679314975488,
+        0.000002153679314975488
+      ]
+    }
+  },
+  "unchangedOtherSongs": 5,
+  "runtimeFits": 0
+}
