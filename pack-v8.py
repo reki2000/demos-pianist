@@ -36,6 +36,10 @@ reports.update(version=8,recordedInstrument=manifest['name'],recordedVelocityLay
  guitarSourceNotesPreserved=True,guitarFingeringsRegenerated=True,compactHandRolledChords=True,
  motionAndScoreUnchangedFromV7=False,characterMesh='smooth-tailcoat',standaloneHTMLBytes=html.stat().st_size,inlineScripts=script_tags+1,requiresRuntimeNetwork=False,
  browserUIAndAuditoryCheck=False)
+selection_report=root/'docs/verification/url-selection/browser.json'
+if selection_report.is_file():reports['selectionURL']=json.loads(selection_report.read_text())
+standalone_selection=root/'docs/verification/url-selection/standalone.json'
+if standalone_selection.is_file():reports['standaloneSelectionURL']=json.loads(standalone_selection.read_text())
 camera_report=root/'docs/verification/mobile-camera/gestures.json'
 if camera_report.is_file():reports['cameraGestures']=json.loads(camera_report.read_text())
 for name,file in [('stringScoreBeams','beams.json'),('guitarChordGrips','grips.json')]:
@@ -62,6 +66,7 @@ files=[html,root/'README.md',root/'AUDIO-NOTES.md',root/'FINGERING-NOTES.md',
  *root.glob('*test.cjs'),*(root/'docs/verification/guitar-hands').glob('*'),*(root/'docs/verification/guitar-finger-clearance').glob('*'),*(root/'docs/verification/violin-left-hand').glob('*'),*(root/'docs/verification/violin-left-orientation').glob('*'),*(root/'docs/verification/violin-skin').glob('*'),*(root/'docs/verification/bow-skin').glob('*'),*(root/'docs/verification/hand-joins').glob('*'),*(root/'docs/verification/piano-hands').glob('*'),*(root/'dist').rglob('*'),*(root/'audio-licenses').glob('*'),
  root/'audio-source/downloads.json',root/'audio-source/layers.json',root/'THIRD-PARTY-NOTICES.md']
 files.extend((root/'docs/verification/mobile-camera').glob('*'))
+files.extend((root/'docs/verification/url-selection').glob('*'))
 archive=root/'piano-recital-v8.zip'
 files.extend((root/'repertoire-sources').glob('*'))
 files.append(root/'build-repertoire.cjs')

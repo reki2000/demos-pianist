@@ -3,8 +3,8 @@
  * piano recital app as switchable instruments sharing the page's song
  * list, transport, cameras and score panel.
  *
- * Design rule: the piano path is untouched. app.js keeps owning the
- * piano; this shell activates only while a string instrument is
+ * Design rule: app.js owns the piano selection and playback. The shell
+ * observes piano song changes and activates rendering while a string instrument is
  * selected. Transport controls are intercepted in the capture phase
  * (before app.js's own handlers can see them), and the shell's render
  * loop is registered after app.js's, so in string mode the shell's
@@ -182,6 +182,40 @@ let pianoButtons = null;       // stashed piano song buttons
 const pianoDOM = {};           // original texts to restore
 const hintSpan = document.querySelector('.score-caption').children[1];
 
+// The URL owns the shareable selection; playback time stays in memory.
+// Preserve the hosting path, unrelated query parameters and fragment.
+let restoringSelection = false;
+const hasSelectionURL = typeof URL === 'function' && window.location && window.history;
+function syncSelectionURL(replace = false) {
+  if (!hasSelectionURL || restoringSelection) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('instrument', active ? active.id : 'piano');
+  url.searchParams.set('song', active ? song.id : window.recital.getState().song);
+  if (url.href !== window.location.href)
+    window.history[replace ? 'replaceState' : 'pushState'](window.history.state, '', url.href);
+}
+function restoreSelectionURL() {
+  if (!hasSelectionURL) return;
+  const params = new URL(window.location.href).searchParams;
+  const requested = params.get('instrument');
+  const id = Object.hasOwn(ADAPTERS, requested) ? requested : 'piano';
+  const songs = id === 'piano' ? window.SONGS : ADAPTERS[id].songs();
+  const selected = songs.find(s => s.id === params.get('song')) || songs[0];
+  const currentId = active ? active.id : 'piano';
+  const currentSong = active ? song.id : window.recital.getState().song;
+  restoringSelection = true;
+  try {
+    if (id !== currentId || selected.id !== currentSong) {
+      if (id === 'piano') {
+        enterPiano();
+        window.recital.pause();
+        if (window.recital.getState().song !== selected.id) window.recital.choose(selected.id);
+      } else enterString(ADAPTERS[id], selected.id);
+    }
+  } finally { restoringSelection = false; }
+  syncSelectionURL(true);
+}
+
 const lowerBound = (arr, t) => { let a = 0, b = arr.length; while (a < b) { const m = (a + b) >> 1; if (arr[m][0] < t) a = m + 1; else b = m; } return a; };
 function currentTime() { if (!playing || !ctx) return position; return clamp(startPos + (ctx.currentTime - anchor) * speed, 0, song.duration); }
 function voice() { return voices[active.id]; }
@@ -238,6 +272,7 @@ function selectSong(id) {
   $('duration').textContent = fmt(song.duration); $('seek').max = song.duration;
   document.title = song.title + ' — ' + active.id;
   markSongs();
+  syncSelectionURL();
 }
 function buildSongs() {
   const wrap = $('songs'); wrap.innerHTML = '';
@@ -249,8 +284,9 @@ function buildSongs() {
     wrap.append(b);
   });
 }
-function enterString(a) {
-  if (active === a) return;
+function enterString(a, songId) {
+  if (!a) return;
+  if (active === a) { if (songId && songId !== song.id) selectSong(songId); return; }
   if (active) { memory[active.id] = { songId: song.id, position }; pauseStr(); }
   else {
     window.recital.pause();
@@ -268,8 +304,8 @@ function enterString(a) {
   syncCameraUI();
   buildSongs();
   const mem = memory[a.id];
-  selectSong(mem && a.songs().some(s => s.id === mem.songId) ? mem.songId : a.songs()[0].id);
-  if (mem) position = mem.position || 0;
+  selectSong(songId || (mem && a.songs().some(s => s.id === mem.songId) ? mem.songId : a.songs()[0].id));
+  if (mem && mem.songId === song.id) position = clamp(mem.position || 0, 0, song.duration);
   $('play').disabled = false;
 }
 function enterPiano() {
@@ -301,6 +337,7 @@ function enterPiano() {
   $('play').textContent = '▶'; $('play').setAttribute('aria-label', 'Play');
   $('cameraLabel').textContent = ({ auto: 'CINEMATIC', hands: 'PLAYER VIEW', portrait: 'PIANIST', pedal: 'PEDAL', wide: 'STAGE', orbit: 'FREE CAMERA' })[document.querySelector('[data-camera].selected')?.dataset.camera || 'auto'];
   window.recital.syncCameraUI?.();
+  syncSelectionURL();
 }
 
 // ------------------------------------------------------------------
@@ -475,10 +512,13 @@ function debugSides() {
 window.MULTI = { active: () => !!active, instrument: () => active && active.id };
 window.multiShell = {
   chooseInstrument(id) { if (id === 'piano') enterPiano(); else enterString(ADAPTERS[id]); },
-  chooseSong(id) { if (active) selectSong(id); },
+  chooseSong(id) { if (active) selectSong(id); else window.recital.choose(id); },
   seek: t => { if (active) seekStr(t); },
   play: () => playStr(), pause: () => pauseStr(),
-  getState: () => ({ instrument: active ? active.id : 'piano', song: song && song.id, time: active ? currentTime() : window.recital.getState().time, playing: active ? playing : window.recital.getState().playing }),
+  getState: () => ({ instrument: active ? active.id : 'piano', song: active ? song.id : window.recital.getState().song, time: active ? currentTime() : window.recital.getState().time, playing: active ? playing : window.recital.getState().playing }),
   debugSides,
 };
+window.addEventListener('recital-song-change', () => { if (!active) syncSelectionURL(); });
+window.addEventListener('popstate', restoreSelectionURL);
+restoreSelectionURL();
 })();
