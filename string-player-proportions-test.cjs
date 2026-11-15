@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');global.window=globalThis;
 for(const n of ['bow-hand','hand-surface','violin-skin','violin-fingering','violin-songs','violin-model','violin-hand','violin-hand-frames','violin-motion','cello-fingering','cello-model','cello-motion','cello-songs','cello-poses'])vm.runInThisContext(fs.readFileSync('dist/instruments/'+n+'.js','utf8'),{filename:n});
+assert.deepEqual(BowHand.dimensions.thumb,[.046,.034,.027*.6],'Thumb distal must retain 60% of its former length');
 const D=BowHand.dimensions,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 assert.deepEqual(ViolinMotion.FINGER_LENGTHS,D.fingers);assert.deepEqual(ViolinMotion.NH.THUMB_LEN,D.thumb);assert.deepEqual(CelloMotion.NH.THUMB_LEN,D.thumb);assert.deepEqual(CelloMotion.SKELETON.THUMB_LEN,D.thumb);
 for(let f=0;f<4;f++){assert.deepEqual(CelloMotion.SKELETON.FINGER_LEN[f+1],D.fingers[f]);for(let j=0;j<3;j++)assert(Math.abs(CelloMotion.SKELETON.FINGER_R[f+1][j]-D.radii[f][j])<1e-12);}

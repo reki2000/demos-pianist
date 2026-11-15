@@ -1,5 +1,7 @@
 # Cello-reference hands and symmetric, shorter arms
 
+The [distal-thumb follow-up](../thumb-distal/README.md) shortens IP-to-tip to 60%; its images supersede the original PR #23 browser snapshots below.
+
 The cello and violin formerly used different left-hand dimensions. Their bow
 hands shared a third, smaller set of bones. All four hands now use the cello
 natural-hand lengths and its selected 0.65 radius profile, from one dimension
@@ -12,9 +14,9 @@ table in `dist/instruments/bow-hand.js`.
 | Ring | 79.2 | 97 | 8.775 / 8.125 / 6.825 |
 | Little | 63.2 | 76 | 7.475 / 6.825 / 5.85 |
 
-The thumb uses **46 + 34 + 27 mm** bones and **9.425 / 8.775 / 7.475 mm**
-radii in both instruments and on both hands. Its 107 mm total includes the
-46 mm metacarpal inside the hand; the two visible phalanges total 61 mm.
+The thumb uses **46 + 34 + 16.2 mm** bones and **9.425 / 8.775 / 7.475 mm**
+radii in both instruments and on both hands. Its 96.2 mm total includes the
+46 mm metacarpal inside the hand; the two visible phalanges total 50.2 mm.
 The metacarpal shaft is covered by a broad thenar sheet from the palm/back
 surface. Only the last 5% of its tube remains inside that sheet. Palm, thumb,
 fingers and wrist are one closed indexed mesh, with shared normals: 846

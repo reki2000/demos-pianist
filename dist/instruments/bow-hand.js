@@ -9,7 +9,7 @@ window.BowHand = (() => {
   // Cello natural-hand proportions, shared by both instruments and hands.
   const dimensions={fingers:[[.043,.029,.021],[.046,.031,.023],[.045,.030,.022],[.036,.023,.017]],
     radii:[[.00845,.0078,.006825],[.0091,.00845,.00715],[.008775,.008125,.006825],[.007475,.006825,.00585]],
-    thumb:[.046,.034,.027],thumbRadii:[.009425,.008775,.007475],armScale:.92};
+    thumb:[.046,.034,.0162],thumbRadii:[.009425,.008775,.007475],armScale:.92};
   function armLengths(type){return (type==='cello'?[.30,.28]:[.36,.34]).map(v=>v*dimensions.armScale);}
   function arm(type,shoulder,wrist,pole){
     const [upper,lower]=armLengths(type),d=sub(wrist,shoulder),distance=Math.hypot(...d),axis=unit(d);
