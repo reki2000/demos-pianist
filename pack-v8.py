@@ -49,6 +49,8 @@ expression_report=root/'docs/verification/string-player-proportions/motion.json'
 if expression_report.is_file():reports['violinExpression']=json.loads(expression_report.read_text())
 proportion_report=root/'docs/verification/string-player-proportions/dimensions.json'
 if proportion_report.is_file():reports['stringPlayerProportions']=json.loads(proportion_report.read_text())
+web_report=root/'docs/verification/thumb-web/connection.json'
+if web_report.is_file():reports['thumbWeb']=json.loads(web_report.read_text())
 reports['standaloneValidation']=json.loads(subprocess.check_output(['node','validate-v8.cjs'],cwd=root,text=True))
 repertoire_report=root/'docs/verification/repertoire/music.json'
 if repertoire_report.is_file():reports['repertoire']=json.loads(repertoire_report.read_text())
@@ -80,6 +82,7 @@ files.append(root/'violin-arm-clearance.cjs')
 files.extend((root/'docs/verification/violin-expression').glob('*'))
 files.extend((root/'docs/verification/string-player-proportions').glob('*'))
 files.extend((root/'docs/verification/thumb-distal').glob('*'))
+files.extend((root/'docs/verification/thumb-web').glob('*'))
 files.append(root/'repertoire-patches.json')
 files.extend((root/'docs/verification/repertoire').glob('*'))
 files.extend((root/'docs/verification/cinematic').glob('*'))

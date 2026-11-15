@@ -115,7 +115,7 @@ window.BowHand = (() => {
       }
       let mesh=skinMeshes[H.type];
       if(!mesh){
-        const g=grips[H.type],state=window.ViolinFingerSkin.create(true,!!window.HandSurface);
+        const g=grips[H.type],state=window.ViolinFingerSkin.create(true,!!window.HandSurface,false,true);
         mesh=window.ViolinFingerSkin.update(state,{basis:localBasis,thumb:g.digits[0],fingers:g.digits.slice(1),palmPos:g.palmPos,palmScale:g.palmScale,wrist:g.wrist,thenarCover:true});
         skinMeshes[H.type]=mesh;
       }

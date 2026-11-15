@@ -1,0 +1,63 @@
+{
+  "fingerLengthsMm": [
+    93,
+    100,
+    97,
+    76
+  ],
+  "fingerRadiiMm": [
+    [
+      8.45,
+      7.8,
+      6.825
+    ],
+    [
+      9.1,
+      8.45,
+      7.15
+    ],
+    [
+      8.775,
+      8.125,
+      6.825
+    ],
+    [
+      7.475,
+      6.825,
+      5.8500000000000005
+    ]
+  ],
+  "thumbBonesMm": [
+    46,
+    34,
+    16.2
+  ],
+  "thumbRadiiMm": [
+    9.424999999999999,
+    8.775,
+    7.475
+  ],
+  "armReductionPercent": 8,
+  "samples": 808,
+  "maxBoneError": 5.648656396795015e-9,
+  "maxShoulderReach": 0.025442658009850017,
+  "maxSkinRadiusError": 3.7470027081099033e-16,
+  "arms": {
+    "violin": [
+      331.2,
+      312.8
+    ],
+    "cello": [
+      276,
+      257.6
+    ]
+  },
+  "skinVerticesTested": 2560,
+  "maxCelloSkinWoodDepth": 0.0000498891513207797,
+  "celloClearancePoses": 404,
+  "symmetricSleeves": true,
+  "runtimeFits": {
+    "violin": 0,
+    "cello": 0
+  }
+}

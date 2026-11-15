@@ -1,0 +1,32 @@
+{
+  "poses": [
+    {
+      "type": "violin",
+      "song": "air",
+      "time": 13.75
+    },
+    {
+      "type": "violin",
+      "song": "czardas",
+      "time": 216.1
+    },
+    {
+      "type": "cello",
+      "song": "prelude",
+      "time": 20
+    },
+    {
+      "type": "cello",
+      "song": "swan",
+      "time": 60
+    },
+    {
+      "type": "cello",
+      "song": "gigue",
+      "time": 33
+    }
+  ],
+  "playback": [],
+  "pageErrors": [],
+  "auditoryCheck": false
+}

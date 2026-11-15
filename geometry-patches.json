@@ -9,7 +9,7 @@
   },
   "violin-model.js": {
     "upstream": "9bc9750b38592f52501c820decbcf8086ee698937f8a51baed9128ad85d31ad4",
-    "integrated": "e4e0f06557ff0c2dc12d4591ffffa85d862766b99675a88f09c488ef124138fd"
+    "integrated": "d2ba2ac18c8235e1f7da4dc50ad8015955976f19291b7a5637d1cdfb95959007"
   },
   "cello-model.js": {
     "upstream": "5e1e58bedf79e7ba01d563c040b85e347e7dff561d42a6af1bca4127b19b1cb4",
@@ -17,7 +17,7 @@
   },
   "cello-motion.js": {
     "upstream": "0a34495c58b208a4e2d31fe9d4a522126d6b26389d9f28bf9dedf9917fe56764",
-    "integrated": "e2c9f31c304be82de4f419be59abea94003e94227181be6d6340674f6f8b11d0"
+    "integrated": "019fb02589587ff271bee9e1c38db71f905f3f79a761155b8cb71ebb83759b76"
   },
   "violin-motion.js": {
     "upstream": "171c7dc5fa30925204389955c3226e2ed931977059327267dcac2fa058e96531",

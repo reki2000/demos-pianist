@@ -1,5 +1,7 @@
 # Distal thumb at 60 percent
 
+The subsequent [thumb-web correction](../thumb-web/README.md) preserves these lengths and supersedes the connection appearance in these snapshots.
+
 The shared IP-to-tip bone is shortened from 27 mm to **16.2 mm** in both
 hands of the cello and violin. The metacarpal (46 mm), proximal phalanx
 (34 mm), thumb radii, other fingers, arms and face are preserved.

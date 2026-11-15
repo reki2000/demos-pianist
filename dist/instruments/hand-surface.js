@@ -3,13 +3,16 @@
 // deformation only fills the existing position array before shared normals.
 window.HandSurface=(()=>{
   const N=48,ROWS=8,LEFT_SCALE=[.038,.035,.013];
-  function create(bow,offset,mirrored=false){
+  function create(bow,offset,mirrored=false,thumbWeb=false){
     const points=[[0,0,1]],id=(r,j)=>r===0?0:r===ROWS?1+(ROWS-1)*N:1+(r-1)*N+(j+N)%N;
     for(let r=1;r<ROWS;r++)for(let j=0;j<N;j++){const a=j*2*Math.PI/N,b=r*Math.PI/ROWS;const x=Math.cos(a),y=Math.sin(a);points.push([Math.sin(b)*Math.sign(x)*Math.abs(x)**(2/2.6),Math.sin(b)*Math.sign(y)*Math.abs(y)**(2/2.6),Math.cos(b)]);}
     points.push([0,0,-1]);
     // Thumb, index, middle, ring, little (left stores its thumb last).
-    const ports=bow?[[5,3],[3,42],[3,39],[3,34],[3,30]]:[[4,7],[4,10],[4,14],[4,17],[5,2]];
+    // Bow meshes are built in their canonical local frame: the thumb exits
+    // the palmar/fingerward side, not the opposite side near the wrist.
+    const ports=bow?[[5,46],[3,42],[3,39],[3,34],[3,30]]:[[4,7],[4,10],[4,14],[4,17],[5,2]];
     const holes=new Set(ports.map(([r,j])=>id(r,j))),faces=[];
+    if(thumbWeb)for(let r=4;r<=6;r++)for(let j=bow?45:-1;j<=(bow?48:4);j++)holes.add(id(r,j));
     const add=(r,j,a,b,c)=>{const wrist=r>=2&&r<6&&j>=(bow?9:32)&&j<(bow?17:40);if(!wrist&&!holes.has(a)&&!holes.has(b)&&!holes.has(c))faces.push([a,b,c]);};
     for(let r=0;r<ROWS;r++)for(let j=0;j<N;j++){
       const a=id(r,j),b=id(r+1,j),c=id(r+1,j+1),d=id(r,j+1);
@@ -21,12 +24,12 @@ window.HandSurface=(()=>{
     while(next.size){const start=next.keys().next().value,loop=[];let p=start;do{loop.push(p);const q=next.get(p);if(q===undefined)throw Error('Palm boundary branches');next.delete(p);p=q;}while(p!==start);loops.push(loop);}
     const used=[...new Set(faces.flat())],mapping=new Map(used.map((v,i)=>[v,offset+i]));
     const indices=faces.flatMap(f=>f.map(v=>mapping.get(v))),sockets=[];
-    for(const [r,j] of ports){const centre=points[id(r,j)];let best=-1,score=Infinity;
-      for(let k=0;k<loops.length;k++){const loop=loops[k];if(loop.length>8)continue;const c=[0,0,0];for(const v of loop)for(let a=0;a<3;a++)c[a]+=points[v][a]/loop.length;const d=c.reduce((s,v,a)=>s+(v-centre[a])**2,0);if(d<score){best=k;score=d;}}
+    for(const [f,[r,j]] of ports.entries()){const centre=points[id(r,j)];let best=-1,score=Infinity;
+      for(let k=0;k<loops.length;k++){const loop=loops[k];if(loop.length>8&&!(thumbWeb&&f===(bow?0:4)))continue;const c=[0,0,0];for(const v of loop)for(let a=0;a<3;a++)c[a]+=points[v][a]/loop.length;const d=c.reduce((s,v,a)=>s+(v-centre[a])**2,0);if(d<score){best=k;score=d;}}
       if(best<0)throw Error('Missing palm socket');sockets.push(loops.splice(best,1)[0].map(v=>mapping.get(v)));
     }
     if(loops.length!==1)throw Error('Missing wrist socket');
-    return {bow,offset,mirrored,points:new Float64Array(used.flatMap(v=>points[v])),indices,sockets,wrist:loops[0].map(v=>mapping.get(v)),wristOffset:offset+used.length,vertices:used.length+49,seams:[],initialized:false};
+    return {bow,offset,mirrored,thumbWeb,points:new Float64Array(used.flatMap(v=>points[v])),indices,sockets,wrist:loops[0].map(v=>mapping.get(v)),wristOffset:offset+used.length,vertices:used.length+49,seams:[],initialized:false};
   }
   function stitch(indices,a,b){
     let i=0,j=0;while(i<a.length||j<b.length){const ai=a[i%a.length],bj=b[j%b.length];if(j===b.length||(i<a.length&&(i+1)/a.length<=(j+1)/b.length)){indices.push(ai,bj,a[(i+1)%a.length]);i++;}else{indices.push(ai,bj,b[(j+1)%b.length]);j++;}}
@@ -34,8 +37,21 @@ window.HandSurface=(()=>{
   function connect(surface,indices,positions){
     // Match seam phase once in the first pose, then retain the same edges.
     const rotate=(loop,target)=>{let start=0,best=Infinity;for(let j=0;j<loop.length;j++){const d=[0,1,2].reduce((s,k)=>s+(positions[loop[j]*3+k]-positions[target*3+k])**2,0);if(d<best){best=d;start=j;}}return loop.slice(start).concat(loop.slice(0,start));};
+    const alignThumb=(loop,base)=>{
+      const A=[0,0,0],B=[0,0,0];for(const v of loop)for(let k=0;k<3;k++)A[k]+=positions[v*3+k]/loop.length;
+      for(let j=0;j<8;j++)for(let k=0;k<3;k++)B[k]+=positions[(base+j)*3+k]/8;
+      let start=0,best=Infinity;
+      for(let offset=0;offset<loop.length;offset++){
+        let score=0;for(let j=0;j<8;j++){
+          const t=j*loop.length/8,i=Math.floor(t),w=t-i;
+          const a=[0,1,2].map(k=>(1-w)*positions[loop[(i+offset)%loop.length]*3+k]+w*positions[loop[(i+offset+1)%loop.length]*3+k]-A[k]);
+          const b=[0,1,2].map(k=>positions[(base+j)*3+k]-B[k]),na=Math.hypot(...a),nb=Math.hypot(...b);
+          score+=a.reduce((n,v,k)=>n+(v/na-b[k]/nb)**2,0);
+        }if(score<best){best=score;start=offset;}
+      }return loop.slice(start).concat(loop.slice(0,start));
+    };
     for(let f=0;f<5;f++){
-      const a=rotate(surface.sockets[f],f*98),ring=Array.from({length:8},(_,j)=>surface.wristOffset+9+f*8+j);
+      const a=surface.thumbWeb&&f===(surface.bow?0:4)?alignThumb(surface.sockets[f],f*98):rotate(surface.sockets[f],f*98),ring=Array.from({length:8},(_,j)=>surface.wristOffset+9+f*8+j);
       surface.seams.push(a);stitch(indices,a,ring);stitch(indices,ring,Array.from({length:8},(_,j)=>f*98+j));
     }
     // Wrist ring points run in the reverse direction from finger roots.
@@ -48,7 +64,7 @@ window.HandSurface=(()=>{
     for(let i=0;i<surface.points.length;i+=3)for(let k=0;k<3;k++)p[surface.offset*3+i+k]=O[k]+B[0][k]*surface.points[i]*S[0]+B[1][k]*surface.points[i+1]*S[1]+B[2][k]*surface.points[i+2]*S[2];
     // A broad thenar sheet grows out of the palm into the metacarpal.
     // It deforms existing connected vertices; no overlaid rod or open patch.
-    if(hand.thenarCover){
+    if(hand.thenarCover&&!surface.thumbWeb){
       const thumb=bow?hand.thumb.points:hand.thumb,seat=thumb[0].map((v,k)=>v+(thumb[1][k]-v)*.90);
       const radial=O.map((v,k)=>v+B[0][k]*S[0]);
       for(let i=0;i<surface.points.length;i+=3){

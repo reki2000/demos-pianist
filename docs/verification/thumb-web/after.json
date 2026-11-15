@@ -1,0 +1,61 @@
+{
+  "shots": [
+    {
+      "type": "violin",
+      "side": "left",
+      "angle": "back",
+      "gl": 0,
+      "buffers": 1
+    },
+    {
+      "type": "violin",
+      "side": "left",
+      "angle": "side",
+      "gl": 0,
+      "buffers": 1
+    },
+    {
+      "type": "violin",
+      "side": "right",
+      "angle": "back",
+      "gl": 0,
+      "buffers": 1
+    },
+    {
+      "type": "violin",
+      "side": "right",
+      "angle": "side",
+      "gl": 0,
+      "buffers": 1
+    },
+    {
+      "type": "cello",
+      "side": "left",
+      "angle": "back",
+      "gl": 0,
+      "buffers": 2
+    },
+    {
+      "type": "cello",
+      "side": "left",
+      "angle": "side",
+      "gl": 0,
+      "buffers": 2
+    },
+    {
+      "type": "cello",
+      "side": "right",
+      "angle": "back",
+      "gl": 0,
+      "buffers": 2
+    },
+    {
+      "type": "cello",
+      "side": "right",
+      "angle": "side",
+      "gl": 0,
+      "buffers": 2
+    }
+  ],
+  "pageErrors": []
+}

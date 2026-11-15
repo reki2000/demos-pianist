@@ -1,0 +1,14 @@
+{
+  "violin": {
+    "socketVertices": 16,
+    "bridgeAreaSquareMm": 300.39903668461324,
+    "thumbDistalMm": 16.2,
+    "triangles": 1666
+  },
+  "cello": {
+    "socketVertices": 16,
+    "bridgeAreaSquareMm": 305.4749544979834,
+    "thumbDistalMm": 16.2,
+    "triangles": 1666
+  }
+}
