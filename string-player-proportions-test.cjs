@@ -6,9 +6,9 @@ const D=BowHand.dimensions,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 assert.deepEqual(ViolinMotion.FINGER_LENGTHS,D.fingers);assert.deepEqual(ViolinMotion.NH.THUMB_LEN,D.thumb);assert.deepEqual(CelloMotion.NH.THUMB_LEN,D.thumb);assert.deepEqual(CelloMotion.SKELETON.THUMB_LEN,D.thumb);
 for(let f=0;f<4;f++){assert.deepEqual(CelloMotion.SKELETON.FINGER_LEN[f+1],D.fingers[f]);for(let j=0;j<3;j++)assert(Math.abs(CelloMotion.SKELETON.FINGER_R[f+1][j]-D.radii[f][j])<1e-12);}
 const report={fingerLengthsMm:D.fingers.map(a=>a.reduce((n,v)=>n+v,0)*1000),fingerRadiiMm:D.radii.map(a=>a.map(v=>v*1000)),thumbBonesMm:D.thumb.map(v=>v*1000),thumbRadiiMm:D.thumbRadii.map(v=>v*1000),armReductionPercent:8,samples:0,maxBoneError:0,maxShoulderReach:0,maxSkinRadiusError:0,arms:{},skinVerticesTested:0,maxCelloSkinWoodDepth:0,celloClearancePoses:0};
-const celloSkin=ViolinFingerSkin.create(false,true,true);let celloVertices;
+const celloSkin=ViolinFingerSkin.create(false,true,true,true);let celloVertices;
 function bones(points,lengths){for(let j=0;j<3;j++){const e=Math.abs(dist(points[j],points[j+1])-lengths[j]);report.maxBoneError=Math.max(report.maxBoneError,e);assert(e<1e-6,'Finger/thumb bone length differs from cello reference');}}
-function skinRadii(H,bow){const state=ViolinFingerSkin.create(bow,true,!bow);ViolinFingerSkin.update(state,H);for(let f=0;f<4;f++){
+function skinRadii(H,bow){const state=ViolinFingerSkin.create(bow,true,!bow,true);ViolinFingerSkin.update(state,H);for(let f=0;f<4;f++){
  const index=(bow?f+1:f)*98+16,centre=[0,1,2].map(k=>Array.from({length:8},(_,j)=>state.positions[(index+j)*3+k]).reduce((a,b)=>a+b,0)/8);
  const expected=D.radii[f][0]+.45*(D.radii[f][1]-D.radii[f][0]);for(let j=0;j<8;j++){const e=Math.abs(dist(Array.from(state.positions.subarray((index+j)*3,(index+j)*3+3)),centre)-expected);report.maxSkinRadiusError=Math.max(report.maxSkinRadiusError,e);assert(e<1e-6,'Rendered finger thickness differs from cello reference');report.skinVerticesTested++;}
 }assert(state.data.every(Number.isFinite));}

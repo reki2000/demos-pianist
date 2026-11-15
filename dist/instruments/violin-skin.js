@@ -9,8 +9,8 @@ window.ViolinFingerSkin = (() => {
   const circle=new Float64Array(SIDES*2);
   for(let j=0;j<SIDES;j++){const a=(j+.5)*2*Math.PI/SIDES;circle[j*2]=Math.cos(a);circle[j*2+1]=Math.sin(a);}
   const bowSections=[[0,-.12],[0,0],[0,.45],[0,.88],[0,1],[1,.18],[1,.62],[1,.88],[1,1],[2,.45],[2,1],[2,1]];
-  function create(bow=false,joined=false,mirrored=false){
-    const count=bow||joined?5:4,surface=joined?window.HandSurface.create(bow,count*PER_FINGER,mirrored):null,vertices=count*PER_FINGER+(surface?surface.vertices:0);
+  function create(bow=false,joined=false,mirrored=false,thumbWeb=false){
+    const count=bow||joined?5:4,surface=joined?window.HandSurface.create(bow,count*PER_FINGER,mirrored,thumbWeb):null,vertices=count*PER_FINGER+(surface?surface.vertices:0);
     const topology=[];
     const triangle=(a,b,c)=>{topology.push(a,b,c);};
     for(let f=0;f<count;f++){

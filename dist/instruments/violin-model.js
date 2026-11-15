@@ -253,7 +253,7 @@ const fingerSkins=new WeakMap(),fingerBoard={O:O0,U,V,W,top:wFB,neck:true};
 function drawLeftHand(R,H) {
   const natural=H.model==='natural';
   if(natural&&window.HandSurface&&R.dynamicMesh){
-    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true);state.thumb.radii=window.BowHand.dimensions.thumbRadii;state.thumb.skinBaseT=.95;fingerSkins.set(R,state);}
+    let state=fingerSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true,true);state.thumb.radii=window.BowHand.dimensions.thumbRadii;state.thumb.skinBaseT=.95;fingerSkins.set(R,state);}
     R.dynamicMesh('violin-left-fingers',window.ViolinFingerSkin.update(state,H,fingerBoard),skin);return;
   }
   if(natural&&H.wrist)R.oriented('joint',H.wrist,[.022,.018,.016],skin,0,...H.basis);

@@ -1,0 +1,34 @@
+{
+  "violinLeft": {
+    "vertices": 829,
+    "triangles": 1654,
+    "components": 1,
+    "openEdges": 0,
+    "poses": 404,
+    "uploadBytes": 119088
+  },
+  "violinRight": {
+    "vertices": 835,
+    "triangles": 1666,
+    "components": 1,
+    "openEdges": 0,
+    "poses": 404,
+    "uploadBytes": 119952
+  },
+  "celloRight": {
+    "vertices": 835,
+    "triangles": 1666,
+    "components": 1,
+    "openEdges": 0,
+    "poses": 404,
+    "uploadBytes": 119952
+  },
+  "celloLeft": {
+    "vertices": 829,
+    "triangles": 1654,
+    "components": 1,
+    "openEdges": 0,
+    "poses": 404,
+    "uploadBytes": 119088
+  }
+}

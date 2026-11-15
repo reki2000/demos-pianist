@@ -19,8 +19,10 @@ radii in both instruments and on both hands. Its 96.2 mm total includes the
 46 mm metacarpal inside the hand; the two visible phalanges total 50.2 mm.
 The metacarpal shaft is covered by a broad thenar sheet from the palm/back
 surface. Only the last 5% of its tube remains inside that sheet. Palm, thumb,
-fingers and wrist are one closed indexed mesh, with shared normals: 846
-vertices, 1,688 triangles, one component, zero boundary edges per hand.
+fingers and wrist are one closed indexed mesh with shared normals. The
+[thumb-web correction](../thumb-web/README.md) broadens the connection: left
+hands use 829 vertices / 1,654 triangles, and bow hands 835 / 1,666, with
+one component and zero boundary edges per hand.
 The former cello web rod and separate overlapping skin pieces are removed.
 
 The four finger lengths remain exact at playback. Cello's Cartesian pose-cache

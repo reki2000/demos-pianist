@@ -5895,7 +5895,7 @@ R.setFaceDetail?.(false);
     }
   }
   function drawNaturalHand(R,p,colOf){
-    let state=handSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true);
+    let state=handSkins.get(R);if(!state){state=window.ViolinFingerSkin.create(false,true,true,true);
       state.thumb.radii=window.BowHand.dimensions.thumbRadii;state.thumb.skinBaseT=.95;handSkins.set(R,state);}
     const H=surfaceHand(p);
     R.dynamicMesh('cello-left-hand',window.ViolinFingerSkin.update(state,H,undefined,conformHandSurface),colOf?colOf('palm'):SKIN);
