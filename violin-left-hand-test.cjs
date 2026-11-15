@@ -4,7 +4,7 @@ for(const n of ['bow-hand','violin-fingering','violin-songs','hand-surface','vio
 const N=ViolinMotion.NH,dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i])),report={proportionReference:"cello",fingerLengthsMm:ViolinMotion.FINGER_LENGTHS.map(f=>f.reduce((a,b)=>a+b,0)*1000),thumbLengthsMm:N.THUMB_LEN.map(v=>v*1000),samples:0,maxContactError:0,maxBoneError:0,maxRootError:0,maxWristAngle:0};
 // The current product requirement supersedes B: match the cello dimensions.
 for(const [f,total] of [.093,.100,.097,.076].entries())assert(Math.abs(ViolinMotion.FINGER_LENGTHS[f].reduce((a,b)=>a+b,0)-total)<1e-10,'Cello finger proportions changed');
-assert.deepEqual(N.THUMB_LEN,[.046,.034,.027],'Thumb length changed');
+assert.deepEqual(N.THUMB_LEN,[.046,.034,.0162],'Thumb length changed');
 // Planning X is reflected by RecitalGL. A left radial/distal/dorsal
 // frame must therefore have negative planning determinant and positive drawn
 // determinant; the former rig incorrectly had the right hand's chirality.

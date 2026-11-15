@@ -5684,8 +5684,16 @@ window.CelloMotion = (() => {
       const direction=add(mul(vd,Math.cos(psi)),mul(M.vec.cross(normal,vd),Math.sin(psi))),P2=add(P1,mul(direction,l2)),P3=add(T,mul(norm(sub(T,P2)),digit.capR));
       return {...digit,points:[B,P1,P2,P3]};
     };
+    // Cached data can retain the former distal length. Restore its proximal
+    // chain first, then resize only IP-to-tip so the supporting IP stays put.
+    const restoreThumb=digit=>{
+      const L=window.BowHand.dimensions.thumb,sourceDistal=POSE_CACHE.source?.thumbDistalLength??.027;
+      const thumb=restore(digit,[L[0],L[1],sourceDistal]),IP=thumb.points[2],axis=norm(sub(thumb.points[3],IP));
+      thumb.points[3]=add(IP,mul(axis,L[2]));thumb.cap=add(IP,mul(axis,L[2]-thumb.capR));
+      return thumb;
+    };
     const fingers={};for(let f=1;f<=4;f++)fingers[f]=restore(p.fingers[f],FINGER_LEN[f]);
-    return {...p,fingers,thumb:restore(p.thumb,window.BowHand.dimensions.thumb)};
+    return {...p,fingers,thumb:restoreThumb(p.thumb)};
   }
   const poseCached = (song, t) => {
     const entry = POSE_CACHE && POSE_CACHE.solvers && POSE_CACHE.solvers[HAND_SOLVER] && POSE_CACHE.solvers[HAND_SOLVER][song.id];

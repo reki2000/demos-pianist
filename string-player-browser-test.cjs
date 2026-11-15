@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{chromium}=require('playwright');
-const root=path.join(__dirname,'dist'),out=path.join(__dirname,'docs/verification/string-player-proportions');
+const root=path.join(__dirname,'dist'),out=path.join(__dirname,process.env.STRING_PLAYER_VERIFICATION_DIR||'docs/verification/string-player-proportions');
 const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname.replace(/\/$/,'/index.html'));if(!file.startsWith(root+path.sep))return res.writeHead(403).end();fs.readFile(file,(err,data)=>{if(err)return res.writeHead(404).end();res.setHeader('Content-Type',({'.js':'application/javascript','.html':'text/html','.css':'text/css','.mp3':'audio/mpeg'})[path.extname(file)]||'application/octet-stream');res.end(data);});});
 (async()=>{let browser;await new Promise(r=>server.listen(0,'127.0.0.1',r));try{
  browser=await chromium.launch({executablePath:process.env.CHROME||'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required']});
@@ -15,7 +15,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+new 
   const pose=await page.evaluate(type=>stringViews[type],type);assert.equal(pose.gl,0);poses.push({type,song,time});
  }
  const playback=[];
- for(const type of ['violin','cello']){
+ for(const type of (process.argv.includes('--poses-only')?[]:['violin','cello'])){
   await page.evaluate(type=>{multiShell.chooseInstrument(type);multiShell.chooseSong(type==='violin'?'meditation':'swan');multiShell.seek(0);multiShell.play();},type);await page.waitForTimeout(1000);
   const sample=()=>page.evaluate(type=>({...stringViews[type],playing:multiShell.getState().playing}),type),first=await sample(),observations=[];
   for(let i=0;i<15;i++){await page.waitForTimeout(5000);const v=await sample();assert(v.playing);assert.equal(v.buffers.buffers,first.buffers.buffers);assert.equal(v.gl,0);if(type==='violin')assert.equal(v.fits,0);observations.push(v);}

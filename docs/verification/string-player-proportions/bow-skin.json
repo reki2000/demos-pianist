@@ -5,7 +5,7 @@
     "closedDigits": 5
   },
   "wholeHandTriangles": 1688,
-  "maxSurfaceContactGap": 0.0005940210024056759,
+  "maxSurfaceContactGap": 0.0006677220132784926,
   "frames": 4500,
   "gpuBuffers": 2,
   "gpuUploads": 2,
