@@ -51,7 +51,17 @@ const ADAPTERS = {
     },
     plan: song => window.GUITAR_INSTRUMENT.planMotion(song),
     pose: (plan, t) => window.GUITAR_INSTRUMENT.pose(plan, t),
-    draw(R, plan, t) { const pose = window.GUITAR_INSTRUMENT.pose(plan, t); window.GUITAR_INSTRUMENT.buildPerformer(R, pose, t); return pose; },
+    prevPose: null, prevTime: null, prevPlan: null,
+    draw(R, plan, t) {
+      let pose = window.GUITAR_INSTRUMENT.pose(plan, t);
+      if (this.prevPlan === plan && this.prevPose && this.prevTime != null) {
+        const dt = t - this.prevTime;
+        if (dt > 0 && dt < 0.12 && window.GuitarMotion?.soften) pose = window.GuitarMotion.soften(this.prevPose, pose, dt);
+      }
+      this.prevPose = pose; this.prevTime = t; this.prevPlan = plan;
+      window.GUITAR_INSTRUMENT.buildPerformer(R, pose, t);
+      return pose;
+    },
     wrists: pose => ({ bow: pose.wristR, fin: pose.wristL, shB: pose.arms[1].shoulder, shF: pose.arms[0].shoulder }),
     createVoice: (ctx, vol) => window.GUITAR_INSTRUMENT.createVoice(ctx, { volume: vol }),
     startNote(voice, song, i, when) {

@@ -357,21 +357,31 @@ function poseLegacy(plan, t, solve = true) {
     const def = rhDef[name];
     const root = add(rhBase, add(mul(w, def.rootOff[0]), add(mul(n, def.rootOff[1]), mul(u, def.rootOff[2]))));
     const list = plan.rhByFinger[name];
-    const ni = lowerBound(list, t + 1e-4);
+    const ni = lowerBound(list, t + 1e-9);
     const cur = ni > 0 ? list[ni - 1] : null, nxt = ni < list.length ? list[ni] : null;
-    let string = def.rest, env = 0;
-    if (cur && t - cur.t < 0.10) { string = cur.string; env = Math.cos(Math.PI * clamp((t - cur.t) / 0.085, 0, 1) / 2); }
-    else if (cur && t - cur.t < 0.35) string = cur.string;
-    const lift = 0.017 - env * 0.012;
-    let target = add(pluckPoint(string, lift), mul(w, (name === 'p' ? 1 : -1) * .003 * Math.sin(Math.PI * (1-env))));
-    if (cur && t - cur.t > 0.35 && string !== def.rest) { // fade the string memory out, never snap
-      const s = smooth((t - cur.t - 0.35) / 0.2);
-      target = target.map((v, k) => v + (pluckPoint(def.rest, 0.011)[k] - v) * s);
+    const hoverLift = 0.016, restPt = pluckPoint(def.rest, hoverLift);
+    const followDur = cur ? Math.min(0.18, nxt ? Math.max(1e-4, (nxt.t - cur.t) * 0.45) : 0.18) : 0;
+    const prepStart = nxt ? Math.max(cur ? cur.t + followDur : -Infinity, nxt.t - 0.22) : Infinity;
+    let string = cur ? cur.string : def.rest, env = 0, target = restPt;
+    if (cur) {
+      const age = t - cur.t;
+      const side = (name === 'p' ? 1 : -1) * 0.0035;
+      if (age < followDur) {
+        const s = smooth(age / Math.max(1e-4, followDur));
+        env = 1 - s;
+        target = add(pluckPoint(cur.string, 0.005 + (hoverLift - 0.005) * s), mul(w, side * Math.sin(Math.PI * s)));
+      } else {
+        const rel = smooth((age - followDur) / 0.32);
+        const hov = pluckPoint(cur.string, hoverLift);
+        target = hov.map((v, k) => v + (restPt[k] - v) * rel);
+      }
     }
-    if (nxt && nxt.string !== string && nxt.t - t < 0.12) { // prepare after the current attack
-      const end=nxt.t-.002,start=Math.min(end-.002,Math.max(cur?cur.t+.002:-Infinity,nxt.t-.12));
-      const s = smooth((t-start)/(end-start));
-      target = target.map((v, k) => v + (pluckPoint(nxt.string, 0.005)[k] - v) * s);
+    if (nxt && t >= prepStart) {
+      const s = smooth((t - prepStart) / Math.max(1e-4, nxt.t - prepStart));
+      const dest = pluckPoint(nxt.string, 0.005);
+      target = target.map((v, k) => v + (dest[k] - v) * s);
+      env = Math.max(env, s);
+      if (s > 0.5) string = nxt.string;
     }
     const f = solve ? solveFinger(root, target, def.digit, name === 'p' ? add(mul(w, 0.6), mul(n, -0.4)) : add(mul(n, -1), mul(u, -0.35)), name === 'p' ? 0.25 : 0.35 - env * 0.3) : {target};
     f.contact = !!cur && Math.abs(t-cur.t)<.006; f.digit = def.digit; f.string = string; f.env = env;
@@ -400,7 +410,166 @@ function poseLegacy(plan, t, solve = true) {
   return { t, palm, anchorD, lhFingers, lhThumb: thumb, rhFingers, arms, vib, activeNotes, torso: { lean, sway, nod: 0 }, wristL, wristR };
 }
 
-function pose(plan,t){return window.GuitarHands?.available(plan) ? window.GuitarHands.pose(plan,t,poseLegacy(plan,t,false)) : poseLegacy(plan,t);}
+const HIP_PIVOT = [0, 0.88, 0.03];
+function rotXYZ(p, rx, ry, rz) {
+  let [x, y, z] = p;
+  let c = Math.cos(rx), s = Math.sin(rx); [y, z] = [y * c - z * s, y * s + z * c];
+  c = Math.cos(ry); s = Math.sin(ry); [x, z] = [x * c + z * s, z * c - x * s];
+  c = Math.cos(rz); s = Math.sin(rz); [x, y] = [x * c - y * s, x * s + y * c];
+  return [x, y, z];
+}
+function solveArm2(S, W, hint) {
+  const L1 = 0.315, L2 = 0.30, v = sub(W, S), distance = Math.hypot(...v), dir = unit(v);
+  const d = clamp(distance, 0.015, L1 + L2 - 1e-6);
+  const a = (L1 * L1 - L2 * L2 + d * d) / (2 * d);
+  let bend = sub(hint, mul(dir, dot(hint, dir)));
+  if (Math.hypot(...bend) < 1e-6) bend = cross(dir, [0, 0, 1]);
+  bend = unit(bend);
+  const E = add(add(S, mul(dir, a)), mul(bend, Math.sqrt(Math.max(0, L1 * L1 - a * a))));
+  return { shoulder: S, elbow: E, wrist: W, lengths: [L1, L2], error: Math.abs(distance - d) };
+}
+// Two-pole low-pass phrasing track compiled once per plan (30 Hz).
+// Drives realistic classical-guitarist upper-body phrasing, head nods,
+// and dynamic gaze between the fretboard, soundhole, and lyrical swells.
+function expressionAt(plan, t) {
+  if (!plan._expressionTrack) {
+    const dt = 1 / 30, count = Math.ceil(plan.duration / dt) + 1;
+    const taus = [0.28, 0.13, 0.24, 0.28, 0.35, 0.25];
+    const events = plan.events;
+    let a = [0.2, 0, anchorAt(plan, 0), 0, 0, 0.5], b = a.slice();
+    let prevD = a[2], lastPitch = 58, lastBass = 0.5, hi = 0;
+    const keys = [];
+    for (let i = 0; i < count; i++) {
+      const time = i * dt;
+      while (hi < events.length && events[hi].t <= time + 0.04) hi++;
+      let velSum = 0, accentPeak = 0, pitchSum = 0, pitchN = 0, bassN = 0, totalN = 0;
+      for (let j = hi - 1; j >= 0 && events[j].t >= time - 0.38; j--) {
+        const ev = events[j], age = time - ev.t;
+        if (age < -0.04) continue;
+        const chordBoost = ev.notes.length >= 2 ? 1.2 : 1.0;
+        for (const nt of ev.notes) {
+          const v = (nt.vel || 72) / 127;
+          const wAge = age >= 0 ? Math.exp(-age / 0.24) : Math.exp(age / 0.03);
+          velSum += v * wAge;
+          if (age >= -0.01 && age < 0.28) {
+            const bassBoost = nt.string >= 5 ? 1.18 : 1.0;
+            accentPeak = Math.max(accentPeak, v * v * chordBoost * bassBoost * Math.exp(-Math.max(0, age) / 0.11));
+          }
+          pitchSum += nt.pitch; pitchN++;
+          if (nt.string >= 4) bassN++;
+          totalN++;
+        }
+      }
+      if (pitchN > 0) lastPitch = pitchSum / pitchN;
+      if (totalN > 0) lastBass = bassN / totalN;
+      const rawD = anchorAt(plan, time);
+      const rawShift = clamp(Math.abs(rawD - prevD) / (dt * 0.42), 0, 1);
+      prevD = rawD;
+      const target = [
+        clamp(velSum / 2.8, 0, 1),
+        clamp(accentPeak, 0, 1),
+        rawD,
+        rawShift,
+        clamp((lastPitch - 58) / 14, -1, 1),
+        lastBass,
+      ];
+      for (let k = 0; k < 6; k++) {
+        const alpha = 1 - Math.exp(-dt / taus[k]);
+        a[k] += (target[k] - a[k]) * alpha;
+        b[k] += (a[k] - b[k]) * alpha;
+      }
+      keys.push(b.slice());
+    }
+    plan._expressionTrack = keys;
+  }
+  const track = plan._expressionTrack;
+  const x = clamp(t * 30, 0, track.length - 1), i = Math.floor(x), j = Math.min(i + 1, track.length - 1);
+  const f = smooth(x - i), v = track[i].map((q, k) => q + (track[j][k] - q) * f);
+  const [energy, accent, leftD, shift, pitch, bass] = v;
+  const px = Math.max(0, x - 24), pi = Math.floor(px), pj = Math.min(pi + 1, track.length - 1);
+  const prior = track[pi][0] + (track[pj][0] - track[pi][0]) * smooth(px - pi);
+  const rise = clamp((energy - prior) * 2.4, -0.6, 0.6);
+  const phrase = Math.sin(t * Math.PI * 2 / 6.4);
+  const answer = Math.sin(t * Math.PI * 2 / 10.6 + 0.9);
+  const breath = Math.sin(t * Math.PI * 2 / 5.2);
+  const highPos = clamp((leftD - 0.14) / 0.22, 0, 1);
 
-return { gripSource:()=>[gripHolds,posKeys].map(f=>f.toString()).join('\n'), poseLegacy, BODY_SPEC,BODY_OUTLINE,bodyWidth,FRETS,BOARD_END,NECK_END,neckSection,neckDistance,fretboardHalfWidth, SCALE, NUT, u, w, n, fretDist, stringPoint, fretPoint, pluckPoint, bridgePoint, PLUCK_D, LENGTHS, solveFinger, plan, pose, lowerBound };
+  // Upper-body rotations about the seated hips (Rx < 0 leans forward toward -Z,
+  // Ry < 0 turns chest toward +X = fretboard, Rz < 0 sways toward +X = fretboard).
+  const leanMag = clamp(0.060 + energy * 0.045 + accent * 0.012 + Math.max(0, rise) * 0.028 + highPos * 0.018 + breath * 0.009, 0.035, 0.145);
+  const torsoPitch = -leanMag;
+  const torsoRoll = clamp(-0.018 - highPos * 0.022 + phrase * (0.022 + 0.032 * energy) + answer * 0.016, -0.095, 0.075);
+  const torsoYaw = clamp(-0.050 - shift * 0.038 + (leftD - 0.18) * 0.11 + answer * (0.022 + 0.024 * energy) + pitch * 0.022, -0.13, 0.05);
+  const torsoPoint = local => add(HIP_PIVOT, rotXYZ(sub(local, HIP_PIVOT), torsoPitch, torsoYaw, torsoRoll));
+
+  const torsoPos = torsoPoint([0, 1.165, 0.03]);
+  const collarPos = torsoPoint([0, 1.340, -0.100]);
+  const neckBase = torsoPoint([0.004, 1.442, 0.012]);
+  const headPos = add(torsoPoint([0.008, 1.595, -0.004]), [0, -accent * 0.007 + breath * 0.003, -accent * 0.005]);
+  const shL = torsoPoint([0.178, 1.385, -0.014 - highPos * 0.022 - energy * 0.008]);
+  const shR = torsoPoint([-0.178, 1.380, -0.020 - energy * 0.008 - bass * 0.006]);
+
+  // Face direction: track the fretting hand during shifts and active passages,
+  // glance toward the soundhole when the left hand is steady, and open slightly
+  // on high-register lyrical swells.
+  const fretTarget = add(NUT, mul(u, -leftD));
+  const toFret = sub(fretTarget, headPos);
+  const fretGaze = Math.atan2(toFret[0], -toFret[2]);
+  const soundholeGaze = 0.62;
+  const openGaze = 0.58;
+  const focusFret = clamp(0.42 + shift * 0.58 - (1 - shift) * Math.max(0, pitch) * 0.25 + 0.18 * Math.sin(t * Math.PI * 2 / 14.5), 0.12, 1.0);
+  const openness = clamp((1 - shift) * (0.24 + 0.44 * Math.max(0, pitch) + 0.30 * Math.max(0, rise)) * (0.5 + 0.5 * Math.sin(t * Math.PI * 2 / 17.3 + 1.4)), 0, 0.60);
+  const gazeAngle = clamp(fretGaze * focusFret + soundholeGaze * (1 - focusFret) - openness * (fretGaze - openGaze) * 0.55 + shift * 0.08, 0.60, 0.96);
+  const headYaw = Math.PI - gazeAngle;
+  const headPitch = clamp(0.24 + (1 - focusFret) * 0.07 + accent * 0.11 + energy * 0.04 - Math.max(0, pitch) * 0.08 - openness * 0.09 + phrase * 0.025, 0.08, 0.44);
+  const headRoll = clamp(torsoRoll * 0.65 - focusFret * 0.035 + answer * (0.045 + 0.045 * energy) + rise * 0.04, -0.14, 0.14);
+
+  return {
+    torso: { pos: torsoPos, collarPos, neckBase, pitch: torsoPitch, yaw: torsoYaw, roll: torsoRoll, breath },
+    head: { pos: headPos, pitch: headPitch, yaw: headYaw, roll: headRoll, gazeAngle },
+    shL, shR, highPos, energy, accent, bass, shift,
+  };
+}
+
+function applyExpression(plan, t, S) {
+  const expr = expressionAt(plan, t);
+  const leftHint = [0.22 - 0.12 * expr.highPos, -1.0, 0.20 - 0.14 * expr.highPos];
+  const rightHint = [-1.0, 0.12 + (0.5 - expr.bass) * 0.14, 0.35];
+  S.arms = [solveArm2(expr.shL, S.wristL, leftHint), solveArm2(expr.shR, S.wristR, rightHint)];
+  S.torso = { lean: -expr.torso.pitch, sway: expr.torso.roll, yaw: expr.torso.yaw, nod: expr.head.pitch };
+  S.expression = expr;
+  return S;
+}
+
+// Display-only easing of non-contact fingers between rendered frames
+// (matching PianoMotion.soften): prevents snappy/instantaneous finger jumps
+// while preserving exact fixed bone lengths and exact contact timing.
+function soften(previous, current, dt, tau = 0.065) {
+  if (!previous || !previous.hands || !current || !current.hands || !(dt > 0) || dt > 0.12) return current;
+  const k = 1 - Math.exp(-dt / tau);
+  for (let h = 0; h < 2; h++) {
+    const H = current.hands[h], P = previous.hands[h];
+    if (!H || !P) continue;
+    for (let f = 0; f < 4; f++) {
+      const F = H.fingers[f], PF = P.fingers[f];
+      if (!F || !PF || F.contact || F.barre) continue;
+      const base = F.points[0], points = [base];
+      for (let j = 1; j < 4; j++) {
+        const curDir = sub(F.points[j], F.points[j - 1]);
+        const prevDir = sub(PF.points[j], PF.points[j - 1]);
+        const dir = unit(prevDir.map((v, i) => v + (curDir[i] - v) * k));
+        points.push(add(points[j - 1], mul(dir, F.lengths[j - 1])));
+      }
+      H.fingers[f] = { ...F, points };
+    }
+  }
+  return current;
+}
+
+function pose(plan,t){
+  const S = window.GuitarHands?.available(plan) ? window.GuitarHands.pose(plan,t,poseLegacy(plan,t,false)) : poseLegacy(plan,t);
+  return applyExpression(plan, t, S);
+}
+
+return { gripSource:()=>[gripHolds,posKeys].map(f=>f.toString()).join('\n'), poseLegacy, expressionAt, soften, BODY_SPEC,BODY_OUTLINE,bodyWidth,FRETS,BOARD_END,NECK_END,neckSection,neckDistance,fretboardHalfWidth, SCALE, NUT, u, w, n, fretDist, stringPoint, fretPoint, pluckPoint, bridgePoint, PLUCK_D, LENGTHS, solveFinger, plan, pose, lowerBound };
 })();
