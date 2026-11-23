@@ -118,16 +118,25 @@ window.EnsembleEngine = (() => {
     R.piece('hair', add(headC, [0, 0.004, 0]), [.080, .108, .094], hairCol, nod, Math.PI, 0);
     if (female) R.ball(add(headC, [0, -0.02, 0.095]), [.040, .038, .034], hairCol);
     R.setFaceDetail?.(false);
-    // Arms reaching the active keys
+    // Arms + articulated 5-digit hands reaching the active piano keys
     const drawArm = (sh, wr, side) => {
-      const el = [(sh[0] + wr[0]) * 0.5 + side * 0.11, 0.86, 0.04];
-      R.segment(sh, el, 0.046, attire);
-      R.ball(el, [.044, .044, .044], attire);
-      R.segment(el, wr, 0.040, attire);
-      R.ball(wr, [.032, .022, .042], skin);
+      const el = [(sh[0] + wr[0]) * 0.5 + side * 0.10, 0.85, 0.04];
+      R.segment(sh, el, female ? 0.040 : 0.044, attire);
+      R.ball(el, [female ? .038 : .042, female ? .038 : .042, female ? .038 : .042], attire);
+      R.segment(el, wr, female ? 0.034 : 0.038, attire);
+      R.piece('palm', add(wr, [0, -0.006, -0.030]), [.032, .012, .036], skin);
+      // 5 articulated fingers arching onto the keys
+      for (let f = 0; f < 5; f++) {
+        const fx = wr[0] + side * (0.024 - f * 0.012);
+        const kn = [fx, wr[1] - 0.004, wr[2] - (f === 0 ? 0.022 : 0.052)];
+        const tip = [fx, 0.748, kn[2] - (f === 0 ? 0.028 : 0.036)];
+        const mid = [(kn[0] + tip[0]) * 0.5, kn[1] + 0.010, (kn[2] + tip[2]) * 0.5];
+        R.segment(kn, mid, 0.0062, skin);
+        R.segment(mid, tip, 0.0052, skinLight);
+      }
     };
-    drawArm([0.20 + swayX, 1.14, 0.12], [lhX, 0.785, -0.24], 1);
-    drawArm([-0.20 + swayX, 1.14, 0.12], [rhX, 0.785, -0.24], -1);
+    drawArm([0.18 + swayX, 1.12, 0.12], [lhX, 0.785, -0.22], 1);
+    drawArm([-0.18 + swayX, 1.12, 0.12], [rhX, 0.785, -0.22], -1);
   }
 
   // Concert music stand placed in front of a performer
@@ -156,7 +165,29 @@ window.EnsembleEngine = (() => {
   // ---- Natural Left-Hand Atlases (zero-LM reuse of precompiled solo hands!) ----
   // Ensemble songs use the EXACT SAME anatomical ViolinFingerSkin left hands
   // as solo Violin & solo Cello, matched by (string, finger/semitone) at 0 ms!
-  let violinAtlas = null, celloAtlas = null;
+  let violinAtlas = null, celloAtlas = null, guitarAtlas = null;
+  function getGuitarAtlas() {
+    if (guitarAtlas) return guitarAtlas;
+    guitarAtlas = [];
+    if (!window.GUITAR_SONGS || !window.GuitarMotion || !window.GuitarHands) return guitarAtlas;
+    const s = window.GUITAR_SONGS[0];
+    if (!s) return guitarAtlas;
+    const P = window.GuitarMotion.plan(s);
+    for (let i = 0; i < 40; i++) {
+      const p = window.GuitarMotion.pose(P, (s.duration * 0.85 * i) / 40 + 0.5);
+      if (p?.hands?.[0] && p?.hands?.[1]) {
+        guitarAtlas.push({ palmX: p.palm[0], hands: p.hands, wristL: p.wristL, elbowL: p.elbowL, wristR: p.wristR, elbowR: p.elbowR });
+      }
+    }
+    return guitarAtlas;
+  }
+  function lookupGuitarHand(palmX) {
+    const atlas = getGuitarAtlas();
+    if (!atlas.length) return null;
+    let best = atlas[0], bestD = Infinity;
+    for (const e of atlas) { const d = Math.abs(e.palmX - palmX); if (d < bestD) { bestD = d; best = e; } }
+    return best;
+  }
   function getViolinAtlas() {
     if (violinAtlas) return violinAtlas;
     violinAtlas = [];
@@ -257,8 +288,12 @@ window.EnsembleEngine = (() => {
           sway, sounding,
         });
       } else if (pt.kind === 'guitar') {
-        // Full pose() includes expressive torso/neck/head so head stays connected to shoulders!
+        // Full pose() + precompiled solo GuitarHandSkin atlas so ensemble guitar hands match solo!
         st = window.GuitarMotion.pose(pt.plan, t);
+        if (!st.hands) {
+          const gm = lookupGuitarHand(st.palm[0]);
+          if (gm) { st.hands = gm.hands; st.wristL = gm.wristL; st.elbowL = gm.elbowL; st.wristR = gm.wristR; st.elbowR = gm.elbowR; }
+        }
       } else if (pt.kind === 'flute' || pt.kind === 'oboe') {
         st = window.WoodwindEngine.stateAt(pt.plan, t);
       } else if (pt.kind === 'piano') {

@@ -17,8 +17,10 @@ window.BrassClarinetEngine = (() => {
 
   const FINGER_LEN = [[.0368, .0224, .016], [.0416, .0256, .0176], [.0384, .024, .0168], [.0304, .0192, .0136]];
   const THUMB_LEN = [.034, .026, .018];
-  const FINGER_RADII = [[.0076, .0070, .0060], [.0082, .0076, .0064], [.0078, .0072, .0060], [.0067, .0061, .0052]];
-  const THUMB_RADII = [.0100, .0085, .0070];
+  const FINGER_RADII = [[.0070, .0064, .0055], [.0075, .0070, .0059], [.0072, .0066, .0055], [.0062, .0056, .0048]];
+  const FINGER_RADII_F = [[.0065, .0060, .0051], [.0070, .0065, .0055], [.0067, .0062, .0051], [.0058, .0052, .0045]];
+  const THUMB_RADII = [.0092, .0078, .0064];
+  const THUMB_RADII_F = [.0086, .0073, .0060];
   const ROOT = [[.027, .070, 0], [.009, .074, 0], [-.009, .072, 0], [-.027, .066, 0], [.020, .020, -.010]];
   const ARM_LEN = [0.275, 0.255];
 
@@ -171,7 +173,7 @@ window.BrassClarinetEngine = (() => {
           : [keyPt(K.l1, keys.l1), keyPt(K.l2, keys.l2), keyPt(K.l3, keys.l3), keyPt(K.l4, 0)];
         const thTgt = isRight ? F.pt(K.rth[0], K.rth[1], K.rth[2]) : F.pt(K.th[0] - keys.reg * 0.014, K.th[1], K.th[2] - (1 - keys.th) * 0.006);
         const bend = add(F.N, mul(F.F, isRight ? -0.35 : 0.35));
-        const fingers = targets.map((pt, i) => ({ ...solveFinger(hpt(ROOT[i]), pt, FINGER_LEN[i], bend), radii: FINGER_RADII[i] }));
+        const fingers = targets.map((pt, i) => ({ ...solveFinger(hpt(ROOT[i]), pt, FINGER_LEN[i], bend), radii: FINGER_RADII_F[i] }));
         const th = solveFinger(hpt(ROOT[4]), thTgt, THUMB_LEN, add(mul(F.F, isRight ? -0.8 : 0.8), mul(F.N, -0.6)));
         return { model: 'clarinet', wrist, palmPos: hpt([0, 0.035, 0]), basis, fingers, thumb: th.points };
       };
@@ -189,14 +191,16 @@ window.BrassClarinetEngine = (() => {
     skin = [.74, .55, .43], skinLight = [.80, .62, .50], suit = [.048, .050, .062], shirt = [.86, .85, .82], hairC = [.07, .055, .048], lash = [.20, .12, .10];
 
   const handSkins = new WeakMap();
-  function drawHands(R, S) {
+  function drawHands(R, S, female) {
     let pair = handSkins.get(R);
     if (!pair) {
       pair = [window.ViolinFingerSkin.create(false, true, true, true), window.ViolinFingerSkin.create(false, true, false, true)];
-      pair[0].thumb.radii = THUMB_RADII; pair[0].thumb.skinBaseT = 0.65;
-      pair[1].thumb.radii = THUMB_RADII; pair[1].thumb.skinBaseT = 0.65;
+      pair[0].thumb.skinBaseT = 0.65;
+      pair[1].thumb.skinBaseT = 0.65;
       handSkins.set(R, pair);
     }
+    const tr = female ? THUMB_RADII_F : THUMB_RADII;
+    pair[0].thumb.radii = tr; pair[1].thumb.radii = tr;
     R.dynamicMesh(S.kind + '-hand-0', window.ViolinFingerSkin.update(pair[0], S.handL), skin);
     R.dynamicMesh(S.kind + '-hand-1', window.ViolinFingerSkin.update(pair[1], S.handR), skin);
   }
@@ -252,12 +256,14 @@ window.BrassClarinetEngine = (() => {
     const hairCol = female ? [.115, .068, .046] : hairC;
     const pearl = [.94, .90, .82];
     const br = 1 + S.expression.breath * 0.012;
-    R.piece('torso', [0, 0.95, 0.010], [female ? .154 : .166, .105, .114], attire);
-    R.piece('jacket', [0, 1.18, 0.012], [(female ? .174 : .196) * br, .258, (female ? .122 : .134) * br], attire, -0.02, 0, 0);
+    R.piece('torso', [0, 0.95, 0.010], [female ? .146 : .164, .102, female ? .106 : .114], attire);
+    R.piece('jacket', [0, 1.18, 0.012], [(female ? .166 : .194) * br, .254, (female ? .114 : .132) * br], attire, -0.02, 0, 0);
+    R.segment([0.082, 1.385, 0.002], S.armL.shoulder, female ? 0.040 : 0.046, attire);
+    R.segment([-0.082, 1.385, 0.002], S.armR.shoulder, female ? 0.040 : 0.046, attire);
     const H = S.head, neckBase = [0, 1.430, -0.006], neckTop = [H.pos[0], H.pos[1] - 0.045, H.pos[2]];
-    if (female) R.segment(neckBase, neckTop, 0.034, skin);
-    else { R.segment(neckBase, add(neckBase, mul(sub(neckTop, neckBase), 0.30)), 0.042, shirt); R.segment(neckBase, neckTop, 0.037, skin); }
-    const HS = female ? [.074, .105, .088] : [.078, .110, .092], FS = [HS[0] / .112, HS[1] / .148, HS[2] / .128];
+    if (female) R.segment(neckBase, neckTop, 0.030, skin);
+    else { R.segment(neckBase, add(neckBase, mul(sub(neckTop, neckBase), 0.30)), 0.040, shirt); R.segment(neckBase, neckTop, 0.035, skin); }
+    const HS = female ? [.069, .099, .083] : [.076, .107, .090], FS = [HS[0] / .112, HS[1] / .148, HS[2] / .128];
     const sc = p => [p[0] * FS[0], p[1] * FS[1], p[2] * FS[2]];
     const hp = p => {
       const q = sc(p), c = Math.cos(H.pitch), s = Math.sin(H.pitch), cy = Math.cos(H.yaw), sy = Math.sin(H.yaw);
@@ -285,7 +291,7 @@ window.BrassClarinetEngine = (() => {
     R.setFaceDetail?.(false);
     window.BowHand.drawArm(R, S.armL, S.handL, { suit: attire, skin, shirt: female ? attire : shirt });
     window.BowHand.drawArm(R, S.armR, S.handR, { suit: attire, skin, shirt: female ? attire : shirt });
-    drawHands(R, S);
+    drawHands(R, S, female);
     if (S.kind === 'trumpet') drawTrumpet(R, S); else drawClarinet(R, S);
   }
 

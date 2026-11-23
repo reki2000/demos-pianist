@@ -214,22 +214,25 @@ function drawUpperBody(R,S,P2,up,opts){
   const attire = female ? (opts?.gown || [.125, .040, .058]) : suit;
   const hairCol = female ? [.115, .068, .046] : hairC;
   const pearl = [.94, .90, .82];
-  // Torso: realistic ~55cm torso height matching violin shoulder sockets cleanly.
+  // Torso: realistic proportions + clavicle/shoulder bridges so shoulders never detach.
   const root = P2([0, 1.19, 0.012]);
-  R.piece('torso', P2([0, 0.95, 0.010]), [female ? .160 : .172, .105, .118], attire);
-  R.piece('jacket', root, [(female ? .194 : .210) * (1 + S.breath * 0.01), .282, (female ? .128 : .138) * (1 + S.breath * 0.01)], attire, S.lean, S.torsoYaw, S.torsoRoll);
+  R.piece('torso', P2([0, 0.95, 0.010]), [female ? .148 : .164, .105, female ? .108 : .116], attire);
+  R.piece('jacket', root, [(female ? .174 : .198) * (1 + S.breath * 0.01), .272, (female ? .116 : .130) * (1 + S.breath * 0.01)], attire, S.lean, S.torsoYaw, S.torsoRoll);
+  // Clavicle-to-shoulder bridges seamlessly connect torso to both shoulder sockets at any bow reach
+  R.segment(P2([ 0.085, 1.385, 0.002]), S.armL.shoulder, female ? 0.042 : 0.047, attire);
+  R.segment(P2([-0.085, 1.385, 0.002]), S.armR.shoulder, female ? 0.042 : 0.047, attire);
   if (!female) R.piece('palm', P2([0, 1.315, -0.118]), [.038, .10, .012], satin, S.lean + 0.06, S.torsoYaw, S.torsoRoll);
   else {
     for (let i = -3; i <= 3; i++) {
       const a = i * 0.28;
-      R.ball(P2([Math.sin(a) * 0.052, 1.415 - Math.cos(a) * 0.012, -0.050 * Math.cos(a)]), [.0050, .0050, .0050], pearl, 0.6);
+      R.ball(P2([Math.sin(a) * 0.048, 1.415 - Math.cos(a) * 0.012, -0.046 * Math.cos(a)]), [.0046, .0046, .0046], pearl, 0.6);
     }
   }
   // Neck + head, tilted down toward the violin, chin over the chin rest.
   const H = S.head;
   const hs = S.headSway || up;
-  R.segment([0.012 + hs[0], 1.43 + hs[1], -0.01 + hs[2]], H.pos, female ? 0.034 : 0.039, skin);
-  const VHS = female ? [.074, .105, .088] : [.078, .110, .092], VFS = [VHS[0] / .112, VHS[1] / .148, VHS[2] / .128];
+  R.segment([0.012 + hs[0], 1.425 + hs[1], -0.01 + hs[2]], H.pos, female ? 0.030 : 0.037, skin);
+  const VHS = female ? [.069, .099, .083] : [.076, .107, .090], VFS = [VHS[0] / .112, VHS[1] / .148, VHS[2] / .128];
   const vs = p => [p[0] * VFS[0], p[1] * VFS[1], p[2] * VFS[2]];
   R.setFaceDetail?.(true);
 R.piece('head', H.pos, VHS, skinLight, H.pitch, H.yaw, H.roll);
