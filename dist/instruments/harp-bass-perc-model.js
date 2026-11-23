@@ -31,7 +31,7 @@ window.HarpBassPercEngine = (() => {
     hairM = [.07, .055, .048], hairF = [.115, .068, .046], lash = [.20, .12, .10], pearl = [.94, .90, .82];
 
   function drawHead(R, pos, pitch, yaw, female) {
-    const HS = female ? [.074, .105, .088] : [.078, .110, .092];
+    const HS = female ? [.069, .099, .083] : [.076, .107, .090];
     const FS = [HS[0] / .112, HS[1] / .148, HS[2] / .128];
     const sc = p => [p[0] * FS[0], p[1] * FS[1], p[2] * FS[2]];
     const hp = p => {
@@ -60,17 +60,11 @@ window.HarpBassPercEngine = (() => {
     R.setFaceDetail?.(false);
   }
 
-  function drawSimpleArm(R, arm, attire, female) {
-    R.segment(arm.shoulder, arm.elbow, 0.048, attire);
-    R.ball(arm.elbow, [.046, .046, .046], attire);
-    R.segment(arm.elbow, arm.wrist, 0.040, attire);
-    if (!female) R.ball(arm.wrist, [.024, .024, .024], shirt);
-    R.ball(arm.wrist, [.028, .020, .038], skin);
-  }
-
   const HARP_FL = [[.0368, .0224, .016], [.0416, .0256, .0176], [.0384, .024, .0168], [.0304, .0192, .0136]];
-  const HARP_TL = [.034, .026, .018], HARP_TR = [.010, .0085, .0070];
-  const HARP_FR = [[.0076, .0070, .0060], [.0082, .0076, .0064], [.0078, .0072, .0060], [.0067, .0061, .0052]];
+  const HARP_TL = [.034, .026, .018];
+  const HARP_TR_F = [.0086, .0073, .0060], HARP_TR_M = [.0090, .0076, .0063];
+  const HARP_FR_F = [[.0065, .0060, .0051], [.0070, .0065, .0055], [.0067, .0062, .0051], [.0058, .0052, .0045]];
+  const HARP_FR_M = [[.0069, .0063, .0054], [.0074, .0068, .0058], [.0070, .0065, .0054], [.0060, .0055, .0047]];
   const HARP_ROOT = [[.027, .070, 0], [.009, .074, 0], [-.009, .072, 0], [-.027, .066, 0], [.020, .020, -.010]];
   const harpRes = (L, q) => [L[0] + L[1] * Math.cos(q) + L[2] * Math.cos(1.67 * q), L[1] * Math.sin(q) + L[2] * Math.sin(1.67 * q)];
   function solveHarpFinger(base, tgt, L, hint) {
@@ -82,15 +76,56 @@ window.HarpBassPercEngine = (() => {
     return pts;
   }
   const harpSkins = new WeakMap();
+  const bassSkins = new WeakMap();
   const percSkins = new WeakMap();
-  function getSkinPair(map, R) {
+  function getSkinPair(map, R, thumbRadii = HARP_TR_M) {
     let skins = map.get(R);
     if (!skins && window.ViolinFingerSkin) {
       skins = [window.ViolinFingerSkin.create(false, true, true, true), window.ViolinFingerSkin.create(false, true, false, true)];
-      for (const sk of skins) { sk.thumb.radii = HARP_TR; sk.thumb.skinBaseT = 0.65; }
+      for (const sk of skins) { sk.thumb.radii = thumbRadii; sk.thumb.skinBaseT = 0.65; }
       map.set(R, skins);
     }
     return skins;
+  }
+  // 5-digit left hand stopping the Double Bass ebony fingerboard.
+  function buildBassLeftHand(stopY, activeStr) {
+    const u = clamp((stopY - 0.82) / 0.96, 0, 1);
+    const nx = 0.19 - 0.01 * u, nz = -0.33 + 0.11 * u;
+    const sx = ((activeStr >= 0 ? activeStr : 1) - 1.5) * 0.016;
+    const wrist = [nx + 0.072, stopY - 0.042, nz + 0.062];
+    const X = [0, 1, 0], Y = unit([-0.55, 0.15, -0.82]);
+    let Z = unit(cross(X, Y));
+    if (dot(cross(X, Y), Z) > 0) Z = mul(Z, -1);
+    const basis = [X, Y, Z], hpt = p => add(wrist, add(mul(X, p[0]), add(mul(Y, p[1]), mul(Z, p[2]))));
+    const hint = [0.75, 0.25, -0.60];
+    const targets = [
+      [nx + sx, stopY + 0.024, nz - 0.026],
+      [nx + sx, stopY + 0.002, nz - 0.027],
+      [nx + sx, stopY - 0.020, nz - 0.027],
+      [nx + sx, stopY - 0.042, nz - 0.025],
+    ];
+    const thTgt = [nx + 0.006, stopY + 0.012, nz + 0.032];
+    const fingers = targets.map((pt, i) => ({ points: solveHarpFinger(hpt(HARP_ROOT[i]), pt, HARP_FL[i], hint), radii: HARP_FR_M[i] }));
+    return { model: 'bass-lh', wrist, palmPos: hpt([0, 0.035, 0]), basis, fingers, thumb: solveHarpFinger(hpt(HARP_ROOT[4]), thTgt, HARP_TL, [0.4, 0.5, 0.75]) };
+  }
+  // 5-digit right hand French bow grip wrapping around the Double Bass bow frog.
+  function buildBassRightHand(frog, bowDir) {
+    const X = unit(bowDir);
+    const Y = unit([0.15, -0.58, -0.80]);
+    let Z = unit(cross(X, Y));
+    if (dot(cross(X, Y), Z) < 0) Z = mul(Z, -1);
+    const wrist = add(frog, [-0.048, 0.046, 0.056]);
+    const basis = [X, Y, Z], hpt = p => add(wrist, add(mul(X, p[0]), add(mul(Y, p[1]), mul(Z, p[2]))));
+    const hint = [0.15, 0.75, 0.60];
+    const targets = [
+      add(frog, add(mul(X, 0.052), [0, -0.010, -0.010])),
+      add(frog, add(mul(X, 0.034), [0, -0.013, -0.010])),
+      add(frog, add(mul(X, 0.016), [0, -0.013, -0.010])),
+      add(frog, add(mul(X, -0.002), [0, -0.004, -0.006])),
+    ];
+    const thTgt = add(frog, add(mul(X, 0.018), [0, -0.018, 0.008]));
+    const fingers = targets.map((pt, i) => ({ points: solveHarpFinger(hpt(HARP_ROOT[i]), pt, HARP_FL[i], hint), radii: HARP_FR_M[i] }));
+    return { model: 'bass-rh', wrist, palmPos: hpt([0, 0.035, 0]), basis, fingers, thumb: solveHarpFinger(hpt(HARP_ROOT[4]), thTgt, HARP_TL, [-0.2, -0.8, 0.5]) };
   }
   // Matched-grip 5-digit hand wrapping around a mallet shaft (wrist -> shaftDir).
   function buildMalletHand(isRight, wrist, tip) {
@@ -110,7 +145,7 @@ window.HarpBassPercEngine = (() => {
       grip(0.088, 0.004), grip(0.072, 0.005), grip(0.056, 0.005), grip(0.042, 0.004),
     ];
     const thTgt = hpt([0.006, 0.092, -0.004]); // thumb along top/inner fulcrum of shaft
-    const fingers = targets.map((pt, i) => ({ points: solveHarpFinger(hpt(HARP_ROOT[i]), pt, HARP_FL[i], hint), radii: HARP_FR[i] }));
+    const fingers = targets.map((pt, i) => ({ points: solveHarpFinger(hpt(HARP_ROOT[i]), pt, HARP_FL[i], hint), radii: HARP_FR_M[i] }));
     return { model: 'mallet', wrist, palmPos: hpt([0, 0.036, 0]), basis, fingers, thumb: solveHarpFinger(hpt(HARP_ROOT[4]), thTgt, HARP_TL, add(mul(Z, 0.7), mul(rad, 0.5))), gripPt: hpt([0, 0.055, -0.014]) };
   }
   function buildHarpHand(isRight, cy, cz, pluckPhase) {
@@ -129,7 +164,7 @@ window.HarpBassPercEngine = (() => {
       [-0.04 + side * 0.032, cy - 0.045, cz - 0.020],
     ];
     const thTgt = [-0.04 + side * (0.006 - curl * 0.6), cy + 0.042, cz + 0.012];
-    const fingers = targets.map((pt, i) => ({ points: solveHarpFinger(hpt(HARP_ROOT[i]), pt, HARP_FL[i], hint), radii: HARP_FR[i] }));
+    const fingers = targets.map((pt, i) => ({ points: solveHarpFinger(hpt(HARP_ROOT[i]), pt, HARP_FL[i], hint), radii: HARP_FR_F[i] }));
     return { model: 'harp', wrist, palmPos: hpt([0, 0.035, 0]), basis, fingers, thumb: solveHarpFinger(hpt(HARP_ROOT[4]), thTgt, HARP_TL, [side * 0.5, 0.85, 0.2]) };
   }
 
@@ -222,20 +257,23 @@ window.HarpBassPercEngine = (() => {
       R.piece('shoe', [s * 0.14, 0.032, -0.16], [.044, .030, .122], ebony, 0, Math.PI, 0);
     }
     const sway = Math.sin(S.time * 1.1) * 0.018;
-    R.piece('torso', [sway * 0.5, 0.62, 0.20], [.156, .105, .114], gown);
-    R.piece('jacket', [sway, 0.89, 0.16], [.174, .258, .122], gown, 0.10, 0, 0);
-    const headC = [0.02 + sway, 1.29, 0.09];
-    R.segment([sway, 1.13, 0.13], [headC[0], headC[1] - 0.04, headC[2]], 0.034, skin);
+    R.piece('torso', [sway * 0.5, 0.62, 0.20], [.148, .100, .108], gown);
+    R.piece('jacket', [sway, 0.89, 0.16], [.164, .252, .114], gown, 0.10, 0, 0);
+    const headC = [0.02 + sway, 1.28, 0.09];
+    R.segment([sway, 1.12, 0.13], [headC[0], headC[1] - 0.04, headC[2]], 0.030, skin);
     drawHead(R, headC, 0.18, Math.PI - 0.08, true);
 
     // Full 5-digit closed-skin harp hands (hoisted solver, 0 per-frame allocations)
     const handL = buildHarpHand(false, lhY, lhZ, S.time * 7.5);
     const handR = buildHarpHand(true, rhY, rhZ, S.time * 7.5 + 1.8);
-    const armL = solveArm2([0.170 + sway, 1.12, 0.12], handL.wrist, 0.275, 0.255, [0.85, -0.45, 0.2]);
-    const armR = solveArm2([-0.170 + sway, 1.12, 0.12], handR.wrist, 0.275, 0.255, [-0.85, -0.45, 0.2]);
+    const shL = [0.162 + sway, 1.12, 0.12], shR = [-0.162 + sway, 1.12, 0.12];
+    R.segment([0.075 + sway, 1.11, 0.13], shL, 0.040, gown);
+    R.segment([-0.075 + sway, 1.11, 0.13], shR, 0.040, gown);
+    const armL = solveArm2(shL, handL.wrist, 0.275, 0.255, [0.85, -0.45, 0.2]);
+    const armR = solveArm2(shR, handR.wrist, 0.275, 0.255, [-0.85, -0.45, 0.2]);
     window.BowHand.drawArm(R, armL, handL, { suit: gown, skin, shirt: gown });
     window.BowHand.drawArm(R, armR, handR, { suit: gown, skin, shirt: gown });
-    const skins = getSkinPair(harpSkins, R);
+    const skins = getSkinPair(harpSkins, R, HARP_TR_F);
     if (skins && R.dynamicMesh) {
       R.dynamicMesh('harp-hand-0', window.ViolinFingerSkin.update(skins[0], handL), skin);
       R.dynamicMesh('harp-hand-1', window.ViolinFingerSkin.update(skins[1], handR), skin);
@@ -288,10 +326,20 @@ window.HarpBassPercEngine = (() => {
     drawHead(R, headC, 0.16, Math.PI - 0.18, false);
     const bassVib = nt && nt.dur >= 0.4 && semi > 0 ? Math.sin(S.time * Math.PI * 2 * 4.6) * 0.009 : 0;
     const stopY = clamp(1.66 - semi * 0.042 + bassVib, 1.12, 1.68);
-    const armL = solveArm2([0.15, 1.39, 0.02], [0.22, stopY, -0.26], 0.285, 0.265, [0.9, -0.3, 0.2]);
-    const armR = solveArm2([-0.20, 1.39, 0.02], frog, 0.295, 0.275, [-0.8, -0.5, 0.2]);
-    drawSimpleArm(R, armL, suit, false);
-    drawSimpleArm(R, armR, suit, false);
+    const handL = buildBassLeftHand(stopY, activeStr);
+    const handR = buildBassRightHand(frog, bowDir);
+    const shL = [0.15, 1.39, 0.02], shR = [-0.20, 1.39, 0.02];
+    R.segment([0.05, 1.38, 0.04], shL, 0.046, suit);
+    R.segment([-0.11, 1.38, 0.04], shR, 0.046, suit);
+    const armL = solveArm2(shL, handL.wrist, 0.285, 0.265, [0.9, -0.3, 0.2]);
+    const armR = solveArm2(shR, handR.wrist, 0.295, 0.275, [-0.8, -0.5, 0.2]);
+    window.BowHand.drawArm(R, armL, handL, { suit, skin, shirt });
+    window.BowHand.drawArm(R, armR, handR, { suit, skin, shirt });
+    const skins = getSkinPair(bassSkins, R, HARP_TR_M);
+    if (skins && R.dynamicMesh) {
+      R.dynamicMesh('bass-hand-0', window.ViolinFingerSkin.update(skins[0], handL), skin);
+      R.dynamicMesh('bass-hand-1', window.ViolinFingerSkin.update(skins[1], handR), skin);
+    }
   }
 
   // ---- 3. CONCERT PERCUSSION (MARIMBA / TIMPANI) ----
@@ -383,11 +431,14 @@ window.HarpBassPercEngine = (() => {
     const tipR = [rhTgt[0], rhTgt[1] + rhLift, rhTgt[2]];
     const handL = buildMalletHand(false, wristL, tipL);
     const handR = buildMalletHand(true, wristR, tipR);
-    const armL = solveArm2([0.185, 1.38, 0.06], wristL, 0.275, 0.255, [0.7, -0.8, 0.2]);
-    const armR = solveArm2([-0.185, 1.38, 0.06], wristR, 0.275, 0.255, [-0.7, -0.8, 0.2]);
+    const shL = [0.185, 1.38, 0.06], shR = [-0.185, 1.38, 0.06];
+    R.segment([0.085, 1.37, 0.08], shL, 0.046, suit);
+    R.segment([-0.085, 1.37, 0.08], shR, 0.046, suit);
+    const armL = solveArm2(shL, wristL, 0.275, 0.255, [0.7, -0.8, 0.2]);
+    const armR = solveArm2(shR, wristR, 0.275, 0.255, [-0.7, -0.8, 0.2]);
     window.BowHand.drawArm(R, armL, handL, { suit, skin, shirt });
     window.BowHand.drawArm(R, armR, handR, { suit, skin, shirt });
-    const skins = getSkinPair(percSkins, R);
+    const skins = getSkinPair(percSkins, R, HARP_TR_M);
     if (skins && R.dynamicMesh) {
       R.dynamicMesh('perc-hand-0', window.ViolinFingerSkin.update(skins[0], handL), skin);
       R.dynamicMesh('perc-hand-1', window.ViolinFingerSkin.update(skins[1], handR), skin);

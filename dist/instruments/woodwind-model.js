@@ -20,11 +20,13 @@ window.WoodwindEngine = (() => {
     return [v[0] * c + cr[0] * s + k[0] * d * (1 - c), v[1] * c + cr[1] * s + k[1] * d * (1 - c), v[2] * c + cr[2] * s + k[2] * d * (1 - c)];
   }
 
-  // Compact realistic adult hand bones + cello/violin-proportioned finger radii.
+  // Compact realistic adult hand bones + sleeker female/male finger radii.
   const FINGER_LEN = [[.0368, .0224, .016], [.0416, .0256, .0176], [.0384, .024, .0168], [.0304, .0192, .0136]];
   const THUMB_LEN = [.034, .026, .018];
-  const FINGER_RADII = [[.0076, .0070, .0060], [.0082, .0076, .0064], [.0078, .0072, .0060], [.0067, .0061, .0052]];
-  const THUMB_RADII = [.0100, .0085, .0070];
+  const FINGER_RADII = [[.0070, .0064, .0055], [.0075, .0070, .0059], [.0072, .0066, .0055], [.0062, .0056, .0048]];
+  const FINGER_RADII_F = [[.0065, .0060, .0051], [.0070, .0065, .0055], [.0067, .0062, .0051], [.0058, .0052, .0045]];
+  const THUMB_RADII = [.0092, .0078, .0064];
+  const THUMB_RADII_F = [.0086, .0073, .0060];
   const ROOT = [[.027, .070, 0], [.009, .074, 0], [-.009, .072, 0], [-.027, .066, 0], [.020, .020, -.010]];
   const ARM_LEN = [0.275, 0.255];
 
@@ -300,9 +302,10 @@ window.WoodwindEngine = (() => {
       }
     }
 
+    const fr = kind === 'flute' ? FINGER_RADII_F : FINGER_RADII;
     const fingers = fingerTargets.map((t, i) => {
       const f = solveFinger(hpt(ROOT[i]), t.pt, FINGER_LEN[i], bendHint);
-      return { ...f, radii: FINGER_RADII[i], press: t.p, contact: t.p > 0.5 };
+      return { ...f, radii: fr[i], press: t.p, contact: t.p > 0.5 };
     });
     const th = solveFinger(hpt(ROOT[4]), thumbTarget, THUMB_LEN, thumbHint);
     return { model: 'woodwind', wrist, palmPos, basis, fingers, thumb: th.points, thumbInfo: th };
@@ -389,17 +392,19 @@ window.WoodwindEngine = (() => {
   }
 
   const handSkins = new WeakMap();
-  function drawHands(R, S) {
+  function drawHands(R, S, female) {
     let pair = handSkins.get(R);
     if (!pair) {
       pair = [
         window.ViolinFingerSkin.create(false, true, true, true),
         window.ViolinFingerSkin.create(false, true, false, true),
       ];
-      pair[0].thumb.radii = THUMB_RADII; pair[0].thumb.skinBaseT = 0.65;
-      pair[1].thumb.radii = THUMB_RADII; pair[1].thumb.skinBaseT = 0.65;
+      pair[0].thumb.skinBaseT = 0.65;
+      pair[1].thumb.skinBaseT = 0.65;
       handSkins.set(R, pair);
     }
+    const tr = female ? THUMB_RADII_F : THUMB_RADII;
+    pair[0].thumb.radii = tr; pair[1].thumb.radii = tr;
     R.dynamicMesh(S.kind + '-hand-0', window.ViolinFingerSkin.update(pair[0], S.handL), skin);
     R.dynamicMesh(S.kind + '-hand-1', window.ViolinFingerSkin.update(pair[1], S.handR), skin);
   }
@@ -412,24 +417,27 @@ window.WoodwindEngine = (() => {
     const lipCol = female ? [.74, .34, .36] : [.62, .38, .33];
     const pearl = [.94, .90, .82];
     const br = 1 + S.expression.breath * 0.012;
-    R.piece('torso', [0, 0.95, 0.010], [female ? .154 : .166, .105, .114], attire);
-    R.piece('jacket', [0, 1.18, 0.012], [(female ? .174 : .196) * br, .258, (female ? .122 : .134) * br], attire, -0.02, 0, 0);
+    R.piece('torso', [0, 0.95, 0.010], [female ? .146 : .164, .102, female ? .106 : .114], attire);
+    R.piece('jacket', [0, 1.18, 0.012], [(female ? .166 : .194) * br, .254, (female ? .114 : .132) * br], attire, -0.02, 0, 0);
+    // Clavicle-to-shoulder bridge so shoulders connect smoothly to the bodice/jacket
+    R.segment([0.082, 1.385, 0.002], S.armL.shoulder, female ? 0.040 : 0.046, attire);
+    R.segment([-0.082, 1.385, 0.002], S.armR.shoulder, female ? 0.040 : 0.046, attire);
     // Neck + white dress-shirt collar (or pearl necklace for female concert gown)
     const H = S.head;
     const neckBase = [0, 1.430, -0.006], neckTop = [H.pos[0], H.pos[1] - 0.045, H.pos[2]];
     if (female) {
-      R.segment(neckBase, neckTop, 0.034, skin);
+      R.segment(neckBase, neckTop, 0.030, skin);
       for (let i = -3; i <= 3; i++) {
         const a = i * 0.28;
-        R.ball([Math.sin(a) * 0.052, 1.422 - Math.cos(a) * 0.012, -0.050 * Math.cos(a)], [.0050, .0050, .0050], pearl, 0.6);
+        R.ball([Math.sin(a) * 0.048, 1.422 - Math.cos(a) * 0.012, -0.046 * Math.cos(a)], [.0048, .0048, .0048], pearl, 0.6);
       }
     } else {
       const collarTop = neckBase.map((v, i) => v + (neckTop[i] - v) * 0.30);
-      R.segment(neckBase, collarTop, 0.042, shirt);
-      R.segment(neckBase, neckTop, 0.037, skin);
+      R.segment(neckBase, collarTop, 0.040, shirt);
+      R.segment(neckBase, neckTop, 0.035, skin);
     }
-    // Realistic ~7.8-head adult head & face
-    const HS = female ? [.074, .105, .088] : [.078, .110, .092];
+    // Refined adult head & face
+    const HS = female ? [.069, .099, .083] : [.076, .107, .090];
     const FS = [HS[0] / .112, HS[1] / .148, HS[2] / .128];
     const sc = p => [p[0] * FS[0], p[1] * FS[1], p[2] * FS[2]];
     const hp = p => {
@@ -463,7 +471,7 @@ window.WoodwindEngine = (() => {
     // Arms (shared BowHand.drawArm with unified .044 forearm!)
     window.BowHand.drawArm(R, S.armL, S.handL, { suit: attire, skin, shirt: female ? attire : shirt });
     window.BowHand.drawArm(R, S.armR, S.handR, { suit: attire, skin, shirt: female ? attire : shirt });
-    drawHands(R, S);
+    drawHands(R, S, female);
     if (S.kind === 'flute') drawFlute(R, S); else drawOboe(R, S);
   }
 

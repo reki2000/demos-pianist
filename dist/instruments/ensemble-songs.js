@@ -76,22 +76,22 @@ window.ENSEMBLE_SONGS = (() => {
 
   // ---- Stage seat layouts (planning coords: +X = stage left, -X = stage right, -Z = audience) ----
   const QUARTET_SEATS = {
-    vn1:   { x:  1.15, z: -0.35, yaw: -0.36, scale: 1.00, female: true,  gown: [.125, .040, .058] },
+    vn1:   { x:  1.15, z: -0.35, yaw: -0.36, scale: 0.94, female: true,  gown: [.125, .040, .058] },
     vn2:   { x:  0.42, z:  0.22, yaw: -0.14, scale: 1.00, female: false },
-    viola: { x: -0.46, z:  0.22, yaw:  0.16, scale: 1.04, female: true,  gown: [.048, .062, .112] },
+    viola: { x: -0.46, z:  0.22, yaw:  0.16, scale: 0.96, female: true,  gown: [.048, .062, .112] },
     cello: { x: -1.18, z: -0.28, yaw:  0.38, scale: 1.00, female: false },
   };
   const DECET_SEATS = {
-    vn1a:  { x:  1.88, z: -0.55, yaw: -0.40, scale: 1.00, female: true,  gown: [.125, .040, .058] },
+    vn1a:  { x:  1.88, z: -0.55, yaw: -0.40, scale: 0.94, female: true,  gown: [.125, .040, .058] },
     vn1b:  { x:  1.22, z:  0.05, yaw: -0.26, scale: 1.00, female: false },
-    vn2a:  { x:  0.55, z:  0.48, yaw: -0.12, scale: 1.00, female: true,  gown: [.048, .068, .098] },
+    vn2a:  { x:  0.55, z:  0.48, yaw: -0.12, scale: 0.94, female: true,  gown: [.048, .068, .098] },
     vn2b:  { x: -0.20, z:  0.55, yaw:  0.04, scale: 1.00, female: false },
-    vc1:   { x: -1.18, z: -0.18, yaw:  0.30, scale: 1.00, female: true,  gown: [.062, .045, .098] },
+    vc1:   { x: -1.18, z: -0.18, yaw:  0.30, scale: 0.94, female: true,  gown: [.062, .045, .098] },
     vc2:   { x: -1.90, z: -0.52, yaw:  0.42, scale: 1.00, female: false },
     guitar:{ x: -0.32, z: -0.45, yaw:  0.14, scale: 1.00, female: false },
-    flute: { x:  0.48, z:  1.32, yaw: -0.08, scale: 1.00, female: true,  gown: [.052, .058, .105] },
+    flute: { x:  0.48, z:  1.32, yaw: -0.08, scale: 0.94, female: true,  gown: [.052, .058, .105] },
     oboe:  { x: -0.45, z:  1.32, yaw:  0.08, scale: 1.00, female: false },
-    piano: { x:  2.05, z:  1.52, yaw: -0.55, scale: 1.00, female: true,  gown: [.115, .042, .055] },
+    piano: { x:  2.05, z:  1.52, yaw: -0.55, scale: 0.94, female: true,  gown: [.115, .042, .055] },
   };
 
   // =========================================================================
