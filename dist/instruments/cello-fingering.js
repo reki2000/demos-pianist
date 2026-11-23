@@ -282,41 +282,37 @@ window.CelloFingering = (() => {
     return { notes: results, stats };
   }
 
-  function applyBowing(song, results, groups, { secPerBeat, maxStrokeBeats }) {
+  function applyBowing(song, results, groups, { secPerBeat }) {
     const beat = t => t / secPerBeat;
-    const FULL_BOW_SEC = 6; // seconds of sounding that spend a whole bow
-    // Pass 1: segment groups into strokes, assign directions.
-    const strokes = []; // {startBeat, durBeats, dir, groups:[]}
+    // Pass 1: alternate down-bow / up-bow on every attack group (retake down-bow after a long rest).
+    const strokes = []; // {startBeat, durBeats, durSec, dir, retake, groups:[]}
     let prevEnd = null;
     for (const g of groups) {
       const gStart = beat(g.start);
-      const gDur = Math.max(...g.notes.map(n => beat(n.dur)));
+      const gDurSec = Math.max(...g.notes.map(n => n.dur));
+      const gDur = beat(gDurSec);
       const gap = prevEnd == null ? Infinity : gStart - prevEnd;
       const cur = strokes[strokes.length - 1];
-      const wouldExceed = cur && (gStart - cur.startBeat) + gDur > maxStrokeBeats && gStart > cur.startBeat;
-      if (!cur || gap >= 0.5 || wouldExceed) {
-        const retake = prevEnd == null || gap >= 2;
-        const dir = !cur ? 'down' : retake ? 'down' : (cur.dir === 'down' ? 'up' : 'down');
-        strokes.push({ startBeat: gStart, durBeats: gDur, dir, retake, groups: [g] });
-      } else {
-        cur.groups.push(g);
-        cur.durBeats = Math.max(cur.durBeats, gStart - cur.startBeat + gDur);
-      }
+      const retake = prevEnd == null || gap >= 2;
+      const dir = !cur ? 'down' : retake ? 'down' : (cur.dir === 'down' ? 'up' : 'down');
+      strokes.push({ startBeat: gStart, durBeats: gDur, durSec: gDurSec, dir, retake, groups: [g] });
       prevEnd = Math.max(prevEnd == null ? 0 : prevEnd, gStart + gDur);
     }
     // Pass 2: walk the bow position through the strokes (frog=0, tip=1),
-    // then interpolate each note's share of its stroke.
-    let bowPos = 0.12;
+    // chaining each reversal smoothly with realistic per-note bow travel.
+    let bowPos = 0.16;
     strokes.forEach((st, si) => {
-      const travel = Math.min(0.9, Math.max(0.12, (st.durBeats * secPerBeat) / FULL_BOW_SEC));
-      if (st.retake) bowPos = st.dir === 'down' ? Math.min(bowPos, 0.25) : Math.max(bowPos, 0.75);
-      if (st.dir === 'down' && bowPos + travel > 1) bowPos = Math.max(0, 1 - travel);
-      if (st.dir === 'up' && bowPos - travel < 0) bowPos = Math.min(1, travel);
-      const start = bowPos, sgn = st.dir === 'down' ? 1 : -1;
+      const want = Math.min(0.68, Math.max(0.20, 0.20 + 0.48 * Math.sqrt(Math.min(st.durSec / 2.2, 1))));
+      if (st.retake) bowPos = st.dir === 'down' ? 0.14 : 0.84;
+      const sgn = st.dir === 'down' ? 1 : -1;
+      const room = sgn > 0 ? (0.86 - bowPos) : (bowPos - 0.12);
+      const travel = Math.min(want, Math.max(0.16, room));
+      if (room < 0.16) bowPos = sgn > 0 ? Math.min(bowPos, 0.86 - travel) : Math.max(bowPos, 0.12 + travel);
+      const start = bowPos;
       for (const g of st.groups) for (const n of g.notes) {
         const r = results[n.i];
-        const f0 = (beat(n.start) - st.startBeat) / st.durBeats;
-        const f1 = (beat(n.start) + beat(n.dur) - st.startBeat) / st.durBeats;
+        const f0 = st.durBeats > 0 ? (beat(n.start) - st.startBeat) / st.durBeats : 0;
+        const f1 = st.durBeats > 0 ? (beat(n.start) + beat(n.dur) - st.startBeat) / st.durBeats : 1;
         r.bow = st.dir; r.stroke = si;
         r.bowFrom = start + sgn * travel * f0;
         r.bowTo = start + sgn * travel * f1;

@@ -30,7 +30,7 @@ const noteName = n => ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 
 // ------------------------------------------------------------------
 // Adapters: normalize each module's INTERFACE entry point.
 // ------------------------------------------------------------------
-const cinematic = Object.fromEntries(['guitar','violin','cello'].map(id=>[id,CinematicCamera.create(id)]));
+const cinematic = Object.fromEntries(['guitar','violin','viola','cello','flute','oboe','clarinet','trumpet','harp','bass','percussion','quartet','ensemble'].map(id=>[id,CinematicCamera.create(id)]));
 const plans = new Map();       // 'inst:song' -> motion plan
 const planned = new Set();     // song objects whose plan() already ran
 function getPlan(inst, song) {
@@ -38,6 +38,34 @@ function getPlan(inst, song) {
   if (!plans.has(key)) { inst.beforePlan && inst.beforePlan(song); plans.set(key, inst.plan(song)); planned.add(song); }
   return plans.get(key);
 }
+function makeAdapter(o) {
+  const I = () => window[o.global];
+  return {
+    id: o.id, label: o.label, performerLabel: o.performerLabel, collection: o.collection,
+    detailLabel: o.detailLabel, scoreHint: o.scoreHint, I,
+    songs: () => I().songs, plan: s => I().plan(s), pose: (p, t) => I().stateAt(p, t),
+    draw(R, p, t) { const st = I().stateAt(p, t); I().draw(R, st); return st; },
+    wrists: o.wrists || (() => ({})),
+    createVoice: (ctx, vol) => I().createVoice(ctx, { volume: vol }),
+    startNote(v, song, i, when, speed) {
+      if (o.noteOnly) v.startNote(song.notes[i], when, speed);
+      else v.startNote(song, song.notes[i], when, speed);
+    },
+    stopVoice: v => v.stopAll(), setVolume: (v, x) => v.setVolume(x),
+    drawScore(cv, song, plan, t) {
+      const cfg = I().scoreConfig;
+      window.StringScore.render(cv, {
+        song: song.scoreNotes ? { ...song, notes: song.scoreNotes } : song, t,
+        beatAt: s => s * song.bpm / 60,
+        signature: song.signatures[0], fifths: song.keySignature.fifths,
+        clefFor: o.clefFor ? (() => o.clefFor(song)) : () => (cfg?.clef || 'treble'),
+        ...(cfg?.annotation ? { annotation: i => cfg.annotation(plan.notes[i]) } : {}),
+      });
+    },
+    shots: o.shots,
+  };
+}
+const windWrists = st => ({ bow: st.armR.wrist, fin: st.armL.wrist, shB: st.armR.shoulder, shF: st.armL.shoulder });
 const ADAPTERS = {
   guitar: {
     id: 'guitar', label: 'Guitar', performerLabel: 'GUITARIST', collection: 'THE GUITAR COLLECTION',
@@ -174,6 +202,118 @@ const ADAPTERS = {
       wide: { eye: [-2.3, 1.65, -3.3], at: [0, 0.92, -0.10], label: '01 / Stage' },
     },
   },
+  viola: makeAdapter({
+    id: 'viola', label: 'Viola', performerLabel: 'VIOLIST', collection: 'THE VIOLA COLLECTION', detailLabel: 'BOW', global: 'VIOLA_INSTRUMENT', wrists: windWrists,
+    clefFor: song => 'tenor',
+    scoreHint: 'Gold notes are sounding · Solo Viola (C3–G3–D4–A4) · natural left hand & alternating bow',
+    shots: {
+      auto: [{ eye: [0.55, 1.56, -2.95], at: [0.05, 1.18, -0.15], label: '01 / Front' }],
+      hands: { eye: [1.00, 1.74, -1.02], at: [0.27, 1.42, -0.34], label: 'Hands on the fingerboard' },
+      portrait: { eye: [-0.80, 1.80, -1.30], at: [0.10, 1.46, -0.20], label: 'Head · torso · wrists' },
+      detail: { eye: [-1.30, 1.58, -1.20], at: [-0.12, 1.40, -0.28], label: 'Bow at the frog' },
+      wide: { eye: [2.6, 2.2, -3.4], at: [0, 1.05, 0], label: '01 / Stage' },
+    },
+  }),
+  flute: makeAdapter({
+    id: 'flute', label: 'Flute', performerLabel: 'FLUTIST', collection: 'THE FLUTE COLLECTION', detailLabel: 'KEYS', global: 'FLUTE_INSTRUMENT', noteOnly: true, wrists: windWrists,
+    scoreHint: 'Gold notes are sounding · Boehm fingering below (T = thumb, 1–3 = fingers, + = G#, Eb/C/C# = footjoint)',
+    shots: {
+      auto: [{ eye: [-0.45, 1.56, -2.85], at: [-0.12, 1.18, -0.10], label: '01 / Front' }],
+      hands: { eye: [-0.30, 1.72, -0.78], at: [-0.28, 1.46, -0.16], label: 'Both hands on the Boehm keys' },
+      portrait: { eye: [-0.85, 1.66, -1.15], at: [-0.08, 1.48, -0.10], label: 'Head · embouchure · torso' },
+      detail: { eye: [-0.35, 1.62, -0.62], at: [-0.32, 1.45, -0.17], label: 'Keywork close-up' },
+      wide: { eye: [-2.1, 1.95, -3.2], at: [-0.05, 1.05, 0], label: '01 / Stage' },
+    },
+  }),
+  oboe: makeAdapter({
+    id: 'oboe', label: 'Oboe', performerLabel: 'OBOIST', collection: 'THE OBOE COLLECTION', detailLabel: 'KEYS', global: 'OBOE_INSTRUMENT', noteOnly: true, wrists: windWrists,
+    scoreHint: 'Gold notes are sounding · Conservatoire fingering below (¹/² = octave keys, ½ = half-hole, 1–3 = fingers)',
+    shots: {
+      auto: [{ eye: [0.55, 1.54, -2.85], at: [0, 1.16, -0.15], label: '01 / Front' }],
+      hands: { eye: [0.36, 1.50, -0.82], at: [0, 1.24, -0.32], label: 'Both hands on the oboe keys' },
+      portrait: { eye: [-0.85, 1.62, -1.15], at: [0, 1.44, -0.14], label: 'Head · reed · torso' },
+      detail: { eye: [0.22, 1.38, -0.74], at: [0, 1.22, -0.33], label: 'Keywork close-up' },
+      wide: { eye: [2.2, 1.95, -3.2], at: [0, 1.05, 0], label: '01 / Stage' },
+    },
+  }),
+  clarinet: makeAdapter({
+    id: 'clarinet', label: 'Clarinet', performerLabel: 'CLARINETIST', collection: 'THE CLARINET COLLECTION', detailLabel: 'KEYS', global: 'CLARINET_INSTRUMENT', wrists: windWrists,
+    scoreHint: 'Gold notes are sounding · Boehm clarinet fingering below (R = register key, T = thumb, 1–3 = fingers)',
+    shots: {
+      auto: [{ eye: [0.55, 1.20, -2.59], at: [0, 1.02, -0.24], label: '01 / Clarinet' }],
+      hands: { eye: [0.36, 1.44, -0.95], at: [0, 1.22, -0.34], label: 'Clarinet keywork' },
+      portrait: { eye: [-0.85, 1.56, -1.15], at: [0, 1.42, -0.14], label: 'Clarinetist portrait' },
+      detail: { eye: [0.25, 1.32, -0.82], at: [0, 1.18, -0.36], label: 'Keys & bell' },
+      wide: { eye: [1.8, 1.65, -2.8], at: [0, 1.02, -0.20], label: '01 / Stage' },
+    },
+  }),
+  trumpet: makeAdapter({
+    id: 'trumpet', label: 'Trumpet', performerLabel: 'TRUMPETER', collection: 'THE TRUMPET COLLECTION', detailLabel: 'VALVES', global: 'TRUMPET_INSTRUMENT', wrists: windWrists,
+    scoreHint: 'Gold notes are sounding · 3-valve piston fingering below (0 = open, 1/2/3 = valves)',
+    shots: {
+      auto: [{ eye: [-0.68, 1.31, -2.56], at: [0, 1.15, -0.26], label: '01 / Trumpet' }],
+      hands: { eye: [-0.55, 1.68, -0.88], at: [0, 1.48, -0.36], label: '3-Valve pistons' },
+      portrait: { eye: [0.85, 1.56, -1.10], at: [0, 1.46, -0.24], label: 'Trumpeter portrait' },
+      detail: { eye: [-0.48, 1.58, -0.95], at: [0, 1.48, -0.44], label: 'Bell & pistons' },
+      wide: { eye: [-1.8, 1.65, -2.8], at: [0, 1.10, -0.24], label: '01 / Stage' },
+    },
+  }),
+  harp: makeAdapter({
+    id: 'harp', label: 'Harp', performerLabel: 'HARPIST', collection: 'THE HARP COLLECTION', detailLabel: 'STRINGS', global: 'HARP_INSTRUMENT',
+    scoreHint: 'Gold notes are sounding · 47-string Concert Grand Harp (red = C, blue = F)',
+    shots: {
+      auto: [{ eye: [-1.15, 1.02, -3.03], at: [0, 0.82, -0.38], label: '01 / Concert Harp' }],
+      hands: { eye: [-0.95, 1.20, -1.12], at: [-0.04, 1.02, -0.44], label: 'Hands on strings' },
+      portrait: { eye: [-0.85, 1.42, -1.05], at: [0, 1.24, 0.02], label: 'Harpist portrait' },
+      detail: { eye: [-0.85, 0.62, -1.45], at: [-0.04, 0.35, -0.35], label: '7 Pedals & base' },
+      wide: { eye: [-1.8, 1.35, -3.3], at: [0, 0.86, -0.38], label: '01 / Stage' },
+    },
+  }),
+  bass: makeAdapter({
+    id: 'bass', label: 'Bass', performerLabel: 'BASSIST', collection: 'THE DOUBLE BASS COLLECTION', detailLabel: 'BOW', global: 'BASS_INSTRUMENT',
+    scoreHint: 'Gold notes are sounding · Upright Double Bass (E1–A1–D2–G2) · alternating French bow',
+    shots: {
+      auto: [{ eye: [-0.65, 1.06, -3.05], at: [0.12, 0.88, -0.20], label: '01 / Double Bass' }],
+      hands: { eye: [0.85, 1.60, -1.25], at: [0.19, 1.42, -0.24], label: 'Left hand shifts' },
+      portrait: { eye: [-0.85, 1.72, -1.10], at: [0, 1.54, -0.05], label: 'Bassist portrait' },
+      detail: { eye: [-0.65, 0.92, -1.55], at: [0.20, 0.74, -0.39], label: 'French bow' },
+      wide: { eye: [-1.8, 1.45, -3.4], at: [0.10, 0.90, -0.20], label: '01 / Stage' },
+    },
+  }),
+  percussion: makeAdapter({
+    id: 'percussion', label: 'Percussion', performerLabel: 'PERCUSSIONIST', collection: 'CONCERT PERCUSSION', detailLabel: 'MALLETS', global: 'PERCUSSION_INSTRUMENT',
+    clefFor: song => song.percKind === 'timpani' ? 'bass' : 'treble',
+    scoreHint: 'Gold notes are sounding · Rosewood Marimba & 4 Copper Timpani',
+    shots: {
+      auto: [{ eye: [0, 1.24, -3.21], at: [0, 0.82, -0.46], label: '01 / Percussion' }],
+      hands: { eye: [0.35, 2.05, -1.85], at: [0, 0.92, -0.50], label: 'Mallets overhead' },
+      portrait: { eye: [0.85, 1.48, -1.70], at: [0, 1.22, -0.25], label: 'Percussionist' },
+      detail: { eye: [-0.45, 1.32, -1.65], at: [0, 0.94, -0.48], label: 'Mallet detail' },
+      wide: { eye: [-1.8, 1.65, -3.3], at: [0, 0.86, -0.46], label: '01 / Stage' },
+    },
+  }),
+  quartet: makeAdapter({
+    id: 'quartet', label: 'Quartet', performerLabel: 'QUARTET', collection: 'STRING QUARTET (4 PLAYERS)', detailLabel: 'STRINGS', global: 'QUARTET_INSTRUMENT',
+    scoreHint: 'Gold notes are sounding · String Quartet (Vn I · Vn II · Viola · Cello) · lead voice shown',
+    shots: {
+      auto: [{ eye: [0, 1.14, -4.90], at: [0, 0.78, -0.05], label: '01 / Quartet' }],
+      hands: { eye: [1.50, 1.50, -2.05], at: [0.75, 1.22, -0.10], label: 'Violin I & II bows' },
+      portrait: { eye: [-1.45, 1.30, -2.15], at: [-0.82, 1.02, -0.05], label: 'Viola & Cello' },
+      detail: { eye: [0.35, 2.55, -3.75], at: [0, 0.95, 0], label: 'Quartet semicircle' },
+      wide: { eye: [0, 1.25, -5.05], at: [0, 0.82, -0.05], label: '01 / Hall' },
+    },
+  }),
+  ensemble: makeAdapter({
+    id: 'ensemble', label: 'Ensemble', performerLabel: 'DECET', collection: 'ALL-STAR DECET (10 PLAYERS)', detailLabel: 'WINDS', global: 'ENSEMBLE_INSTRUMENT',
+    scoreHint: 'Gold notes are sounding · 10-Player All-Star Decet (Fl · Ob · Gt · Pf · 4 Vn · 2 Vc) · lead voice shown',
+    shots: {
+      auto: [{ eye: [0, 1.26, -6.80], at: [0, 0.68, 0.45], label: '01 / All-Star Decet' }],
+      hands: { eye: [1.55, 1.60, -2.55], at: [1.05, 1.22, 0.15], label: '4-Violin section' },
+      portrait: { eye: [0.25, 1.52, -0.75], at: [0, 1.28, 1.32], label: 'Flute & Oboe soloists' },
+      detail: { eye: [-1.55, 1.35, -2.55], at: [-1.15, 0.95, -0.32], label: 'Cellos & Guitar' },
+      wide: { eye: [0, 1.38, -7.00], at: [0, 0.72, 0.45], label: '01 / Grand Stage' },
+    },
+  }),
 };
 
 // ------------------------------------------------------------------
@@ -317,6 +457,7 @@ function enterString(a, songId) {
   selectSong(songId || (mem && a.songs().some(s => s.id === mem.songId) ? mem.songId : a.songs()[0].id));
   if (mem && mem.songId === song.id) position = clamp(mem.position || 0, 0, song.duration);
   $('play').disabled = false;
+  setScoreOpen(a.id !== 'quartet' && a.id !== 'ensemble');
 }
 function enterPiano() {
   if (!active) return;
@@ -328,6 +469,7 @@ function enterPiano() {
   cameraControl.cancel();
   active = null; song = null; plan = null;
   window.recital.setRenderEnabled(true);
+  setScoreOpen(true);
   if (pianoButtons) { const wrap = $('songs'); wrap.innerHTML = ''; for (const b of pianoButtons) wrap.append(b); }
   document.querySelector('.edition').innerHTML = pianoDOM.edition;
   document.querySelector('.collection-heading>span').textContent = pianoDOM.count;
@@ -393,18 +535,18 @@ function attachCelloMesh(R) {
     gl.drawArrays(gl.TRIANGLES, 0, data.length / 6);
   };
 }
-let lastNow = performance.now();
+let lastNow = performance.now(), lastRenderSig = '';
 function frame(now) {
   requestAnimationFrame(frame);
   if (!active || document.hidden || now - lastNow < 1000 / 30) return;
   const dt = Math.min(0.05, (now - lastNow) / 1000); lastNow = now;
-  // Both performers share one WebGL context. Restore the piano's program
-  // after our frame, and rebind ours in begin(), including on switch-back.
   const sharedGL = $('scene').getContext('webgl');
   const previousProgram = sharedGL && typeof sharedGL.getParameter === 'function' ? sharedGL.getParameter(sharedGL.CURRENT_PROGRAM) : null;
   if (!renderer) { try { renderer = window.RecitalGL.create($('scene')); attachCelloMesh(renderer); } catch (e) { return; } }
   const t = currentTime();
-  const pose = active.id === 'cello' ? (camMode==='auto'?window.CelloMotion.poseCached(song,t):null) : active.pose(plan, t);
+  // Avoid redundant pose computation for modes whose camera does not track hands.
+  const needsPose = active.id !== 'cello' && !['quartet', 'ensemble', 'harp', 'bass', 'percussion'].includes(active.id);
+  const pose = active.id === 'cello' ? (camMode==='auto'?window.CelloMotion.poseCached(song,t):null) : (needsPose ? active.pose(plan, t) : null);
   // Camera resolution.
   let shot = null, dynEye = null, dynAt = null;
   const S = active.shots;
@@ -420,17 +562,25 @@ function frame(now) {
   const narrow = !manual && camMode!=='auto' && $('scene').clientWidth < 650 && !['hands', 'pedal', 'portrait'].includes(camMode);
   const renderEye = narrow ? eye.map((v, i) => i === 1 ? v + 0.4 : v * 1.23) : eye;
   lastCamera={eye:renderEye.slice(),at:target.slice(),up:manual?manual.up.slice():camMode==='auto'?shot.up:[0,1,0]};
+  const scCv = $('scene'), scoreVis = $('score').style.display !== 'none';
+  const sig = playing ? '' : `${active.id}:${song.id}:${t.toFixed(3)}:${camMode}:${scoreVis}:${scCv.clientWidth}x${scCv.clientHeight}:${renderEye.map(v=>v.toFixed(3))}:${target.map(v=>v.toFixed(3))}`;
+  if (!playing && sig === lastRenderSig) { if (previousProgram) sharedGL.useProgram(previousProgram); return; }
+  lastRenderSig = sig;
   renderer.begin(renderEye, target,lastCamera.up);
   drawStage(renderer);
-  if (active.id === 'cello') active.draw(renderer, plan, t, song); else active.draw(renderer, plan, t);
-  // Score.
+  if (active.id === 'cello') active.draw(renderer, plan, t, song);
+  else if (pose && active.I && active.I().draw && active.id !== 'guitar') active.I().draw(renderer, pose);
+  else active.draw(renderer, plan, t);
+  // Score (skip drawing when accordion is collapsed; throttle to 30fps during playback).
   const cv = $('score');
-  if (active.prepareScoreCanvas) {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    if (cv.width !== Math.round(cv.clientWidth * dpr)) { cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr); }
-    const c2 = cv.getContext('2d'); c2.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (cv.style.display !== 'none' && (!playing || (frame._sc = ((frame._sc || 0) + 1) & 1) === 0)) {
+    if (active.prepareScoreCanvas) {
+      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      if (cv.width !== Math.round(cv.clientWidth * dpr)) { cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr); }
+      const c2 = cv.getContext('2d'); c2.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    active.drawScore(cv, song, plan, t);
   }
-  active.drawScore(cv, song, plan, t);
   // HUD.
   $('shotText').textContent = shot ? shot.label : '';
   const act = [];
@@ -488,15 +638,19 @@ document.querySelectorAll('.instruments button').forEach(b => b.addEventListener
   else enterString(ADAPTERS[id]);
 }));
 const scorePanel = document.querySelector('.score-panel');
+const scoreCaption = document.querySelector('.score-caption');
 const toggle = document.createElement('button');
-toggle.className = 'score-toggle'; toggle.textContent = 'Hide score'; toggle.setAttribute('aria-expanded', 'true');
-toggle.onclick = () => {
-  const cv = $('score'), hide = cv.style.display !== 'none';
-  cv.style.display = hide ? 'none' : '';
-  toggle.textContent = hide ? 'Show score' : 'Hide score';
-  toggle.setAttribute('aria-expanded', String(!hide));
-};
-document.querySelector('.score-caption').append(toggle);
+toggle.className = 'score-toggle'; toggle.textContent = '▾ Hide score'; toggle.setAttribute('aria-expanded', 'true');
+function setScoreOpen(open) {
+  const cv = $('score');
+  cv.style.display = open ? '' : 'none';
+  scorePanel?.classList.toggle('collapsed', !open);
+  toggle.textContent = open ? '▾ Hide score' : '▸ Show score';
+  toggle.setAttribute('aria-expanded', String(!!open));
+}
+toggle.onclick = e => { e.stopPropagation(); setScoreOpen($('score').style.display === 'none'); };
+scoreCaption.addEventListener('click', () => setScoreOpen($('score').style.display === 'none'));
+scoreCaption.append(toggle);
 
 // Debug/test surface (mirrors window.recital's shape). debugSides
 // reports each wrist's side of the TORSO sagittal plane (a quick

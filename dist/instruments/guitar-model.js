@@ -145,10 +145,10 @@ function headFrame(pose) {
  * rests exactly on the stool top (0.14) and the right shoe's sole on
  * the floor (0). Exported for posture-test.cjs. */
 const POSTURE = {
-  hipL: [0.140, .655, .045], kneeL: [0.275, .700, -0.290], ankleL: [0.230, .190, -0.315],
-  hipR: [-0.135, .655, .045], kneeR: [-0.215, .560, -0.300], ankleR: [-0.215, .060, -0.420],
-  shoeL: [0.230, .185, -0.350], shoeR: [-0.215, .045, -0.455], shoeHalfH: .045,
-  stool: [0.220, .070, -0.310], stoolTop: .14,
+  hipL: [0.135, .640, .085], kneeL: [0.275, .690, -0.295], ankleL: [0.230, .190, -0.320],
+  hipR: [-0.130, .640, .085], kneeR: [-0.215, .555, -0.305], ankleR: [-0.215, .060, -0.420],
+  shoeL: [0.230, .185, -0.355], shoeR: [-0.215, .045, -0.455], shoeHalfH: .045,
+  stool: [0.220, .070, -0.315], stoolTop: .14,
 };
 
 function fingerDraw(R, f, rad) {
