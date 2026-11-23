@@ -25,7 +25,7 @@ window.BowHand = (() => {
     const radial=H.basis?H.basis[0]:[1,0,0];let X=sub(radial,mul(Y,dot(radial,Y)));if(Math.hypot(...X)<1e-6)X=cross([0,0,1],Y);X=unit(X);const Z=cross(X,Y);
     const cuff=sub(A.wrist,mul(Y,.050)),end=sub(A.wrist,mul(Y,.030));
     const part=(shape,a,b,width,depth,color)=>oriented(R,shape,mul(add(a,b),.5),[width,Math.hypot(...sub(b,a))*.5,depth],color,[X,Y,Z]);
-    part('forearm',A.elbow,cuff,.035,.022,suit);
+    part('forearm',A.elbow,cuff,.044,.040,suit);
     part('bodyLimb',A.wrist,cuff,.022,.014,skin);
     part('bodyLimb',end,cuff,.025,.016,shirt);
   }

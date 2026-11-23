@@ -118,7 +118,11 @@ function drawGuitar(R, pose, t) {
 const HEAD_C = [0.008, 1.615, -0.005], HEAD_S = [.082, .112, .092];
 const FS = [HEAD_S[0] / .112, HEAD_S[1] / .148, HEAD_S[2] / .128];
 function headFrame(pose) {
-  const rx = pose.torso.lean * .6, ry = Math.PI - 0.785, rz = pose.torso.sway * .5; // 45 deg glance toward the fretboard, whose bearing from the head is now forward-left
+  const eh = pose.expression?.head;
+  const centre = eh ? eh.pos : HEAD_C;
+  const rx = eh ? eh.pitch : pose.torso.lean * .6;
+  const ry = eh ? eh.yaw : Math.PI - 0.785;
+  const rz = eh ? eh.roll : pose.torso.sway * .5;
   const rot = p => {
     let [x, y, z] = p, c = Math.cos(rx), s = Math.sin(rx);
     [y, z] = [y * c - z * s, y * s + z * c];
@@ -127,10 +131,10 @@ function headFrame(pose) {
     return [x, y, z];
   };
   const scale = p => [p[0] * FS[0], p[1] * FS[1], p[2] * FS[2]];
-  const point = p => add(HEAD_C, rot(scale(p)));
+  const point = p => add(centre, rot(scale(p)));
   const fwd = rot([0, 0, 1]), right = rot([1, 0, 0]);
   const nose = point([0, -.012, .122]);
-  return { centre: HEAD_C, rx, ry, rz, point, scale, fwd, right,
+  return { centre, rx, ry, rz, rot, point, scale, fwd, right,
     eyePlus: point([.04, .009, .12]), eyeMinus: point([-.04, .009, .12]),
     nose, noseTip: add(nose, mul(fwd, .02 * FS[2] * 1.3)) };
 }
@@ -141,10 +145,10 @@ function headFrame(pose) {
  * rests exactly on the stool top (0.14) and the right shoe's sole on
  * the floor (0). Exported for posture-test.cjs. */
 const POSTURE = {
-  hipL: [0.115, .88, .03], kneeL: [0.215, .80, -0.315], ankleL: [0.185, .19, -0.325],
-  hipR: [-0.115, .88, .03], kneeR: [-0.185, .60, -0.30], ankleR: [-0.20, .06, -0.44],
-  shoeL: [0.185, .185, -0.36], shoeR: [-0.205, .045, -0.475], shoeHalfH: .045,
-  stool: [0.175, .070, -0.315], stoolTop: .14,
+  hipL: [0.140, .655, .045], kneeL: [0.275, .700, -0.290], ankleL: [0.230, .190, -0.315],
+  hipR: [-0.135, .655, .045], kneeR: [-0.215, .560, -0.300], ankleR: [-0.215, .060, -0.420],
+  shoeL: [0.230, .185, -0.350], shoeR: [-0.215, .045, -0.455], shoeHalfH: .045,
+  stool: [0.220, .070, -0.310], stoolTop: .14,
 };
 
 function fingerDraw(R, f, rad) {
@@ -161,18 +165,32 @@ function drawPerformer(R, pose, t) {
   R.box([0.02, .515, 0.04], [.68, .05, .44], [.02, .02, .026], .7);
   for (const x of [0.30, -0.26]) for (const z of [-0.13, 0.21]) R.segment([x, .49, z], [x * .96, .03, z], .020, [.02, .02, .026]);
   R.box(POSTURE.stool, [.27, .14, .30], [.10, .08, .06], .2); // footstool
-  // Legs: left thigh raised toward the guitar, right leg down.
+  // Legs: left thigh raised cleanly under the guitar waist, right leg down.
   const { hipL, kneeL, hipR, kneeR } = POSTURE;
-  R.segment(hipL, kneeL, .058, suit); R.segment(hipR, kneeR, .058, suit);
+  R.segment(hipL, kneeL, .056, suit); R.segment(hipR, kneeR, .056, suit);
+  R.ball(kneeL, [.050, .050, .050], suit); R.ball(kneeR, [.050, .050, .050], suit);
   R.segment(kneeL, POSTURE.ankleL, .044, suit); R.segment(kneeR, POSTURE.ankleR, .044, suit);
   R.piece('shoe', POSTURE.shoeL, [.055, .045, .11], [.015, .012, .014], 0, 0, 0);
   R.piece('shoe', POSTURE.shoeR, [.055, .045, .11], [.015, .012, .014], 0, 0, 0);
-  // Torso + head (gentle lean and sway from the pose).
-  R.piece('jacket', [0, 1.165, 0.03], [.205, .295, .148], suit, lean, 0, sway);
+  // Torso + neck + head (expressive upper-body phrasing when pose.expression is present).
+  const expr = pose.expression;
   const hf = headFrame(pose), hp = hf.point, hs = hf.scale;
+  if (expr) {
+    const T = expr.torso, br = 1 + T.breath * 0.012;
+    R.piece('torso', [0, 0.77, 0.04], [.192, .165, .135], suit);
+    R.piece('jacket', T.pos, [.225 * br, .295, .152 * br], suit, T.pitch, T.yaw, T.roll);
+    const neckTop = add(hf.centre, hf.rot([0, -0.048, -0.004]));
+    const collarTop = T.neckBase.map((v, i) => v + (neckTop[i] - v) * 0.28);
+    R.segment(T.neckBase, collarTop, .045, shirt);
+    R.segment(T.neckBase, neckTop, .040, skin);
+  } else {
+    R.piece('jacket', [0, 1.165, 0.03], [.205, .295, .148], suit, lean, 0, sway);
+  }
   R.setFaceDetail?.(true);
-R.piece('head', HEAD_C, HEAD_S, skin, hf.rx, hf.ry, hf.rz);
-  R.piece('hair', [0.008, 1.645, 0.012], [.086, .105, .096], hair, hf.rx, hf.ry, hf.rz);
+R.piece('head', hf.centre, HEAD_S, skin, hf.rx, hf.ry, hf.rz);
+  const hairPos = expr ? add(hf.centre, hf.rot([0, 0.004, 0])) : [0.008, 1.645, 0.012];
+  const hairScale = expr ? [.086, .112, .096] : [.086, .105, .096];
+  R.piece('hair', hairPos, hairScale, hair, hf.rx, hf.ry, hf.rz);
   // Face, mirrored from the demos-pianist performer: serene lowered
   // eyes (lash segments), soft brows, ears, a nose piece and lips, at
   // the pianist's local coordinates scaled by FS (see headFrame).
@@ -189,10 +207,11 @@ R.piece('head', HEAD_C, HEAD_S, skin, hf.rx, hf.ry, hf.rz);
 R.setFaceDetail?.(false);
   // Arms (exact two-bone chains from the pose).
   for (const arm of pose.arms) {
+    if (expr) R.ball(arm.shoulder, [.046, .046, .046], suit);
     R.segment(arm.shoulder, arm.elbow, .047, suit);
-    const v=arm.elbow.map((v,i)=>v-arm.wrist[i]),l=Math.hypot(...v),cuff=arm.wrist.map((v,i)=>v+0.040* (arm.elbow[i]-v)/l);
-    R.segment(arm.elbow,cuff,.031,suit);R.segment(cuff,arm.wrist,.021,shirt);
-    R.ball(arm.elbow, [.042, .042, .042], suit);
+    const v=arm.elbow.map((v,i)=>v-arm.wrist[i]),l=Math.hypot(...v),cuff=arm.wrist.map((v,i)=>v+0.040*(arm.elbow[i]-v)/l);
+    R.segment(arm.elbow,cuff,.044,suit,'forearm');R.segment(cuff,arm.wrist,.028,shirt);
+    R.ball(arm.elbow, [.044, .044, .044], suit);
   }
   if(pose.hands){window.GuitarHandSkin.draw(R,pose.hands,skin);}
   else {

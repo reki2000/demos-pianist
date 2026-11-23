@@ -71,7 +71,8 @@ window.makeGuitarHands=()=>{
     F.points=pts;F.error=Math.hypot(...sub(pts[3],target));
    }H.fingers.push(F);
   }
-  const root=point(H,ROOT[4]),target=hand?targets[4].target:thumbTarget(x,H),F=finger(root,target,0,hand?u:mul(n,-1));
+  const thumbH=smooth((x[0]-.20)/.080),thumbHint=hand?u:add(mul(w,.48*(1-thumbH)),mul(n,-1));
+  const root=point(H,ROOT[4]),target=hand?targets[4].target:thumbTarget(x,H),F=finger(root,target,0,thumbHint);
   H.thumb=F.points;H.thumbInfo=F;H.carriage=x;return H;
  }
  function pressPoint(nt){
