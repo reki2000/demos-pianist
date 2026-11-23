@@ -187,60 +187,115 @@ function drawBow(R, bow) {
   R.ball(bow.frogStick.map((v, i) => v - bow.axis[i] * 0.037), [0.005, 0.005, 0.005], [.6, .6, .62], 0.8);
 }
 
-function drawPerformer(R, S) {
+function drawPerformer(R, S, opts) {
   const sw = S.sway, up = S.upperSway || sw;
   const P = p => [p[0] + sw[0], p[1] + sw[1], p[2] + sw[2]];
   const P2 = p => [p[0] + up[0], p[1] + up[1], p[2] + up[2]];
-  // Legs and shoes (standing).
-  for (const s of [-1, 1]) {
-    const hip = P([s * 0.095, 0.99, 0]), knee = P([s * 0.105, 0.52, -0.012]), ankle = P([s * 0.11, 0.075, 0.008]);
-    R.segment(hip, knee, 0.074, suit); R.segment(knee, ankle, 0.052, suit);
-    R.piece('joint', knee, [.058, .058, .058], suit);
-    // The shoe loft's toe is its local +Z end; the performer faces -Z,
-    // so the shoe is yawed PI (the pianist's unrotated call, kept in an
-    // earlier port, pointed the toes at the back of the stage) and the
-    // centre sits 80mm toward the facing from the ankle, as there.
-    R.piece('shoe', P([s * 0.11, 0.038, -0.072]), [.058, .040, .140], ebony, 0, Math.PI, 0);
+  const female = !!opts?.female;
+  const gown = opts?.gown || [.125, .040, .058];
+  if (female) {
+    R.piece('torso', P([0, 0.52, 0.006]), [.225, .44, .185], gown);
+    R.piece('torso', P([0, 0.16, 0.004]), [.275, .14, .225], gown);
+    for (const s of [-1, 1]) R.piece('shoe', P([s * 0.095, 0.032, -0.068]), [.046, .032, .126], ebony, 0, Math.PI, 0);
+  } else {
+    // Legs and shoes (standing — realistic ~7.8-head adult proportions).
+    for (const s of [-1, 1]) {
+      const hip = P([s * 0.088, 0.94, 0]), knee = P([s * 0.095, 0.49, -0.012]), ankle = P([s * 0.100, 0.068, 0.008]);
+      R.segment(hip, knee, 0.056, suit); R.segment(knee, ankle, 0.041, suit);
+      R.piece('joint', knee, [.046, .046, .046], suit);
+      R.piece('shoe', P([s * 0.100, 0.034, -0.068]), [.050, .036, .132], ebony, 0, Math.PI, 0);
+    }
   }
-  if(S.expression&&R.withTransform)return R.withTransform(S.expression.frame,()=>drawUpperBody(R,S,P2,up));
-  return drawUpperBody(R,S,P2,up);
+  if(S.expression&&R.withTransform)return R.withTransform(S.expression.frame,()=>drawUpperBody(R,S,P2,up,opts));
+  return drawUpperBody(R,S,P2,up,opts);
 }
-function drawUpperBody(R,S,P2,up){
-  // Torso: jacket loft, slight forward lean and breath.
-  const root = P2([0, 1.17, 0.012]);
-  R.piece('jacket', root, [.265 * (1 + S.breath * 0.01), .40, .180 * (1 + S.breath * 0.01)], suit, S.lean, S.torsoYaw, S.torsoRoll);
-  R.piece('palm', P2([0, 1.335, -0.155]), [.055, .15, .018], satin, S.lean + 0.06, S.torsoYaw, S.torsoRoll);
+function drawUpperBody(R,S,P2,up,opts){
+  const female = !!opts?.female;
+  const attire = female ? (opts?.gown || [.125, .040, .058]) : suit;
+  const hairCol = female ? [.115, .068, .046] : hairC;
+  const pearl = [.94, .90, .82];
+  // Torso: realistic ~55cm torso height matching violin shoulder sockets cleanly.
+  const root = P2([0, 1.19, 0.012]);
+  R.piece('torso', P2([0, 0.95, 0.010]), [female ? .160 : .172, .105, .118], attire);
+  R.piece('jacket', root, [(female ? .194 : .210) * (1 + S.breath * 0.01), .282, (female ? .128 : .138) * (1 + S.breath * 0.01)], attire, S.lean, S.torsoYaw, S.torsoRoll);
+  if (!female) R.piece('palm', P2([0, 1.315, -0.118]), [.038, .10, .012], satin, S.lean + 0.06, S.torsoYaw, S.torsoRoll);
+  else {
+    for (let i = -3; i <= 3; i++) {
+      const a = i * 0.28;
+      R.ball(P2([Math.sin(a) * 0.052, 1.415 - Math.cos(a) * 0.012, -0.050 * Math.cos(a)]), [.0050, .0050, .0050], pearl, 0.6);
+    }
+  }
   // Neck + head, tilted down toward the violin, chin over the chin rest.
   const H = S.head;
-  // The neck bridges the jacket (torso follow) and the head (which
-  // rides the instrument's sway with the chin on the rest).
   const hs = S.headSway || up;
-  R.segment([0.012 + hs[0], 1.47 + hs[1], -0.01 + hs[2]], H.pos, 0.048, skin);
+  R.segment([0.012 + hs[0], 1.43 + hs[1], -0.01 + hs[2]], H.pos, female ? 0.034 : 0.039, skin);
+  const VHS = female ? [.074, .105, .088] : [.078, .110, .092], VFS = [VHS[0] / .112, VHS[1] / .148, VHS[2] / .128];
+  const vs = p => [p[0] * VFS[0], p[1] * VFS[1], p[2] * VFS[2]];
   R.setFaceDetail?.(true);
-R.piece('head', H.pos, [.112, .148, .128], skinLight, H.pitch, H.yaw, H.roll);
+R.piece('head', H.pos, VHS, skinLight, H.pitch, H.yaw, H.roll);
   const hp = (p) => { // head-local point, same rotation convention as the pianist
-    const cr = Math.cos(H.roll), sr = Math.sin(H.roll), px = p[0] * cr - p[1] * sr, py = p[0] * sr + p[1] * cr;
+    const q = vs(p);
+    const cr = Math.cos(H.roll), sr = Math.sin(H.roll), px = q[0] * cr - q[1] * sr, py = q[0] * sr + q[1] * cr;
     const c = Math.cos(H.pitch), s = Math.sin(H.pitch), cy = Math.cos(H.yaw), sy = Math.sin(H.yaw);
-    const y = py * c - p[2] * s, z = py * s + p[2] * c;
+    const y = py * c - q[2] * s, z = py * s + q[2] * c;
     return [H.pos[0] + px * cy + z * sy, H.pos[1] + y, H.pos[2] + z * cy - px * sy];
   };
-  R.piece('hair', hp([0, 0.004, 0]), [.117, .148, .133], hairC, H.pitch, H.yaw, H.roll);
-  R.piece('nose', hp([0, -0.012, 0.122]), [.016, .034, .02], skinLight, H.pitch, H.yaw, H.roll);
+  R.piece('hair', hp([0, 0.004, 0]), vs([.117, .148, .133]), hairCol, H.pitch, H.yaw, H.roll);
+  if (female) {
+    R.ball(hp([0, -0.022, -0.135]), vs([.054, .052, .048]), hairCol);
+    for (const x of [-1, 1]) {
+      R.segment(hp([x * 0.098, 0.025, -0.020]), hp([x * 0.096, -0.135, -0.025]), 0.020, hairCol);
+      R.ball(hp([x * 0.112, -0.036, -0.005]), [.0055, .0055, .0055], pearl, 0.7);
+    }
+  }
+  R.piece('nose', hp([0, -0.012, 0.122]), vs([.016, .034, .02]), skinLight, H.pitch, H.yaw, H.roll);
   for (const x of [-1, 1]) {
     const ex = x * 0.04;
-    R.segment(hp([ex - 0.017, 0.010, 0.113]), hp([ex, 0.005, 0.120]), 0.0022, lash);
-    R.segment(hp([ex, 0.005, 0.120]), hp([ex + 0.017, 0.009, 0.114]), 0.0022, lash);
-    R.segment(hp([ex - 0.020, 0.042, 0.118]), hp([ex + 0.018, 0.045, 0.118]), 0.0032, hairC);
-    R.piece('joint', hp([x * 0.109, -0.008, -0.008]), [.012, .03, .022], skin, H.pitch, H.yaw, H.roll);
+    R.segment(hp([ex - 0.017, 0.010, 0.113]), hp([ex, 0.005, 0.120]), 0.0018, lash);
+    R.segment(hp([ex, 0.005, 0.120]), hp([ex + 0.017, 0.009, 0.114]), 0.0018, lash);
+    R.segment(hp([ex - 0.020, 0.042, 0.118]), hp([ex + 0.018, 0.045, 0.118]), 0.0024, hairCol);
+    R.piece('joint', hp([x * 0.109, -0.008, -0.008]), vs([.012, .03, .022]), skin, H.pitch, H.yaw, H.roll);
   }
-  R.segment(hp([-0.02, -0.074, 0.113]), hp([0.02, -0.072, 0.113]), 0.0042, [.62, .38, .33]);
+  R.segment(hp([-0.02, -0.074, 0.113]), hp([0.02, -0.072, 0.113]), 0.0034, female ? [.74, .34, .36] : [.62, .38, .33]);
 R.setFaceDetail?.(false);
-  // Arms (joints solved by motion): suit sleeves, white cuff, skin hands.
-  for (const [arm,hand] of [[S.armL,S.handL],[S.armR,S.handR]])
-    window.BowHand.drawArm(R,arm,hand,{suit,skin,shirt});
-  drawLeftHand(R,S.handL);
-  // Five articulated digits share the exact bow frame.
+  // Wrist vibrato on sustained stopped notes: rock the whole left hand & wrist
+  // smoothly along the string axis U while keeping the fingertip planted!
+  const stopNote = S.sounding && S.sounding.find(a => a.finger > 0);
+  let vibFrame = null;
+  if (stopNote && R.withTransform) {
+    const vibAng = Math.sin(S.time * Math.PI * 2 * 5.8) * 0.036;
+    const pivot = S.frame.stringPoint(stopNote.string, stopNote.distMm);
+    // Rotate about V (across fingerboard) so the palm & wrist rock along U (string axis)
+    const c = Math.cos(vibAng), s = Math.sin(vibAng);
+    const rotV = v => {
+      const d = v[0] * V[0] + v[1] * V[1] + v[2] * V[2];
+      const cr = [V[1] * v[2] - V[2] * v[1], V[2] * v[0] - V[0] * v[2], V[0] * v[1] - V[1] * v[0]];
+      return [v[0] * c + cr[0] * s + V[0] * d * (1 - c), v[1] * c + cr[1] * s + V[1] * d * (1 - c), v[2] * c + cr[2] * s + V[2] * d * (1 - c)];
+    };
+    const rP = rotV(pivot);
+    const vf = { U: rotV([1, 0, 0]), V: rotV([0, 1, 0]), W: rotV([0, 0, 1]), O: [pivot[0] - rP[0], pivot[1] - rP[1], pivot[2] - rP[2]] };
+    if (S.expression && S.expression.frame) {
+      const A = S.expression.frame;
+      const xv = q => [A.U[0]*q[0]+A.V[0]*q[1]+A.W[0]*q[2], A.U[1]*q[0]+A.V[1]*q[1]+A.W[1]*q[2], A.U[2]*q[0]+A.V[2]*q[1]+A.W[2]*q[2]];
+      vibFrame = { U: xv(vf.U), V: xv(vf.V), W: xv(vf.W), O: add(A.O, xv(vf.O)) };
+    } else vibFrame = vf;
+    vibFrame._local = vf;
+  }
+  // Right (bowing) arm + hand
+  window.BowHand.drawArm(R, S.armR, S.handR, { suit: attire, skin, shirt: female ? attire : shirt });
   window.BowHand.draw(R, S.handR, skin, skinLight);
+  // Left (fingering) arm + hand with whole-wrist vibrato rock
+  if (vibFrame) {
+    const lf = vibFrame._local;
+    const rW = [lf.U[0] * S.armL.wrist[0] + lf.V[0] * S.armL.wrist[1] + lf.W[0] * S.armL.wrist[2] + lf.O[0],
+                lf.U[1] * S.armL.wrist[0] + lf.V[1] * S.armL.wrist[1] + lf.W[1] * S.armL.wrist[2] + lf.O[1],
+                lf.U[2] * S.armL.wrist[0] + lf.V[2] * S.armL.wrist[1] + lf.W[2] * S.armL.wrist[2] + lf.O[2]];
+    window.BowHand.drawArm(R, { ...S.armL, wrist: rW }, S.handL, { suit: attire, skin, shirt: female ? attire : shirt });
+    R.withTransform(vibFrame, () => drawLeftHand(R, S.handL));
+  } else {
+    window.BowHand.drawArm(R, S.armL, S.handL, { suit: attire, skin, shirt: female ? attire : shirt });
+    drawLeftHand(R, S.handL);
+  }
 }
 
 // The wrist is oval, with its broad axis across the palm. Circular sleeve
@@ -282,7 +337,7 @@ function drawLeftHand(R,H) {
   if(natural)for(let j=0;j<4;j++){const r=[.010,.009,H.thumbPadRadius||.008,.007][j];R.oriented('rod',H.thumb[j],[r,r,r],skin,0,...H.basis);}
 }
 
-function draw(R, S) {
+function draw(R, S, opts) {
   const instrument=()=>{
   drawViolin(R, S.frame, S.activeStrings);
   // Hot speaking lengths for sounding strings (stop point -> bridge).
@@ -293,7 +348,7 @@ function draw(R, S) {
   drawBow(R, S.bow);
   };
   if(S.expression&&R.withTransform)R.withTransform(S.expression.frame,instrument);else instrument();
-  drawPerformer(R, S);
+  drawPerformer(R, S, opts);
 }
 
 return {

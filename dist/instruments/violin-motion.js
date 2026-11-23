@@ -179,10 +179,34 @@ function vibrato(note, t) {
 }
 
 function bowAt(P, t) {
-  const notes = P.notes;
+  if (!P._liveBow) {
+    // Build authentic per-note alternating (détaché) bow strokes so every
+    // attack group alternates down-bow / up-bow with realistic bow travel.
+    const groups = [];
+    for (const n of P.notes) {
+      const g = groups[groups.length - 1];
+      if (g && n.t0 - g.t0 < 0.03) { g.t1 = Math.max(g.t1, n.t1); g.dur = g.t1 - g.t0; }
+      else groups.push({ t0: n.t0, t1: n.t1, dur: n.dur, string: n.string });
+    }
+    let prevEnd = null, prevFrac = null, prevDir = 'up';
+    const strokes = groups.map((g, idx) => {
+      const longRest = prevEnd != null && g.t0 - prevEnd >= 1.0;
+      const bow = idx === 0 || longRest ? 'down' : (prevDir === 'down' ? 'up' : 'down');
+      const dir = bow === 'down' ? 1 : -1;
+      const want = clamp(0.16 + 0.56 * Math.sqrt(Math.min(g.dur / 2.2, 1)), 0.16, 0.70);
+      let from = longRest ? (dir > 0 ? 0.18 : 0.80) : (prevFrac != null ? prevFrac : (dir > 0 ? 0.18 : 0.80));
+      const room = dir > 0 ? (0.82 - from) : (from - 0.16);
+      const travel = Math.min(want, Math.max(0.12, room));
+      if (room < 0.14) from = dir > 0 ? clamp(from, 0.16, 0.82 - travel) : clamp(from, 0.16 + travel, 0.82);
+      const to = clamp(from + dir * travel, 0.16, 0.82);
+      prevEnd = g.t1; prevFrac = to; prevDir = bow;
+      return { t0: g.t0, t1: g.t1, dur: g.dur, string: g.string, bow, bowId: idx, bowFrom: from, bowTo: to };
+    });
+    P._liveBow = strokes;
+  }
+  const notes = P._liveBow;
   let i = lowerBound(notes, t + 1e-6, n => n.t0) - 1;
   const cur = notes[Math.max(0, i)], next = notes[i + 1];
-  // Sounding note (or the gap inside a stroke): s from the plan's bow track.
   let sounding = null;
   for (let k = Math.max(0, i); k >= 0 && notes[k].t0 > t - 12; k--) if (t >= notes[k].t0 && t < notes[k].t1) { sounding = notes[k]; break; }
   let s, stringF, dir = 'down', bowId = -1;

@@ -18,7 +18,7 @@ function mesh(data){let b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.
 let cube=[];for(let [n,verts] of [[[0,0,1],[[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5]]],[[0,0,-1],[[.5,-.5,-.5],[-.5,-.5,-.5],[-.5,.5,-.5],[.5,.5,-.5]]],[[1,0,0],[[.5,-.5,.5],[.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5]]],[[-1,0,0],[[-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[-.5,.5,-.5]]],[[0,1,0],[[-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5]]],[[0,-1,0],[[-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5]]]])for(let i of [0,1,2,0,2,3])cube.push(...verts[i],...n);
 let sphere=[];const uv=(a,b)=>[Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)];for(let i=0;i<14;i++)for(let j=0;j<20;j++){let a=i*Math.PI/14,b=j*Math.PI*2/20,da=Math.PI/14,db=Math.PI*2/20;let ps=[uv(a,b),uv(a+da,b),uv(a+da,b+db),uv(a,b+db)];for(let k of [0,1,2,0,2,3])sphere.push(...ps[k],...ps[k])}
 // Thin strings, bows and stage rails do not need the full ball mesh.
-let rod=[];for(let i=0;i<8;i++)for(let j=0;j<10;j++){let a=i*Math.PI/8,b=j*Math.PI*2/10,da=Math.PI/8,db=Math.PI*2/10;let ps=[uv(a,b),uv(a+da,b),uv(a+da,b+db),uv(a,b+db)];for(let k of [0,1,2,0,2,3])rod.push(...ps[k],...ps[k])}
+let rod=[];for(let i=0;i<4;i++)for(let j=0;j<6;j++){let a=i*Math.PI/4,b=j*Math.PI*2/6,da=Math.PI/4,db=Math.PI*2/6;let ps=[uv(a,b),uv(a+da,b),uv(a+da,b+db),uv(a,b+db)];for(let k of [0,1,2,0,2,3])rod.push(...ps[k],...ps[k])}
 function loft(sections,sides=20){let data=[],n=sections.length;
 // Rings are elliptical sections [y,rx,rz,dz]; vertex normals are averaged so curved parts shade smoothly.
 const se=(v,e)=>Math.sign(v)*Math.abs(v)**(2/e);
@@ -31,19 +31,19 @@ for(let i=0;i<n-1;i++)for(let j=0;j<sides;j++){let k=(j+1)%sides;vertex(i,j);ver
 for(let j=0;j<sides;j++){let k=(j+1)%sides,c0=[0,sections[0][0],sections[0][3]||0],c1=[0,sections.at(-1)[0],sections.at(-1)[3]||0];flat(c0,rings[0][k],rings[0][j],[0,-1,0]);flat(c1,rings.at(-1)[j],rings.at(-1)[k],[0,1,0])}return data}
 // Loft along local Z instead of Y (for shoes): swap the Y and Z of positions and normals.
 const alongZ=data=>{let out=data.slice();for(let i=0;i<out.length;i+=3){let y=out[i+1];out[i+1]=out[i+2];out[i+2]=y}return out};
-let shapes={box:mesh(cube),sphere:mesh(sphere),rod:mesh(rod),fingertip:mesh(loft([[-1,.62,.62],[-.8,1,1],[.45,.75,.75],[1,.12,.12]])),forearm:mesh(loft([[-1,1,1],[-.8,1,1],[.4,.78,.78],[1,.595238,.595238]])),
-torso:mesh(loft([[-1,.70,.80],[-.78,.86,.92],[-.3,.97,1],[.4,1,.98],[.8,.9,.86],[1,.55,.6]],12)),
-jacket:mesh(loft([[-1,.74,.82],[-.62,.70,.80],[-.15,.80,.88],[.38,.95,.94],[.68,1,.88],[.86,.82,.70],[.96,.5,.5],[1,.3,.36]],12)),
+let shapes={box:mesh(cube),sphere:mesh(sphere),rod:mesh(rod),fingertip:mesh(loft([[-1,.62,.62],[-.8,1,1],[.45,.75,.75],[1,.12,.12]],8)),forearm:mesh(loft([[-1,1,1],[-.8,1,1],[.4,.78,.78],[1,.595238,.595238]],10)),
+torso:mesh(loft([[-1,.70,.80],[-.3,.97,1],[.4,1,.98],[1,.55,.6]],8)),
+jacket:mesh(loft([[-1,.74,.82],[-.15,.80,.88],[.68,1,.88],[1,.3,.36]],8)),
 head:mesh(loft([[-1,.18,.2,.16],[-.92,.42,.45,.13],[-.74,.6,.66,.08],[-.48,.76,.84,.03],[-.15,.88,.95,0],[.2,.95,1,-.02],[.52,.93,.98,-.05],[.78,.8,.85,-.07],[.93,.55,.6,-.08],[1,.2,.24,-.08]],24)),
 hair:mesh(loft([[-.45,.8,.6,-.42],[-.2,.95,.8,-.28],[.12,1.0,.88,-.17],[.4,1.0,.9,-.13],[.64,.96,1.02,-.05],[.86,.76,.82,-.06],[.98,.46,.52,-.07],[1.03,.1,.12,-.07]],24)),
-palm:mesh(loft([[-1,.4,.5,0,2.6],[-.6,.85,.9,0,2.6],[.3,1,1,0,2.6],[.8,.9,.92,0,2.6],[1,.5,.55,0,2.6]],10)),
-shoe:mesh(alongZ(loft([[-1,.55,.55,-.05],[-.82,.78,.92,0],[-.25,.82,1,0],[.35,.86,.78,-.18],[.75,.66,.52,-.3],[1,.22,.22,-.36]],10))),
+palm:mesh(loft([[-1,.4,.5,0,2.6],[.3,1,1,0,2.6],[1,.5,.55,0,2.6]],8)),
+shoe:mesh(alongZ(loft([[-1,.55,.55,-.05],[-.25,.82,1,0],[.35,.86,.78,-.18],[1,.22,.22,-.36]],8))),
 limb:mesh(loft([[-1.04,.25,.25],[-1,.62,.62],[-.9,.9,.9],[-.7,1,1],[.7,1,1],[.9,.9,.9],[1,.62,.62],[1.04,.25,.25]])),
-bodyLimb:mesh(loft([[-1.04,.25,.25],[-1,.62,.62],[-.9,.9,.9],[-.7,1,1],[.7,1,1],[.9,.9,.9],[1,.62,.62],[1.04,.25,.25]],8)),
+bodyLimb:mesh(loft([[-1.02,.4,.4],[-.75,1,1],[.75,1,1],[1.02,.4,.4]],6)),
 joint:mesh(loft([[-1,.35,.35],[-.8,.75,.75],[-.4,.96,.96],[.4,.96,.96],[.8,.75,.75],[1,.35,.35]])),
 nose:mesh(loft([[-1,.62,.55,.25],[-.7,1,.95,.35],[-.2,.72,.7,.18],[.4,.5,.5,.05],[1,.38,.4,0]],12)),
-tail:mesh(loft([[-1,.5,.1],[-.6,.92,.13],[.4,1,.14],[1,.8,.12]],12)),
-cushion:mesh(loft([[-1,.9,.88,0,5],[-.55,1,1,0,5],[.45,1,1,0,5],[.85,.96,.94,0,5],[1,.84,.8,0,5]],12))};
+tail:mesh(loft([[-1,.5,.1],[-.6,.92,.13],[.4,1,.14],[1,.8,.12]],8)),
+cushion:mesh(loft([[-1,.9,.88,0,5],[0,1,1,0,5],[1,.84,.8,0,5]],8))};
 let faceDetail=false;
 function setFaceDetail(value){faceDetail=!!value}
 // A parent frame for the violin upper-body hierarchy, applied before the
@@ -90,6 +90,6 @@ function begin(eye,at,up=[0,1,0]){eye=toWorld(eye);at=toWorld(at);up=toWorld(up)
 // instance was created last owns the binding and the other's uniform
 // uploads fail with INVALID_OPERATION (black stage). The host renderer's
 // begin() (dist/gl.js) carries the same fix.
-gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.8),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
+gl.useProgram(prog);let dpr=Math.min(devicePixelRatio||1,1.25),w=Math.round(canvas.clientWidth*dpr),h=Math.round(canvas.clientHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clearColor(.028,.032,.04,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.uniformMatrix4fv(u.uVP,false,(vp=multiply(perspective(w/h),look(eye,at,up))));gl.uniform3fv(u.uEye,eye)}
 return{box,ball,bone,piece,segment,setFaceDetail,withTransform,oriented,mesh:drawMesh,dynamicMesh,dynamicStats,begin,project,gl};}
 return{create,toWorld,look,perspective,multiply};})();

@@ -5702,7 +5702,26 @@ window.CelloMotion = (() => {
     const x = clamp(t, 0, entry.duration), q = x / entry.step, i = Math.min(entry.frames - 1, Math.floor(q)), j = Math.min(entry.frames - 1, i + 1), u = Math.min(1, q - i);
     const a0 = i * entry.width, b0 = j * entry.width, n = new Array(entry.width);
     for (let k = 0; k < entry.width; k++) n[k] = Math.fround(data[a0 + k] + (data[b0 + k] - data[a0 + k]) * u);
-    return withBowHand(restoreCachedDigits(cachePose(cacheUnflat(entry.schema, n, u < 0.5 ? entry.strings[i] : entry.strings[j], { i: 0 }, { i: 0 }))));
+    const base = restoreCachedDigits(cachePose(cacheUnflat(entry.schema, n, u < 0.5 ? entry.strings[i] : entry.strings[j], { i: 0 }, { i: 0 })));
+    // Recompute live per-note alternating bow & right arm from the fingering plan
+    // while keeping the precomputed left-hand natural FK pose untouched.
+    if (!song.cello) plan(song);
+    const tr = song.cello && song.cello.tracks;
+    if (tr) {
+      const bowF = 0.5 + (tr.bow(x) - 0.5) * 0.66;
+      const sFloat = tr.string(x);
+      const s0 = clamp(Math.floor(sFloat), 0, 3), s1 = clamp(s0 + 1, 0, 3), sf = sFloat - s0;
+      const contact = lerp(M.bowContact(s0), M.bowContact(s1), sf);
+      const dir = norm(lerp(M.bowDir(s0), M.bowDir(s1), sf));
+      const frog = sub(contact, mul(dir, bowF * M.BOW_LENGTH));
+      const tip = add(contact, mul(dir, (1 - bowF) * M.BOW_LENGTH));
+      const stickFrog = add(frog, mul(M.n, 0.020)), stickTip = add(tip, mul(M.n, 0.020));
+      const wristR = add(stickFrog, add(mul(dir, -0.010), [0, 0.012, 0]));
+      const elbowR = solveElbow(SHOULDER_R, wristR, [-0.55, -1, 0.15]);
+      base.bow = { frog, tip, contact, string: sFloat, frac: bowF, stickFrog, stickTip };
+      base.rightArm = { shoulder: SHOULDER_R, elbow: elbowR, wrist: wristR };
+    }
+    return withBowHand(base);
   };
 
   // ---- drawing ----
@@ -5710,51 +5729,64 @@ window.CelloMotion = (() => {
     SHIRT = [0.85, 0.84, 0.81], HAIR = [0.075, 0.058, 0.05], WOOD = [0.16, 0.10, 0.06],
     LASH = [0.20, 0.12, 0.10], LIP1 = [0.62, 0.38, 0.33], LIP2 = [0.70, 0.48, 0.40];
 
-  function drawFigure(R, p) {
+  function drawFigure(R, p, opts) {
+    const female = !!opts?.female;
+    const attire = female ? (opts?.gown || [0.055, 0.062, 0.110]) : SUIT;
+    const hairCol = female ? [0.115, 0.068, 0.046] : HAIR;
+    const pearl = [0.94, 0.90, 0.82];
     // Chair + legs (seated, knees spread around the cello).
     R.box([0, 0.445, 0.14], [0.47, 0.045, 0.44], WOOD);
     R.box([0, 0.70, 0.35], [0.47, 0.55, 0.04], WOOD);
     for (const sx of [-1, 1]) {
       R.segment([sx * 0.20, 0.44, 0.30], [sx * 0.20, 0.0, 0.30], 0.02, WOOD, 'limb');
       const hip = [sx * 0.105, 0.53, 0.10], knee = [sx * 0.225, 0.475, -0.315], ankle = [sx * 0.235, 0.045, -0.20];
-      R.segment(hip, knee, 0.062, SUIT, 'limb');
-      R.segment(knee, ankle, 0.047, SUIT, 'limb');
-      R.piece('shoe', add(ankle, [0, -0.012, -0.045]), [0.075, 0.045, 0.145], [0.02, 0.02, 0.025]);
+      R.segment(hip, knee, female ? 0.068 : 0.060, attire, 'limb');
+      R.ball(knee, [female ? 0.060 : 0.052, female ? 0.060 : 0.052, female ? 0.060 : 0.052], attire);
+      R.segment(knee, ankle, female ? 0.058 : 0.046, attire, 'limb');
+      R.piece('shoe', add(ankle, [0, -0.012, -0.045]), [female ? 0.054 : 0.068, female ? 0.036 : 0.042, female ? 0.130 : 0.140], [0.02, 0.02, 0.025]);
     }
-    // Torso, head.
+    // Torso, neck, head (realistic ~7.8-head adult proportions).
     const lean = p.sway.lean;
-    R.piece('jacket', [0, 0.875, 0.085], [0.185, 0.30, 0.135], SUIT, lean, 0, -p.sway.turn); // z-turn negated: planning frame is X-mirrored
-    // The head loft's face is its local +Z, and the player faces -Z
-    // (toward the audience): without the PI yaw the face pointed at
-    // the chair back. With it, the 0.38 X-tilt reads as a downward
-    // glance toward the fingerboard.
-    const headC = [-0.012, 1.315 + p.sway.breath, 0.045], HX = 0.38, HY = Math.PI, HZ = 0.06;
+    R.piece('torso', [0, 0.58, 0.095], [female ? 0.158 : 0.168, 0.105, 0.115], attire);
+    R.piece('jacket', [0, 0.875, 0.085], [female ? 0.172 : 0.194, 0.258, female ? 0.122 : 0.134], attire, lean, 0, -p.sway.turn); // z-turn negated: planning frame is X-mirrored
+    const headC = [-0.012, 1.295 + p.sway.breath, 0.048], HX = 0.38, HY = Math.PI, HZ = 0.06;
+    const CHS = female ? [0.074, 0.102, 0.086] : [0.078, 0.106, 0.090], CFS = [CHS[0] / 0.112, CHS[1] / 0.148, CHS[2] / 0.128];
+    const cs = q => [q[0] * CFS[0], q[1] * CFS[1], q[2] * CFS[2]];
+    R.segment([0, 1.130, 0.070], [headC[0], headC[1] - 0.042, headC[2] + 0.008], female ? 0.034 : 0.038, SKIN);
+    if (!female) R.segment([0, 1.130, 0.070], [0, 1.162, 0.064], 0.042, SHIRT);
+    else {
+      for (let i = -3; i <= 3; i++) {
+        const a = i * 0.28;
+        R.ball([Math.sin(a) * 0.054, 1.148 - Math.cos(a) * 0.012, 0.056 - 0.054 * Math.cos(a)], [0.0055, 0.0055, 0.0055], pearl, 0.6);
+      }
+    }
     R.setFaceDetail?.(true);
-R.piece('head', headC, [0.105, 0.125, 0.112], SKIN, HX, HY, HZ);
-    R.piece('hair', [-0.016, 1.345 + p.sway.breath, 0.062], [0.108, 0.122, 0.115], HAIR, 0.30, Math.PI, 0.06);
-    // Face, mirroring the pianist's construction (demos-pianist
-    // app.js): the same nose loft piece, two-segment lowered-lid
-    // lash lines, hair-colour brows, joint-loft ears and two lip
-    // segments, at the pianist's head-local offsets scaled by the
-    // head-radii ratio ([.105,.125,.112] / [.112,.148,.128]).
-    // headPoint applies the head's own Rz*Ry*Rx frame, so the
-    // features ride the animated head on its true front (+Z local).
+R.piece('head', headC, CHS, SKIN, HX, HY, HZ);
     const headPoint = q => {
+      const s = cs(q);
       const cx = Math.cos(HX), sx = Math.sin(HX), cy = Math.cos(HY), sy = Math.sin(HY), cz = Math.cos(HZ), sz = Math.sin(HZ);
-      const y1 = q[1] * cx - q[2] * sx, z1 = q[1] * sx + q[2] * cx;
-      const x2 = q[0] * cy + z1 * sy, z2 = -q[0] * sy + z1 * cy;
+      const y1 = s[1] * cx - s[2] * sx, z1 = s[1] * sx + s[2] * cx;
+      const x2 = s[0] * cy + z1 * sy, z2 = -s[0] * sy + z1 * cy;
       return [headC[0] + x2 * cz - y1 * sz, headC[1] + x2 * sz + y1 * cz, headC[2] + z2];
     };
-    R.piece('nose', headPoint([0, -0.0101, 0.1068]), [0.015, 0.0287, 0.0175], SKIN_L, HX, HY, HZ);
-    for (const s of [-1, 1]) {
-      const ex = s * 0.0375, lid = 0.0101;
-      R.segment(headPoint([ex - 0.0159, lid + 0.0017, 0.0989]), headPoint([ex, lid - 0.0025, 0.105]), 0.002, LASH);
-      R.segment(headPoint([ex, lid - 0.0025, 0.105]), headPoint([ex + 0.0159, lid + 0.0008, 0.0998]), 0.002, LASH);
-      R.segment(headPoint([ex - 0.0188, 0.0338, 0.1033]), headPoint([ex + 0.0169, 0.0363, 0.1033]), 0.0028, HAIR);
-      R.piece('joint', headPoint([s * 0.1022, -0.0068, -0.007]), [0.0113, 0.0253, 0.0193], SKIN, HX, HY, HZ);
+    R.piece('hair', headPoint([0, 0.004, 0]), cs([0.117, 0.148, 0.133]), hairCol, HX, HY, HZ);
+    if (female) {
+      R.ball(headPoint([0, -0.022, -0.135]), cs([0.054, 0.052, 0.048]), hairCol);
+      for (const s of [-1, 1]) {
+        R.segment(headPoint([s * 0.098, 0.025, -0.020]), headPoint([s * 0.096, -0.135, -0.025]), 0.020, hairCol);
+        R.ball(headPoint([s * 0.112, -0.036, -0.005]), [0.0055, 0.0055, 0.0055], pearl, 0.7);
+      }
     }
-    R.segment(headPoint([-0.0188, -0.0625, 0.0989]), headPoint([0.0188, -0.0625, 0.0989]), 0.0037, LIP1);
-    R.segment(headPoint([-0.0113, -0.0701, 0.0963]), headPoint([0.0113, -0.0701, 0.0963]), 0.0031, LIP2);
+    R.piece('nose', headPoint([0, -0.012, 0.122]), cs([0.016, 0.034, 0.02]), SKIN_L, HX, HY, HZ);
+    for (const s of [-1, 1]) {
+      const ex = s * 0.04, lid = 0.012;
+      R.segment(headPoint([ex - 0.017, lid + 0.002, 0.113]), headPoint([ex, lid - 0.003, 0.12]), 0.0018, LASH);
+      R.segment(headPoint([ex, lid - 0.003, 0.12]), headPoint([ex + 0.017, lid + 0.001, 0.114]), 0.0018, LASH);
+      R.segment(headPoint([ex - 0.020, 0.040, 0.118]), headPoint([ex + 0.018, 0.043, 0.118]), 0.0024, HAIR);
+      R.piece('joint', headPoint([s * 0.109, -0.008, -0.008]), cs([0.012, 0.03, 0.022]), SKIN, HX, HY, HZ);
+    }
+    R.segment(headPoint([-0.02, -0.074, 0.113]), headPoint([0.02, -0.074, 0.113]), 0.0032, LIP1);
+    R.segment(headPoint([-0.012, -0.083, 0.11]), headPoint([0.012, -0.083, 0.11]), 0.0026, LIP2);
 R.setFaceDetail?.(false);
     // Arms. Both forearms end at their wrist joints; only the
     // right keeps a wrist ball (the bow hand's mass) -- the left
@@ -5770,14 +5802,32 @@ R.setFaceDetail?.(false);
     // chains below (extensions 0.22x segment length; joint balls
     // sized by the no-bulge rule there, see drawChain).
     const leftHand={basis:p.hand.frame?[p.hand.frame.x,p.hand.frame.y,p.hand.frame.z]:[M.v,M.u,M.n]};
-    for(const [A,H] of [[p.leftArm,leftHand],[p.rightArm,p.bowHand]])
-      window.BowHand.drawArm(R,A,H,{suit:SUIT,skin:SKIN,shirt:SHIRT});
-    // Left hand, one assembly (see pose()): carpus at the wrist
-    // joint, the palm's shaped masses spanning wrist -> knuckle
-    // row, the thenar eminence at the thumb's base, then the
-    // fingers and thumb chained out of the row / thenar corner.
-    // Drawn before the fingers so the chains emerge from the
-    // masses' knuckle edge.
+    window.BowHand.drawArm(R,p.rightArm,p.bowHand,{suit:attire,skin:SKIN,shirt:female?attire:SHIRT});
+    // Whole-wrist/forearm vibrato rock along the cello fingerboard axis M.u on stopped notes
+    let vibFrame = null;
+    if (p.hand.model === 'natural' && p.sounding && p.sounding.length && R.withTransform) {
+      const tVib = (opts && Number.isFinite(opts.time)) ? opts.time : 0;
+      const vibAng = Math.sin(tVib * Math.PI * 2 * 5.2) * 0.032;
+      const pivot = p.hand.anchor || p.hand.wrist;
+      const c = Math.cos(vibAng), s = Math.sin(vibAng), ax = M.v;
+      const rotAx = v => {
+        const d = v[0] * ax[0] + v[1] * ax[1] + v[2] * ax[2];
+        const cr = [ax[1] * v[2] - ax[2] * v[1], ax[2] * v[0] - ax[0] * v[2], ax[0] * v[1] - ax[1] * v[0]];
+        return [v[0] * c + cr[0] * s + ax[0] * d * (1 - c), v[1] * c + cr[1] * s + ax[1] * d * (1 - c), v[2] * c + cr[2] * s + ax[2] * d * (1 - c)];
+      };
+      const rP = rotAx(pivot);
+      vibFrame = { U: rotAx([1, 0, 0]), V: rotAx([0, 1, 0]), W: rotAx([0, 0, 1]), O: [pivot[0] - rP[0], pivot[1] - rP[1], pivot[2] - rP[2]] };
+    }
+    if (vibFrame) {
+      const rW = [vibFrame.U[0] * p.leftArm.wrist[0] + vibFrame.V[0] * p.leftArm.wrist[1] + vibFrame.W[0] * p.leftArm.wrist[2] + vibFrame.O[0],
+                  vibFrame.U[1] * p.leftArm.wrist[0] + vibFrame.V[1] * p.leftArm.wrist[1] + vibFrame.W[1] * p.leftArm.wrist[2] + vibFrame.O[1],
+                  vibFrame.U[2] * p.leftArm.wrist[0] + vibFrame.V[2] * p.leftArm.wrist[1] + vibFrame.W[2] * p.leftArm.wrist[2] + vibFrame.O[2]];
+      window.BowHand.drawArm(R, { ...p.leftArm, wrist: rW }, leftHand, { suit: attire, skin: SKIN, shirt: female ? attire : SHIRT });
+      R.withTransform(vibFrame, () => drawNaturalHand(R, p));
+      drawBowHand(R, p);
+      return;
+    }
+    window.BowHand.drawArm(R,p.leftArm,leftHand,{suit:attire,skin:SKIN,shirt:female?attire:SHIRT});
     if (p.hand.model === 'natural') { drawNaturalHand(R, p); drawBowHand(R, p); return; }
     const pm = p.hand.palm, cp = p.hand.carpus;
     // The carpus is drawn 1.15x its pose radii so the wrist/palm
@@ -5901,12 +5951,14 @@ R.setFaceDetail?.(false);
     R.dynamicMesh('cello-left-hand',window.ViolinFingerSkin.update(state,H,undefined,conformHandSurface),colOf?colOf('palm'):SKIN);
   }
 
-  function draw(R, song, t, opts = {}) {
-    const p = poseCached(song, t) || pose(song, t);
+  function drawPose(R, p, opts = {}) {
     M.drawCello(R, { hotString: p.sounding.length ? p.sounding[0] : -1 });
     M.drawBow(R, clamp(Math.round(p.bow.string), 0, 3), p.bow.frac, p.bow);
-    drawFigure(R, p);
+    drawFigure(R, p, opts);
     return p;
+  }
+  function draw(R, song, t, opts = {}) {
+    return drawPose(R, poseCached(song, t) || pose(song, t), { ...opts, time: t });
   }
 
   // ---- Canonical REST assembly (foundation, 2026-11-08) ----
@@ -5972,5 +6024,5 @@ R.setFaceDetail?.(false);
     };
   };
 
-  return { plan, pose, poseCached, packPose, setPoseCache, poseLegacy, setHandSolver, NH, surfaceHand, conformHandSurface, drawNaturalHand, draw, setVariant, setCarriage, setRadiusScale, setPlaceVariant, VARIANTS, BONE, PLACE_VARIANTS, ROM, restHand, _romLog: ROM_LOG, _ik: { solveElbow, fingerChain, fingerChainPad, MIN_SPAN, PAD }, SKELETON: { SHOULDER_L, SHOULDER_R, ARM, FINGER_LEN, FINGER_R, THUMB_LEN, THUMB_R, THUMB_CMC_ROT_MAX, get RADIUS_SCALE() { return RADIUS_SCALE; }, HAND: { PALM_LEN, MC_ROW, MC_LEN, MC_BASE, MC_YAW, MC_CUP, SCAPHOID, PLATE, KNUCKLE_PAD, THENAR, HYPOTHENAR, CARPUS: CARPUS_R, THUMB_BASE, THUMB_DIR, REST_CURL, REST_CURL_THUMB } } };
+  return { plan, pose, poseCached, packPose, setPoseCache, poseLegacy, setHandSolver, NH, surfaceHand, conformHandSurface, drawNaturalHand, drawPose, draw, withBowHand, setVariant, setCarriage, setRadiusScale, setPlaceVariant, VARIANTS, BONE, PLACE_VARIANTS, ROM, restHand, _romLog: ROM_LOG, _ik: { solveElbow, fingerChain, fingerChainPad, MIN_SPAN, PAD }, SKELETON: { SHOULDER_L, SHOULDER_R, ARM, FINGER_LEN, FINGER_R, THUMB_LEN, THUMB_R, THUMB_CMC_ROT_MAX, get RADIUS_SCALE() { return RADIUS_SCALE; }, HAND: { PALM_LEN, MC_ROW, MC_LEN, MC_BASE, MC_YAW, MC_CUP, SCAPHOID, PLATE, KNUCKLE_PAD, THENAR, HYPOTHENAR, CARPUS: CARPUS_R, THUMB_BASE, THUMB_DIR, REST_CURL, REST_CURL_THUMB } } };
 })();
